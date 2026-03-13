@@ -1,9 +1,15 @@
 package jnum;
 
+import com.sun.jdi.FloatValue;
+import java.awt.geom.Area;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+import java.nio.ByteOrder;
+import java.util.Vector;
 
 public class NDArray{
     private final MemorySegment data;
@@ -56,5 +62,38 @@ public class NDArray{
     public float getFlat(long index) {
         return data.getAtIndex(ValueLayout.JAVA_FLOAT, index);
     }
+    
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder("NDArray" + shapeString() + " [");
+        for (long i = 0; i < size; i++) {
+            sb.append(data.getAtIndex(ValueLayout.JAVA_FLOAT, i));
+            if (i < size - 1) sb.append(", ");
+        }
+        return sb.append("]").toString();
+    }
 
+    public NDArray add(NDArray b){
+        if(this.size!=b.size) throw new IllegalArgumentException("Shape mismatch detected:cannot add NDArrays with diffrent shapes");
+        Arena arena=Arena.ofAuto();
+        MemorySegment res_seg= arena.allocate(ValueLayout.JAVA_FLOAT,this.size);
+
+        VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
+        long i=0;
+        long loopbound=SPECIES.loopBound(this.size);
+
+        for(;i<loopbound;i+=SPECIES.length()){
+            var v1=FloatVector.fromMemorySegment(SPECIES,this.data,i*4,ByteOrder.nativeOrder());
+            var v2=FloatVector.fromMemorySegment(SPECIES,b.data,i*4,ByteOrder.nativeOrder());
+            var Vres=v1.add(v2);
+            Vres.intoMemorySegment(res_seg,i*4,ByteOrder.nativeOrder());
+        }
+
+        for (; i < this.size; i++) {
+            var val1 = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            var val2 = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            res_seg.setAtIndex(ValueLayout.JAVA_FLOAT, i, val1 + val2);
+        }
+        return new NDArray(res_seg, this.shape, this.strider);
+    }
 }
