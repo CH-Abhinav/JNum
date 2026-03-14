@@ -15,6 +15,10 @@ public class NDArray{
     private final int[] shape;
     private final int[] strides;
     private final long size;
+    private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
+    private static final long FLOAT_BYTES = ValueLayout.JAVA_FLOAT.byteSize();
+    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
+    private static final int VL = SPECIES.length();
 
     private NDArray(MemorySegment data,int[] shape,int[] strides){
         this.data=data;
@@ -65,7 +69,13 @@ public class NDArray{
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder("NDArray" + shapeString() + " [");
+        int maxPrint = 6;
         for (long i = 0; i < size; i++) {
+            if (i == maxPrint / 2 && size > maxPrint) {
+                sb.append("..., ");
+                i = size - (maxPrint / 2) - 1;
+                continue;
+            }
             sb.append(data.getAtIndex(ValueLayout.JAVA_FLOAT, i));
             if (i < size - 1) sb.append(", ");
         }
@@ -73,25 +83,73 @@ public class NDArray{
     }
 
     public NDArray add(NDArray b){
-        if(this.size!=b.size) throw new IllegalArgumentException("Shape mismatch detected:cannot add NDArrays with diffrent shapes");
+        if (!Arrays.equals(this.shape, b.shape)) {
+            throw new IllegalArgumentException("Shape mismatch: " + this.shapeString() + " vs " + b.shapeString()+" cannot compute");
+        }        
         Arena arena=Arena.ofAuto();
         MemorySegment res_seg= arena.allocate(ValueLayout.JAVA_FLOAT,this.size);
-
-        VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
         long i=0;
         long loopbound=SPECIES.loopBound(this.size);
 
-        for(;i<loopbound;i+=SPECIES.length()){
-            var v1=FloatVector.fromMemorySegment(SPECIES,this.data,i*4,ByteOrder.nativeOrder());
-            var v2=FloatVector.fromMemorySegment(SPECIES,b.data,i*4,ByteOrder.nativeOrder());
+        for(;i<loopbound;i+=VL){
+            var v1=FloatVector.fromMemorySegment(SPECIES,this.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
             var Vres=v1.add(v2);
-            Vres.intoMemorySegment(res_seg,i*4,ByteOrder.nativeOrder());
+            Vres.intoMemorySegment(res_seg,i*FLOAT_BYTES,ORDER);
         }
 
         for (; i < this.size; i++) {
             var val1 = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
             var val2 = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
             res_seg.setAtIndex(ValueLayout.JAVA_FLOAT, i, val1 + val2);
+        }
+        return new NDArray(res_seg, this.shape, this.strides);
+    }
+
+    public NDArray sub(NDArray b){
+        if (!Arrays.equals(this.shape, b.shape)) {
+            throw new IllegalArgumentException("Shape mismatch: " + this.shapeString() + " vs " + b.shapeString()+" cannot compute");
+        }        
+        Arena arena=Arena.ofAuto();
+        MemorySegment res_seg= arena.allocate(ValueLayout.JAVA_FLOAT,this.size);
+        long i=0;
+        long loopbound=SPECIES.loopBound(this.size);
+
+        for(;i<loopbound;i+=VL){
+            var v1=FloatVector.fromMemorySegment(SPECIES,this.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var Vres=v1.sub(v2);
+            Vres.intoMemorySegment(res_seg,i*FLOAT_BYTES,ORDER);
+        }
+
+        for (; i < this.size; i++) {
+            var val1 = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            var val2 = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            res_seg.setAtIndex(ValueLayout.JAVA_FLOAT, i, val1 - val2);
+        }
+        return new NDArray(res_seg, this.shape, this.strides);
+    }
+
+    public NDArray mul(NDArray b){
+        if (!Arrays.equals(this.shape, b.shape)) {
+            throw new IllegalArgumentException("Shape mismatch: " + this.shapeString() + " vs " + b.shapeString()+" cannot compute");
+        }        
+        Arena arena=Arena.ofAuto();
+        MemorySegment res_seg= arena.allocate(ValueLayout.JAVA_FLOAT,this.size);
+        long i=0;
+        long loopbound=SPECIES.loopBound(this.size);
+
+        for(;i<loopbound;i+=VL){
+            var v1=FloatVector.fromMemorySegment(SPECIES,this.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var Vres=v1.mul(v2);
+            Vres.intoMemorySegment(res_seg,i*FLOAT_BYTES,ORDER);
+        }
+
+        for (; i < this.size; i++) {
+            var val1 = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            var val2 = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+            res_seg.setAtIndex(ValueLayout.JAVA_FLOAT, i, val1 * val2);
         }
         return new NDArray(res_seg, this.shape, this.strides);
     }
