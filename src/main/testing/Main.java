@@ -4,36 +4,34 @@ import jnum.NDArray;
 
 public class Main {
     public static void main(String[] args) {
-        int size = 100_000_000;
+        System.out.println("--- JNum v0.0.2 Final Integration Test ---\n");
 
-        System.out.println("Allocating arrays...");
-        NDArray a = NDArray.zeros(size);
-        NDArray b = NDArray.zeros(size); // (Using zeros so we don't hit the slow 'ones' loop)
-        NDArray c = NDArray.zeros(size); 
+        // 1. Ingest standard Java array (Heap to Off-Heap)
+        float[] rawData = {10f, 20f, 30f, 40f, 50f, 60f};
+        NDArray flatArray = NDArray.from(rawData, 6);
+        System.out.println("1. Flat Array: " + flatArray);
 
-        System.out.println("Warming up JVM (20 runs)...");
-        for (int i = 0; i < 20; i++) {
-            a.add(b, c); 
-            c.getFlat(0); 
-        }
+        // 2. Zero-Copy Reshape
+        NDArray matrix = flatArray.reshape(2, 3);
+        System.out.println("2. Reshaped to 2x3: " + matrix);
 
-        System.out.println("Starting Benchmark...");
-        int runs = 10;
-        long total = 0;
+        // 3. N-Dimensional Indexing (Get Row 1, Col 2 -> should be 60.0)
+        System.out.println("3. Value at (1, 2): " + matrix.get(1, 2));
 
-        for (int i = 0; i < runs; i++) {
-            long start = System.nanoTime();
+        // 4. Scalar Broadcasting (Add 5 to everything)
+        NDArray plusFive = matrix.add(5.0f);
+        System.out.println("4. Matrix + 5.0f: " + plusFive);
 
-            a.add(b, c); // Zero allocations happening here!
+        // 5. High-Performance Math (plusFive - matrix)
+        NDArray difference = plusFive.sub(matrix);
+        System.out.println("5. Difference (Expected all 5s): " + difference);
 
-            float guard = c.getFlat(0); 
-            long end = System.nanoTime();
-            long duration = (end - start) / 1_000_000;
-            total += duration;
-
-            System.out.println("Run " + (i + 1) + ": " + duration + " ms");
-        }
-        System.out.println("---------------------------------");
-        System.out.println("Average: " + (total / runs) + " ms");
+        // 6. Hardware Reductions
+        System.out.println("6. Max Value of Original: " + matrix.max());
+        System.out.println("7. Min Value of Original: " + matrix.min());
+        System.out.println("8. Sum of Original: " + matrix.sum());
+        System.out.println("9. Average of Original: " + matrix.avg());
+        
+        System.out.println("\nAll systems nominal. Welcome to v0.0.2!");
     }
 }

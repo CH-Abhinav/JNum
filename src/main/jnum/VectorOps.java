@@ -202,7 +202,7 @@ class VectorOps{
     public static float max(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
-        var vMax=FloatVector.zero(SPECIES,Float.NEGATIVE_INFINITY);
+        var vMax = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
             vMax=vMax.max(v1);
@@ -220,10 +220,10 @@ class VectorOps{
     public static float min(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
-        var vMin=FloatVector.zero(SPECIES,Float.POSITIVE_INFINITY);
+        var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
-            vMin=vMin.mix(v1);
+            vMin=vMin.min(v1);
         }
         float finalMin=vMin.reduceLanes(VectorOperators.MIN);
         for (; i < a.size; i++) {
