@@ -16,10 +16,20 @@ class VectorOps{
 
     private VectorOps(){}
 
-    public static NDArray add(NDArray a,NDArray b,NDArray resArray){
+    private static void exception(NDArray a,NDArray b,NDArray resArray){
         if (!Arrays.equals(a.shape, b.shape) || !Arrays.equals(a.shape, resArray.shape)) {
             throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + b.shapeString()+" or "+ resArray.shapeString()+" cannot compute");
-        }        
+        }
+    }
+
+    private static void exceptionfloat(NDArray a,NDArray resArray){
+        if (!Arrays.equals(a.shape, resArray.shape)) {
+            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + resArray.shapeString()+" cannot compute");
+        }
+    }
+
+    public static NDArray add(NDArray a,NDArray b,NDArray resArray){
+        exception( a, b, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -39,9 +49,7 @@ class VectorOps{
     }
 
     public static NDArray sub(NDArray a,NDArray b,NDArray resArray){
-        if (!Arrays.equals(a.shape, b.shape) || !Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + b.shapeString()+" or " + resArray.shapeString()+" cannot compute");
-        }        
+        exception( a, b, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -61,9 +69,7 @@ class VectorOps{
     }
 
     public static NDArray mul(NDArray a,NDArray b,NDArray resArray){
-        if (!Arrays.equals(a.shape, b.shape) || !Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + b.shapeString()+" or " + resArray.shapeString()+" cannot compute");
-        }        
+        exception( a, b, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -83,9 +89,7 @@ class VectorOps{
     }
 
     public static NDArray div(NDArray a,NDArray b,NDArray resArray){
-        if (!Arrays.equals(a.shape, b.shape) || !Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + b.shapeString()+" or " + resArray.shapeString()+" cannot compute");
-        }        
+        exception( a, b, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -105,9 +109,7 @@ class VectorOps{
     }
 
     public static NDArray add(NDArray a,float b,NDArray resArray){
-        if (!Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + resArray.shapeString()+" cannot compute");
-        }        
+        exceptionfloat(a, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -125,9 +127,7 @@ class VectorOps{
     }
 
     public static NDArray sub(NDArray a,float b,NDArray resArray){
-        if (!Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + resArray.shapeString()+" cannot compute");
-        }        
+        exceptionfloat(a, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -145,9 +145,7 @@ class VectorOps{
     }
 
     public static NDArray mul(NDArray a,float b,NDArray resArray){
-        if (!Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + resArray.shapeString()+" cannot compute");
-        }        
+        exceptionfloat(a, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 
@@ -165,9 +163,7 @@ class VectorOps{
     }
 
     public static NDArray div(NDArray a,float b,NDArray resArray){
-        if (!Arrays.equals(a.shape, resArray.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + resArray.shapeString()+" cannot compute");
-        }        
+        exceptionfloat(a, resArray);        
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
 

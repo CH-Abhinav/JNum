@@ -102,6 +102,18 @@ public class NDArray{
         return getFlat(flatIndex);
     }
 
+    public int[] shape() {
+        return shape.clone();
+    }
+
+    public int ndim() {
+        return shape.length;
+    }
+
+    public long size() {
+        return size;
+    }
+
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder("NDArray" + shapeString() + " [");
