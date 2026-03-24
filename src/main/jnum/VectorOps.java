@@ -45,7 +45,7 @@ class VectorOps{
 
     public static NDArray addInt(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -64,7 +64,7 @@ class VectorOps{
 
     public static NDArray addDouble(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -102,7 +102,7 @@ class VectorOps{
 
     public static NDArray subInt(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -121,7 +121,7 @@ class VectorOps{
 
     public static NDArray subDouble(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -159,7 +159,7 @@ class VectorOps{
 
     public static NDArray mulInt(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -178,7 +178,7 @@ class VectorOps{
 
     public static NDArray mulDouble(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -216,7 +216,7 @@ class VectorOps{
 
     public static NDArray divInt(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -235,7 +235,7 @@ class VectorOps{
 
     public static NDArray divDouble(NDArray a,NDArray b,NDArray resArray){        
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -271,7 +271,7 @@ class VectorOps{
 
     public static NDArray addInt(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -288,7 +288,7 @@ class VectorOps{
 
     public static NDArray addDouble(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -322,7 +322,7 @@ class VectorOps{
 
     public static NDArray subInt(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -339,7 +339,7 @@ class VectorOps{
 
     public static NDArray subDouble(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -373,7 +373,7 @@ class VectorOps{
 
     public static NDArray mulInt(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -390,7 +390,7 @@ class VectorOps{
 
     public static NDArray mulDouble(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -424,7 +424,7 @@ class VectorOps{
 
     public static NDArray divInt(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -441,7 +441,7 @@ class VectorOps{
 
     public static NDArray divDouble(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -456,7 +456,7 @@ class VectorOps{
         return resArray;
     }
 
-    public static float sum(NDArray a){
+    public static float sumFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vSum=FloatVector.zero(SPECIES);
@@ -471,7 +471,37 @@ class VectorOps{
         return total;
     }
 
-    public static float max(NDArray a){
+    public static int sumInt(NDArray a){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+        var vSum=IntVector.zero(SPECIESINT);
+        for(;i<loopbound;i+=VL){
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            vSum=vSum.add(v1);
+        }
+        int total=vSum.reduceLanes(VectorOperators.ADD);
+        for(;i<a.size;i++){
+            total+=a.data.getAtIndex(ValueLayout.JAVA_INT,i);
+        }
+        return total;
+    }
+
+    public static double sumDouble(NDArray a){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+        var vSum=DoubleVector.zero(SPECIESDB);
+        for(;i<loopbound;i+=VL){
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            vSum=vSum.add(v1);
+        }
+        double total=vSum.reduceLanes(VectorOperators.ADD);
+        for(;i<a.size;i++){
+            total+=a.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i);
+        }
+        return total;
+    }
+
+    public static float maxFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMax = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
@@ -489,7 +519,39 @@ class VectorOps{
         return finalMax;
     }
 
-    public static float min(NDArray a){
+    public static int maxInt(NDArray a) {
+        long i = 0;
+        long loopbound = SPECIESINT.loopBound(a.size);
+        var vMax = IntVector.broadcast(SPECIESINT, Integer.MIN_VALUE);
+        for (; i < loopbound; i += INT_VL) {
+            var v1 = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
+            vMax = vMax.max(v1);
+        }
+        int finalMax = vMax.reduceLanes(VectorOperators.MAX);
+        for (; i < a.size; i++) {
+            int tailVal = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
+            if (tailVal > finalMax) finalMax = tailVal;
+        }
+        return finalMax;
+    }
+
+    public static double maxDouble(NDArray a) {
+        long i = 0;
+        long loopbound = SPECIESDB.loopBound(a.size);
+        var vMax = DoubleVector.broadcast(SPECIESDB, Double.NEGATIVE_INFINITY);
+        for (; i < loopbound; i += DB_VL) {
+            var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
+            vMax = vMax.max(v1);
+        }
+        double finalMax = vMax.reduceLanes(VectorOperators.MAX);
+        for (; i < a.size; i++) {
+            double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+            if (tailVal > finalMax) finalMax = tailVal;
+        }
+        return finalMax;
+    }
+
+    public static float minFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
@@ -503,6 +565,38 @@ class VectorOps{
             if (tailVal < finalMin) {
                 finalMin = tailVal;
             }
+        }
+        return finalMin;
+    }
+
+    public static double minInt(NDArray a) {
+        long i = 0;
+        long loopbound = SPECIESINT.loopBound(a.size);
+        var vMin = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
+        for (; i < loopbound; i += INT_VL) {
+            var v1 = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
+            vMin = vMin.min(v1);
+        }
+        int finalMin = vMin.reduceLanes(VectorOperators.MIN);
+        for (; i < a.size; i++) {
+            int tailVal = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
+            if (tailVal < finalMin) finalMin = tailVal;
+        }
+        return (double) finalMin;
+    }
+
+    public static double minDouble(NDArray a) {
+        long i = 0;
+        long loopbound = SPECIESDB.loopBound(a.size);
+        var vMin = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
+        for (; i < loopbound; i += DB_VL) {
+            var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
+            vMin = vMin.min(v1);
+        }
+        double finalMin = vMin.reduceLanes(VectorOperators.MIN);
+        for (; i < a.size; i++) {
+            double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+            if (tailVal < finalMin) finalMin = tailVal;
         }
         return finalMin;
     }

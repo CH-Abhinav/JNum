@@ -249,20 +249,32 @@ public class NDArray{
         return sb.append("]").toString();
     }
 
-    public float max(){
-        return VectorOps.max(this);
+    public double max() {
+        return switch(this.dtype) {
+            case FLOAT -> VectorOps.maxFloat(this);
+            case DOUBLE -> VectorOps.maxDouble(this);
+            case INTEGER -> VectorOps.maxInt(this);
+        };
     }
 
-    public float min(){
-        return VectorOps.min(this);
+    public double min() {
+        return switch(this.dtype) {
+            case FLOAT -> VectorOps.minFloat(this);
+            case DOUBLE -> VectorOps.minDouble(this);
+            case INTEGER -> VectorOps.minInt(this);
+        };
     }
 
-    public float sum(){
-        return VectorOps.sum(this);
+    public double sum() {
+        return switch(this.dtype) {
+            case FLOAT -> VectorOps.sumFloat(this);
+            case DOUBLE -> VectorOps.sumDouble(this);
+            case INTEGER -> VectorOps.sumInt(this);
+        };
     }
 
-    public float avg(){
-        return VectorOps.sum(this)/(float)size;
+    public double avg() {
+        return this.sum() / (double) this.size;
     }
 
     public NDArray add(NDArray b){
