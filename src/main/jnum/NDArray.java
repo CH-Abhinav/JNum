@@ -297,6 +297,7 @@ public class NDArray{
     }
 
     public NDArray add(float b){
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
         return VectorOps.addFloat(this, b, resArray);
     }
@@ -307,19 +308,27 @@ public class NDArray{
     }
 
     public NDArray add(double b){
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
         return VectorOps.addDouble(this, b, resArray);
     }
 
     public NDArray add(float b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
         return VectorOps.addFloat(this,b,resArray);
     }
 
     public NDArray add(int b,NDArray resArray){
+        validArguments(this,resArray);
         return VectorOps.addInt(this,b,resArray);
     }
 
     public NDArray add(double b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
         return VectorOps.addDouble(this,b,resArray);
     }
 
@@ -343,6 +352,7 @@ public class NDArray{
     }
 
     public NDArray sub(float b){
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
         return VectorOps.subFloat(this, b, resArray);
     }
@@ -353,19 +363,27 @@ public class NDArray{
     }
 
     public NDArray sub(double b){
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
         return VectorOps.subDouble(this, b, resArray);
     }
 
     public NDArray sub(float b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
         return VectorOps.subFloat(this, b, resArray);
     }
 
     public NDArray sub(int b,NDArray resArray){
+        validArguments(this,resArray);
         return VectorOps.subInt(this, b, resArray);
     }
 
     public NDArray sub(double b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
         return VectorOps.subDouble(this, b, resArray);
     }
 
@@ -389,6 +407,7 @@ public class NDArray{
     }
 
     public NDArray mul(float b){
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.shape);
         return VectorOps.mulFloat(this, b, resArray);
     }
@@ -399,7 +418,27 @@ public class NDArray{
     }
 
     public NDArray mul(double b){
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
+        return VectorOps.mulDouble(this, b, resArray);
+    }
+
+    public NDArray mul(float b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        return VectorOps.mulFloat(this, b, resArray);
+    }
+
+    public NDArray mul(int b,NDArray resArray){
+        validArguments(this,resArray);
+        return VectorOps.mulInt(this, b, resArray);
+    }
+
+    public NDArray mul(double b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
         return VectorOps.mulDouble(this, b, resArray);
     }
 
@@ -423,6 +462,7 @@ public class NDArray{
     }
 
     public NDArray div(float b){
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.shape);
         return VectorOps.divFloat(this, b, resArray);
     }
@@ -433,9 +473,28 @@ public class NDArray{
     }
 
     public NDArray div(double b){
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
         return VectorOps.divDouble(this, b, resArray);
     }
 
+    public NDArray div(float b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
+        return VectorOps.divFloat(this, b, resArray);
+    }
+
+    public NDArray div(int b,NDArray resArray){
+        validArguments(this,resArray);
+        return VectorOps.divInt(this, b, resArray);
+    }
+
+    public NDArray div(double b,NDArray resArray){
+        validArguments(this,resArray);
+        if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
+        if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
+        return VectorOps.divDouble(this, b, resArray);
+    }
 
 }

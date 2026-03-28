@@ -1,6 +1,7 @@
 package jnum;
 
 
+import java.lang.classfile.constantpool.DoubleEntry;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import jdk.incubator.vector.FloatVector;
@@ -20,8 +21,10 @@ class VectorOps{
     private static final int VL = SPECIES.length();
     private static final int INT_VL = SPECIESINT.length();
     private static final int DB_VL = SPECIESDB.length();
-
-    private VectorOps(){}
+    //this is utility class does not require instantability 
+    private VectorOps(){
+        throw new AssertionError();
+    }
 
 
     public static NDArray addFloat(NDArray a,NDArray b,NDArray resArray){        
@@ -456,7 +459,7 @@ class VectorOps{
         return resArray;
     }
 
-    public static float sumFloat(NDArray a){
+    public static double sumFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vSum=FloatVector.zero(SPECIES);
@@ -468,14 +471,14 @@ class VectorOps{
         for(;i<a.size;i++){
             total+=a.data.getAtIndex(ValueLayout.JAVA_FLOAT,i);
         }
-        return total;
+        return (double) total;
     }
 
-    public static int sumInt(NDArray a){
+    public static double sumInt(NDArray a){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESINT.loopBound(a.size);
         var vSum=IntVector.zero(SPECIESINT);
-        for(;i<loopbound;i+=VL){
+        for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
             vSum=vSum.add(v1);
         }
@@ -483,14 +486,14 @@ class VectorOps{
         for(;i<a.size;i++){
             total+=a.data.getAtIndex(ValueLayout.JAVA_INT,i);
         }
-        return total;
+        return (double) total;
     }
 
     public static double sumDouble(NDArray a){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=SPECIESDB.loopBound(a.size);
         var vSum=DoubleVector.zero(SPECIESDB);
-        for(;i<loopbound;i+=VL){
+        for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
             vSum=vSum.add(v1);
         }
@@ -498,10 +501,10 @@ class VectorOps{
         for(;i<a.size;i++){
             total+=a.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i);
         }
-        return total;
+        return (double) total;
     }
 
-    public static float maxFloat(NDArray a){
+    public static double maxFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMax = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
@@ -516,10 +519,10 @@ class VectorOps{
                 finalMax = tailVal;
             }
         }
-        return finalMax;
+        return (double) finalMax;
     }
 
-    public static int maxInt(NDArray a) {
+    public static double maxInt(NDArray a) {
         long i = 0;
         long loopbound = SPECIESINT.loopBound(a.size);
         var vMax = IntVector.broadcast(SPECIESINT, Integer.MIN_VALUE);
@@ -532,7 +535,7 @@ class VectorOps{
             int tailVal = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
             if (tailVal > finalMax) finalMax = tailVal;
         }
-        return finalMax;
+        return (double) finalMax;
     }
 
     public static double maxDouble(NDArray a) {
@@ -548,10 +551,10 @@ class VectorOps{
             double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
             if (tailVal > finalMax) finalMax = tailVal;
         }
-        return finalMax;
+        return (double) finalMax;
     }
 
-    public static float minFloat(NDArray a){
+    public static double minFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
@@ -566,7 +569,7 @@ class VectorOps{
                 finalMin = tailVal;
             }
         }
-        return finalMin;
+        return (double) finalMin;
     }
 
     public static double minInt(NDArray a) {
@@ -598,7 +601,7 @@ class VectorOps{
             double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
             if (tailVal < finalMin) finalMin = tailVal;
         }
-        return finalMin;
+        return (double) finalMin;
     }
 
 }
