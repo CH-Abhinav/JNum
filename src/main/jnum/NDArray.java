@@ -5,6 +5,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 //import java.nio.ByteOrder;
@@ -215,6 +216,47 @@ public class NDArray{
             flatIndex+=(long)indices[i]*strides[i];
         }
         return getFlatFloat(flatIndex);
+    }
+
+    public int[] indexOf(double b){
+        int[] indices=new int[this.shape.length];
+        switch(dtype){
+            case FLOAT->{
+                var c= (float)b;
+            for(long i=0;i<this.size;i++){
+                if(c==this.data.getAtIndex(ValueLayout.JAVA_FLOAT,i)){
+                    for (int d = 0; d < this.shape.length; d++) {
+                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
+                    }
+                    return indices;
+                }
+            }
+        }
+        case INTEGER->{
+                var c= (int)b;
+            for(long i=0;i<this.size;i++){
+                if(c==this.data.getAtIndex(ValueLayout.JAVA_INT,i)){
+                    for (int d = 0; d < this.shape.length; d++) {
+                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
+                    }
+                    return indices;
+                }
+            }
+        }
+        case DOUBLE->{
+            
+                var c= (double)b;
+            for(long i=0;i<this.size;i++){
+                if(c==this.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i)){
+                    for (int d = 0; d < this.shape.length; d++) {
+                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
+                    }
+                    return indices;
+                    }
+                }
+            }
+        }
+    throw new NoSuchElementException();    
     }
 
     public int[] shape() {
