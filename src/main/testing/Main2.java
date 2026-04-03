@@ -22,7 +22,7 @@ public class Main2 {
         }
         System.out.println("Done.\n");
 
-        int runs = 100;
+        int runs = 10;
         long start, end, duration;
         long total;
         float guard = 0; // Prevents the compiler from deleting our math loops
@@ -71,7 +71,7 @@ public class Main2 {
         for (int i = 0; i < runs; i++) {
             start = System.nanoTime();
             
-            float sumResult = c.avg(); // Horizontal lane crushing
+            double sumResult = c.avg(); // Horizontal lane crushing
             guard += sumResult;
             
             end = System.nanoTime();

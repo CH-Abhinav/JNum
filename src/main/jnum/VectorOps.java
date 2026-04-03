@@ -1,7 +1,5 @@
 package jnum;
 
-
-import java.lang.classfile.constantpool.DoubleEntry;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import jdk.incubator.vector.FloatVector;
@@ -21,7 +19,8 @@ class VectorOps{
     private static final int VL = SPECIES.length();
     private static final int INT_VL = SPECIESINT.length();
     private static final int DB_VL = SPECIESDB.length();
-    //this is utility class does not require instantability 
+
+    //non instatitable utility class    
     private VectorOps(){
         throw new AssertionError();
     }

@@ -539,4 +539,79 @@ public class NDArray{
         return VectorOps.divDouble(this, b, resArray);
     }
 
+    //MATH OPERATIONS FROM MathOps.java 
+
+    public NDArray sqrt(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.sqrtFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.sqrtDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.sqrtInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray abs(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.absFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.absDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.absInt(this, NDArray.zeros(DType.INTEGER, this.shape));
+        };
+    }
+
+    public NDArray exp(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.expFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.expDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.expInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray log(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.logFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.logDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.logInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray log10(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.log10Float(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.log10Double(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.log10Int(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray sin(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.sinFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.sinDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.sinInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray cos(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.cosFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.cosDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.cosInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray sinh(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.sinhFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.sinhDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.sinhInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray cosh(){
+        return switch(this.dtype){
+            case FLOAT-> MathOps.coshFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.coshDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.coshInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+
 }
