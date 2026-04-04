@@ -155,6 +155,19 @@ public class NDArray{
         return Arrays.toString(shape).replace("[", "(").replace("]", ")");
     }
 
+    public NDArray copy(){
+        NDArray dups=NDArray.zeros(this.dtype, this.shape);
+        MemorySegment.copy(this.data, 0, dups.data, 0, this.data.byteSize());
+        return dups;
+    }
+
+    public boolean equals(NDArray a){
+        if (!Arrays.equals(this.shape, a.shape)) return false;
+        if(this.dtype!=a.dtype) return false;
+        long mismatch=this.data.mismatch(a.data);
+        return mismatch==-1;
+    }
+
     public double getFlat(long index){
         return switch(this.dtype){
             case FLOAT ->data.getAtIndex(ValueLayout.JAVA_FLOAT, index);

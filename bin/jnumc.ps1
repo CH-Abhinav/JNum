@@ -1,1 +1,1 @@
-javac -cp "src\main" --add-modules jdk.incubator.vector $args
+javac -cp "src\main" --add-modules jdk.incubator.vector @args
