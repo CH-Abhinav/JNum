@@ -3,7 +3,7 @@ package testing;
 
 import jnum.NDArray;
 
-public class Benchmark {
+public class benchmark {
     public static void main(String[] args) {
         // 100 Million Elements (Compute-Bound Test)
         int size = 100_000_000; 

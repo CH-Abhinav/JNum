@@ -306,12 +306,21 @@ public class MathOps {
 
     public static NDArray sinFloat(NDArray a,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound = a.size - (a.size % (VL * 4));
 
-        for(;i<loopbound;i+=VL){
+        for(;i<loopbound;i+=VL*4){
             var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES, a.data, (i+VL)*FLOAT_BYTES, ORDER);
+            var v3=FloatVector.fromMemorySegment(SPECIES, a.data, (i+VL*2)*FLOAT_BYTES, ORDER);
+            var v4=FloatVector.fromMemorySegment(SPECIES, a.data, (i+VL*3)*FLOAT_BYTES, ORDER);
             var VRes=v.lanewise(VectorOperators.SIN);
+            var VRes2=v2.lanewise(VectorOperators.SIN);
+            var VRes3=v3.lanewise(VectorOperators.SIN);
+            var VRes4=v4.lanewise(VectorOperators.SIN);
             VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+            VRes2.intoMemorySegment(resArray.data, (i+VL)*FLOAT_BYTES, ORDER);
+            VRes3.intoMemorySegment(resArray.data,(i+VL*2)*FLOAT_BYTES,ORDER);
+            VRes4.intoMemorySegment(resArray.data, (i+VL*3)*FLOAT_BYTES, ORDER);
         }
 
         for(;i<a.size;i++){

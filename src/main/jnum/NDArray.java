@@ -40,25 +40,39 @@ public class NDArray{
     }
 
     public static NDArray zeros(int... shape){
-        return zeros(DType.FLOAT, shape);
+        return zeros(Arena.ofAuto(),DType.FLOAT,shape);
+    }
+
+    public static NDArray zeros(Arena arena,int... shape){
+        return zeros(arena,DType.FLOAT, shape);
     }
 
     public static NDArray zeros(DType dType,int... shape){
+        return zeros(Arena.ofAuto(),dType,shape);
+    }
+
+    public static NDArray zeros(Arena arena,DType dType,int... shape){
         long Size=1;
         for(int dim:shape) Size*=dim;
-        Arena arena=Arena.ofAuto();
         MemorySegment segment=arena.allocate(dType.layout,Size);
         return new NDArray(segment,shape,calculateDefaultStrides(shape),dType);
     }
 
-    public static NDArray ones(int...shape){
-        return ones(DType.FLOAT, shape);
+    public static NDArray ones(int... shape){
+        return ones(Arena.ofAuto(),DType.FLOAT,shape);
     }
 
     public static NDArray ones(DType dType,int... shape){
+        return ones(Arena.ofAuto(),dType,shape);
+    }
+
+    public static NDArray ones(Arena arena,int...shape){
+        return ones(arena,DType.FLOAT, shape);
+    }
+
+    public static NDArray ones(Arena arena,DType dType,int... shape){
         long Size=1;
         for(int dim:shape) Size*=dim;
-        Arena arena=Arena.ofAuto();
         MemorySegment segment=arena.allocate(dType.layout,Size);
         switch (dType) {
             case INTEGER -> {
@@ -91,46 +105,55 @@ public class NDArray{
         return strides;
     }
 
-    public static NDArray from(float[] data,int... shape){
-        long CalcSize=1;
-        for(int dim:shape) CalcSize*=dim;
-        if(CalcSize!=data.length){
-            throw new IllegalArgumentException("Shape dimensions do not match data size.");
-        }
-        DType dType=DType.FLOAT;
-        Arena arena = Arena.ofAuto();
-        MemorySegment segment = arena.allocate(dType.layout, CalcSize);
-        MemorySegment.copy(data, 0,segment, dType.layout , 0, data.length);
-
-        return new NDArray(segment,shape,calculateDefaultStrides(shape),dType);
+    //float array from methods
+    public static NDArray from(float[] data, int... shape) {
+        return from(Arena.ofAuto(), data, shape);
     }
 
-    public static NDArray from(int[] data,int... shape){
-        long CalcSize=1;
-        for(int dim:shape) CalcSize*=dim;
-        if(CalcSize!=data.length){
+    public static NDArray from(Arena arena, float[] data, int... shape) {
+        long CalcSize = 1;
+        for (int dim : shape) CalcSize *= dim;
+        if (CalcSize != data.length) {
             throw new IllegalArgumentException("Shape dimensions do not match data size.");
         }
-        DType dType=DType.INTEGER;
-        Arena arena = Arena.ofAuto();
+        DType dType = DType.FLOAT;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
-        MemorySegment.copy(data, 0,segment, dType.layout , 0, data.length);
-
-        return new NDArray(segment,shape,calculateDefaultStrides(shape),dType);
+        MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
+        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
     }
 
-    public static NDArray from(double [] data,int... shape){
-        long CalcSize=1;
-        for(int dim:shape) CalcSize*=dim;
-        if(CalcSize!=data.length){
+    //int array from methods
+    public static NDArray from(int[] data, int... shape) {
+        return from(Arena.ofAuto(), data, shape);
+    }
+
+    public static NDArray from(Arena arena, int[] data, int... shape) {
+        long CalcSize = 1;
+        for (int dim : shape) CalcSize *= dim;
+        if (CalcSize != data.length) {
             throw new IllegalArgumentException("Shape dimensions do not match data size.");
         }
-        DType dType=DType.DOUBLE;
-        Arena arena = Arena.ofAuto();
+        DType dType = DType.INTEGER;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
-        MemorySegment.copy(data, 0,segment, dType.layout , 0, data.length);
+        MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
+        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
+    }
 
-        return new NDArray(segment,shape,calculateDefaultStrides(shape),dType);
+    // DOUBLE array from method
+    public static NDArray from(double[] data, int... shape) {
+        return from(Arena.ofAuto(), data, shape);
+    }
+
+    public static NDArray from(Arena arena, double[] data, int... shape) {
+        long CalcSize = 1;
+        for (int dim : shape) CalcSize *= dim;
+        if (CalcSize != data.length) {
+            throw new IllegalArgumentException("Shape dimensions do not match data size.");
+        }
+        DType dType = DType.DOUBLE;
+        MemorySegment segment = arena.allocate(dType.layout, CalcSize);
+        MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
+        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
     }
 
     public NDArray reshape(int... newShape) {
@@ -552,6 +575,80 @@ public class NDArray{
         return VectorOps.divDouble(this, b, resArray);
     }
 
+    //IN PLACE operations of VectorOps
+
+    // addinplace() methods
+
+    public NDArray addi(NDArray b){
+        return this.add(b,this);
+    }
+
+    public NDArray addi(float b){
+        return this.add(b,this);
+    }
+
+    public NDArray addi(int b){
+        return this.add(b,this);
+    }
+
+    public NDArray addi(double b){
+        return this.add(b,this);
+    }
+
+    //subinplace() methods
+
+    public NDArray subi(NDArray b){
+        return this.sub(b,this);
+    }
+
+    public NDArray subi(float b){
+        return this.sub(b,this);
+    }
+
+    public NDArray subi(int b){
+        return this.sub(b,this);
+    }
+
+    public NDArray subi(double b){
+        return this.sub(b,this);
+    }
+
+    //mulinplace() methods
+
+    public NDArray muli(NDArray b){
+        return this.mul(b,this);
+    }
+
+    public NDArray muli(float b){
+        return this.mul(b,this);
+    }
+
+    public NDArray muli(int b){
+        return this.mul(b,this);
+    }
+
+    public NDArray muli(double b){
+        return this.mul(b,this);
+    }
+
+    //divinplace() methods
+
+    public NDArray divi(NDArray b){
+        return this.div(b,this);
+    }
+
+    public NDArray divi(float b){
+        return this.div(b,this);
+    }
+
+    public NDArray divi(int b){
+        return this.div(b,this);
+    }
+
+    public NDArray divi(double b){
+        return this.div(b,this);
+    }
+
     //MATH OPERATIONS FROM MathOps.java 
 
     public NDArray sqrt(){
@@ -625,6 +722,8 @@ public class NDArray{
             case INTEGER -> MathOps.coshInt(this, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
+
+
 
 
 }
