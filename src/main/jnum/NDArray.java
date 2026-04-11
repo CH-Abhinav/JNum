@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
-//import java.nio.ByteOrder;
 
 
 public class NDArray{
@@ -17,10 +16,6 @@ public class NDArray{
     final int[] strides;
     final long size;
     public final DType dtype;
-    //private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
-    //private static final long FLOAT_BYTES = ValueLayout.JAVA_FLOAT.byteSize();
-    //private static final ByteOrder ORDER = ByteOrder.nativeOrder();
-    //private static final int VL = SPECIES.length();
 
     private static void validArguments(NDArray a,NDArray b){
         if (!Arrays.equals(a.shape, b.shape)) {
@@ -174,6 +169,74 @@ public class NDArray{
         return new NDArray(this.data, newShape, calculateDefaultStrides(newShape),dType);
     }
 
+    public NDArray transpose(){
+        if(ndim()<2) return this;
+        var newShape=new int[this.shape.length];
+        var newStrides=new int[this.strides.length];
+        for(int i=0;i<this.shape.length;i++){
+            newShape[i]=this.shape[(this.shape.length-1-i)];
+            newStrides[i]=this.strides[(this.strides.length-1-i)];
+        }
+        return new NDArray(this.data,newShape,newStrides,this.dtype);
+    }
+
+    public boolean isContiguous(){
+        var expStride=1;
+        for(int i=this.shape.length-1;i>=0;i--){
+            if(this.strides[i]!=expStride) return false;
+            expStride*=shape[i];
+        }
+        return true;
+    }
+
+    public NDArray contiguous(){
+        return contiguous(Arena.ofAuto());
+    }
+
+    public double dot(NDArray b){
+        if (this.ndim() != 1 || b.ndim() != 1) {
+            throw new IllegalArgumentException("Dot product requires 1D vectors. Shapes: " + this.shapeString() + ", " + b.shapeString());
+        }
+        if (this.size != b.size) {
+            throw new IllegalArgumentException("Vector sizes must match for dot product.");
+        }
+        return this.mul(b).sum();
+    }
+
+    public NDArray contiguous(Arena arena){
+        if(this.isContiguous()) return this;
+        var segment=arena.allocate(this.dtype.layout,this.size);
+        var newStrides=calculateDefaultStrides(this.shape);
+        for(int i=0;i<this.size;i++){
+            var tempindex=i;
+            var coord=new int[this.shape.length];
+            for(int j=this.shape.length-1;j>=0;j--){
+                coord[j]=tempindex%this.shape[j];
+                tempindex=tempindex/this.shape[j];
+            }
+            long oldFlatIndex = 0;
+            for(int d = 0; d < this.shape.length; d++){
+                oldFlatIndex += coord[d] * this.strides[d];
+            }
+            switch(dtype){
+                case FLOAT->{
+                    var val=this.data.getAtIndex(ValueLayout.JAVA_FLOAT, oldFlatIndex);
+                    segment.setAtIndex(ValueLayout.JAVA_FLOAT, i, val);
+                }
+                case INTEGER->{
+                    var val=this.data.getAtIndex(ValueLayout.JAVA_INT, oldFlatIndex);
+                    segment.setAtIndex(ValueLayout.JAVA_INT, i, val);
+                }
+                case DOUBLE->{
+                    var val=this.data.getAtIndex(ValueLayout.JAVA_DOUBLE, oldFlatIndex);
+                    segment.setAtIndex(ValueLayout.JAVA_DOUBLE, i, val);
+                }
+            }
+        }
+        return new NDArray(segment, this.shape, newStrides, dtype);
+    }
+
+
     public String shapeString() {
         return Arrays.toString(shape).replace("[", "(").replace("]", ")");
     }
@@ -311,6 +374,10 @@ public class NDArray{
         return this.dtype;
     }
 
+    public MemorySegment data() {
+        return this.data;
+    }
+
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder("NDArray" + shapeString() + " [");
@@ -354,6 +421,10 @@ public class NDArray{
     public double avg() {
         return this.sum() / (double) this.size;
     }
+
+    //VectorOps 
+
+    //addition operation
 
     public NDArray add(NDArray b){
         validArguments(this,b);
@@ -410,6 +481,8 @@ public class NDArray{
         return VectorOps.addDouble(this,b,resArray);
     }
 
+    //subtract operations
+
     public NDArray sub(NDArray b){
         validArguments(this,b);
         NDArray resArray=NDArray.zeros(this.shape);
@@ -465,6 +538,8 @@ public class NDArray{
         return VectorOps.subDouble(this, b, resArray);
     }
 
+    //multiplication operations 
+
     public NDArray mul(NDArray b){
         validArguments(this, b);
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
@@ -519,6 +594,8 @@ public class NDArray{
         if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
         return VectorOps.mulDouble(this, b, resArray);
     }
+
+    //division operations
 
     public NDArray div(NDArray b){
         validArguments(this, b);
@@ -692,34 +769,69 @@ public class NDArray{
     }
 
     public NDArray sin(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
+        
         return switch(this.dtype){
-            case FLOAT-> MathOps.sinFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> MathOps.sinDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> MathOps.sinInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> MathOps.sinFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.sinDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.sinInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray cos(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> MathOps.cosFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> MathOps.cosDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> MathOps.cosInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> MathOps.cosFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.cosDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.cosInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray tan(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
+        
+        return switch(this.dtype){
+            case FLOAT-> MathOps.tanFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.tanDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.tanInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray cot(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
+        
+        return switch(this.dtype){
+            case FLOAT-> MathOps.cotFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.cotDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.cotInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray sinh(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> MathOps.sinhFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> MathOps.sinhDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> MathOps.sinhInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> MathOps.sinhFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.sinhDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.sinhInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray cosh(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> MathOps.coshFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> MathOps.coshDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> MathOps.coshInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> MathOps.coshFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.coshDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.coshInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
+
+    public NDArray tanh(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
+        
+        return switch(this.dtype){
+            case FLOAT-> MathOps.tanhFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> MathOps.tanhDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> MathOps.tanhInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 

@@ -28,7 +28,17 @@ public class MathOps {
 
     public static NDArray sqrtFloat(NDArray a,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var VRes1=v1.lanewise(VectorOperators.SQRT);
+            var VRes2=v2.lanewise(VectorOperators.SQRT);
+            VRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            VRes2.intoMemorySegment(resArray.data, (i+VL)*FLOAT_BYTES, ORDER);
+        }
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -422,6 +432,122 @@ public class MathOps {
         return resArray;
     }
 
+    //TAN methods
+
+    public static NDArray tanFloat(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+
+        for(;i<loopbound;i+=VL){
+            var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var VRes=v.lanewise(VectorOperators.TAN);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) Math.tan(val));
+        }
+        return resArray;
+    }
+
+    public static NDArray tanDouble(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESDB.loopBound(a.size);
+
+        for(;i<loopbound;i+=DB_VL){
+            var v=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var VRes=v.lanewise(VectorOperators.TAN);
+            VRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+        }
+
+        for(;i<a.size;i++){
+            double val = a.data.get(ValueLayout.JAVA_DOUBLE, i * DB_BYTES);
+            resArray.data.set(ValueLayout.JAVA_DOUBLE, i * DB_BYTES, Math.tan(val));
+        }
+
+        return resArray;
+    }
+
+    public static NDArray tanInt(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESINT.loopBound(a.size);
+
+        for(;i<loopbound;i+=INT_VL){
+            var vInt=IntVector.fromMemorySegment(SPECIESINT, a.data, i*INT_BYTES, ORDER);
+            var vFloat=vInt.convert(VectorOperators.I2F, 0);
+            var VRes=vFloat.lanewise(VectorOperators.TAN);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_INT, i*INT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) Math.tan(val));
+        }
+        return resArray;
+    }
+
+    //COT methods
+
+    public static NDArray cotFloat(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+
+        for(;i<loopbound;i+=VL){
+            var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var vTan=v.lanewise(VectorOperators.TAN);
+            var vOnes=FloatVector.broadcast(SPECIES, 1.0f);
+            var VRes=vOnes.div(vTan);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) (1.0 / Math.tan(val)));
+        }
+        return resArray;
+    }
+
+    public static NDArray cotDouble(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESDB.loopBound(a.size);
+
+        for(;i<loopbound;i+=DB_VL){
+            var v=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var vTan=v.lanewise(VectorOperators.TAN);
+            var vOnes=DoubleVector.broadcast(SPECIESDB, 1.0);
+            var VRes=vOnes.div(vTan);
+            VRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+        }
+
+        for(;i<a.size;i++){
+            double val = a.data.get(ValueLayout.JAVA_DOUBLE, i * DB_BYTES);
+            resArray.data.set(ValueLayout.JAVA_DOUBLE, i * DB_BYTES, (1.0 / Math.tan(val)));
+        }
+
+        return resArray;
+    }
+
+    public static NDArray cotInt(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESINT.loopBound(a.size);
+
+        for(;i<loopbound;i+=INT_VL){
+            var vInt=IntVector.fromMemorySegment(SPECIESINT, a.data, i*INT_BYTES, ORDER);
+            var vFloat=vInt.convert(VectorOperators.I2F, 0);
+            var vTan=vFloat.lanewise(VectorOperators.TAN);
+            var vOnes=FloatVector.broadcast(SPECIES, 1.0f);
+            var VRes=vOnes.div(vTan);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_INT, i*INT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) (1.0 / Math.tan(val)));
+        }
+        return resArray;
+    }
+
     //SINH methods
 
     public static NDArray sinhFloat(NDArray a,NDArray resArray){
@@ -532,6 +658,122 @@ public class MathOps {
         return resArray;
     }
 
+    //TANH methods
 
+    public static NDArray tanhFloat(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+
+        for(;i<loopbound;i+=VL){
+            var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var VRes=v.lanewise(VectorOperators.TANH);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) Math.tanh(val));
+        }
+        return resArray;
+    }
+
+    public static NDArray tanhDouble(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESDB.loopBound(a.size);
+
+        for(;i<loopbound;i+=DB_VL){
+            var v=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var VRes=v.lanewise(VectorOperators.TANH);
+            VRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+        }
+
+        for(;i<a.size;i++){
+            double val = a.data.get(ValueLayout.JAVA_DOUBLE, i * DB_BYTES);
+            resArray.data.set(ValueLayout.JAVA_DOUBLE, i * DB_BYTES, Math.tanh(val));
+        }
+
+        return resArray;
+    }
+
+    public static NDArray tanhInt(NDArray a,NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESINT.loopBound(a.size);
+
+        for(;i<loopbound;i+=INT_VL){
+            var vInt=IntVector.fromMemorySegment(SPECIESINT, a.data, i*INT_BYTES, ORDER);
+            var vFloat=vInt.convert(VectorOperators.I2F, 0);
+            var VRes=vFloat.lanewise(VectorOperators.TANH);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_INT, i*INT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) Math.tanh(val));
+        }
+        return resArray;
+    }
+
+    //COTH methods
+
+    public static NDArray cothFloat(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIES.loopBound(a.size);
+
+        for(;i<loopbound;i+=VL){
+            var v=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var vTanh=v.lanewise(VectorOperators.TANH);
+            var vOnes=FloatVector.broadcast(SPECIES, 1.0f);
+            var VRes=vOnes.div(vTanh);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) (1.0 / Math.tanh(val)));
+        }
+        return resArray;
+    }
+
+    public static NDArray cothDouble(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESDB.loopBound(a.size);
+
+        for(;i<loopbound;i+=DB_VL){
+            var v=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var vTanh=v.lanewise(VectorOperators.TANH);
+            var vOnes=DoubleVector.broadcast(SPECIESDB, 1.0);
+            var VRes=vOnes.div(vTanh);
+            VRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+        }
+
+        for(;i<a.size;i++){
+            double val = a.data.get(ValueLayout.JAVA_DOUBLE, i * DB_BYTES);
+            resArray.data.set(ValueLayout.JAVA_DOUBLE, i * DB_BYTES, (1.0 / Math.tanh(val)));
+        }
+
+        return resArray;
+    }
+
+    public static NDArray cothInt(NDArray a, NDArray resArray){
+        long i=0;
+        long loopbound=SPECIESINT.loopBound(a.size);
+
+        for(;i<loopbound;i+=INT_VL){
+            var vInt=IntVector.fromMemorySegment(SPECIESINT, a.data, i*INT_BYTES, ORDER);
+            var vFloat=vInt.convert(VectorOperators.I2F, 0);
+            var vTanh=vFloat.lanewise(VectorOperators.TANH);
+            var vOnes=FloatVector.broadcast(SPECIES, 1.0f);
+            var VRes=vOnes.div(vTanh);
+            VRes.intoMemorySegment(resArray.data, i*FLOAT_BYTES, ORDER);
+        }
+
+        for(;i<a.size;i++){
+            float val=a.data.get(ValueLayout.JAVA_INT, i*INT_BYTES);
+            resArray.data.set(ValueLayout.JAVA_FLOAT,i*FLOAT_BYTES,(float) (1.0 / Math.tanh(val)));
+        }
+        return resArray;
+    }
+
+    
 
 }
