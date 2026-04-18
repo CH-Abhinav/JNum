@@ -1,15 +1,14 @@
-package jnum;
+package jnum.jnumops;
 
-import com.sun.jdi.FloatValue;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorSpecies;
+import jnum.NDArray;
 import jdk.incubator.vector.VectorOperators;
-
-class VectorOps{
+public class ArithematicOps {
     private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Integer> SPECIESINT= IntVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Double> SPECIESDB= DoubleVector.SPECIES_PREFERRED;
@@ -22,7 +21,7 @@ class VectorOps{
     private static final int DB_VL = SPECIESDB.length();
 
     //non instatitable utility class    
-    private VectorOps(){
+    private ArithematicOps(){
         throw new AssertionError();
     }
 
@@ -65,18 +64,18 @@ class VectorOps{
     }
 
     private static NDArray addFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
@@ -86,43 +85,117 @@ class VectorOps{
     }
 
     public static NDArray addInt(NDArray a,NDArray b,NDArray resArray){
-        NDArray safeA = a.isContiguous() ? a : a.contiguous();
-        NDArray safeB = b.isContiguous() ? b : b.contiguous();    
+        if(a.isContiguous() && b.isContiguous() && resArray.isContiguous()) return addIntSIMD(a, b, resArray);
+        else return addIntStrides(a, b, resArray);
+    }
+
+    private static NDArray addIntSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(safeA.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1a=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v1b=IntVector.fromMemorySegment(SPECIESINT,b.data,i*INT_BYTES,ORDER);
+            var v2a=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var v2b=IntVector.fromMemorySegment(SPECIESINT,b.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1a.add(v1b);
+            var vRes2=v2a.add(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
-            var v1=IntVector.fromMemorySegment(SPECIESINT,safeA.data,i*INT_BYTES,ORDER);
-            var v2=IntVector.fromMemorySegment(SPECIESINT,safeB.data,i*INT_BYTES,ORDER);
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIESINT,b.data,i*INT_BYTES,ORDER);
             var vRes=v1.add(v2);
             vRes.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
         }
 
-        for (; i < safeA.size; i++) {
-            var val1 = safeA.data.getAtIndex(ValueLayout.JAVA_INT, i);
-            var val2 = safeB.data.getAtIndex(ValueLayout.JAVA_INT, i);
+        for (; i < a.size; i++) {
+            var val1 = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
+            var val2 = b.data.getAtIndex(ValueLayout.JAVA_INT, i);
             resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, val1 + val2);
         }
         return resArray;
     }
 
+    private static NDArray addIntStrides(NDArray a,NDArray b,NDArray resArray){
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                coords[d] = tempIndex % resArray.shape[d];
+                tempIndex = tempIndex / resArray.shape[d];
+            }
+            long flatA = 0, flatB = 0, flatRes = 0;
+            for (int d = 0; d < resArray.shape.length; d++) {
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
+            }
+            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
+            int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
+            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA + valB);
+        }
+        return resArray;
+    }
+
     public static NDArray addDouble(NDArray a,NDArray b,NDArray resArray){
-        NDArray safeA = a.isContiguous() ? a : a.contiguous();
-        NDArray safeB = b.isContiguous() ? b : b.contiguous();   
+        if(a.isContiguous() && b.isContiguous() && resArray.isContiguous()) return addDoubleSIMD(a, b, resArray);
+        else return addDoubleStrides(a, b, resArray);
+    }
+
+    private static NDArray addDoubleSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(safeA.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v1b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,i*DB_BYTES,ORDER);
+            var v2a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var v2b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1a.add(v1b);
+            var vRes2=v2a.add(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
-            var v1=DoubleVector.fromMemorySegment(SPECIESDB,safeA.data,i*DB_BYTES,ORDER);
-            var v2=DoubleVector.fromMemorySegment(SPECIESDB,safeB.data,i*DB_BYTES,ORDER);
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIESDB,b.data,i*DB_BYTES,ORDER);
             var vRes=v1.add(v2);
             vRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
         }
 
-        for (; i < safeA.size; i++) {
-            var val1 = safeA.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-            var val2 = safeB.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+        for (; i < a.size; i++) {
+            var val1 = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+            var val2 = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
             resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, val1 + val2);
+        }
+        return resArray;
+    }
+
+    private static NDArray addDoubleStrides(NDArray a,NDArray b,NDArray resArray){
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                coords[d] = tempIndex % resArray.shape[d];
+                tempIndex = tempIndex / resArray.shape[d];
+            }
+            long flatA = 0, flatB = 0, flatRes = 0;
+            for (int d = 0; d < resArray.shape.length; d++) {
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
+            }
+            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
+            double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
+            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA + valB);
         }
         return resArray;
     }
@@ -134,7 +207,20 @@ class VectorOps{
 
     private static NDArray subFloatSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1a=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v1b=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var v2a=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var v2b=FloatVector.fromMemorySegment(SPECIES,b.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1a.sub(v1b);
+            var vRes2=v2a.sub(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -152,18 +238,18 @@ class VectorOps{
     }
 
     private static NDArray subFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
@@ -179,7 +265,20 @@ class VectorOps{
 
     private static NDArray subIntSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1a=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v1b=IntVector.fromMemorySegment(SPECIESINT,b.data,i*INT_BYTES,ORDER);
+            var v2a=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var v2b=IntVector.fromMemorySegment(SPECIESINT,b.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1a.sub(v1b);
+            var vRes2=v2a.sub(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -197,18 +296,18 @@ class VectorOps{
     }
 
     private static NDArray subIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
@@ -224,7 +323,20 @@ class VectorOps{
 
     private static NDArray subDoubleSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v1b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,i*DB_BYTES,ORDER);
+            var v2a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var v2b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1a.sub(v1b);
+            var vRes2=v2a.sub(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -242,18 +354,18 @@ class VectorOps{
     }
 
     private static NDArray subDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
@@ -269,7 +381,20 @@ class VectorOps{
 
     private static NDArray mulFloatSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1a=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v1b=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var v2a=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var v2b=FloatVector.fromMemorySegment(SPECIES,b.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1a.mul(v1b);
+            var vRes2=v2a.mul(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -287,18 +412,18 @@ class VectorOps{
     }
 
     private static NDArray mulFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
@@ -314,7 +439,20 @@ class VectorOps{
 
     private static NDArray mulIntSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1a=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v1b=IntVector.fromMemorySegment(SPECIESINT,b.data,i*INT_BYTES,ORDER);
+            var v2a=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var v2b=IntVector.fromMemorySegment(SPECIESINT,b.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1a.mul(v1b);
+            var vRes2=v2a.mul(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -332,18 +470,18 @@ class VectorOps{
     }
 
     private static NDArray mulIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
@@ -359,7 +497,20 @@ class VectorOps{
 
     private static NDArray mulDoubleSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v1b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,i*DB_BYTES,ORDER);
+            var v2a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var v2b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1a.mul(v1b);
+            var vRes2=v2a.mul(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -377,18 +528,18 @@ class VectorOps{
     }
 
     private static NDArray mulDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
@@ -404,7 +555,20 @@ class VectorOps{
 
     private static NDArray divFloatSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1a=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v1b=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var v2a=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var v2b=FloatVector.fromMemorySegment(SPECIES,b.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1a.div(v1b);
+            var vRes2=v2a.div(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -422,18 +586,18 @@ class VectorOps{
     }
 
     private static NDArray divFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
@@ -449,7 +613,20 @@ class VectorOps{
 
     private static NDArray divIntSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1a=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v1b=IntVector.fromMemorySegment(SPECIESINT,b.data,i*INT_BYTES,ORDER);
+            var v2a=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var v2b=IntVector.fromMemorySegment(SPECIESINT,b.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1a.div(v1b);
+            var vRes2=v2a.div(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -467,18 +644,18 @@ class VectorOps{
     }
 
     private static NDArray divIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
@@ -494,7 +671,20 @@ class VectorOps{
 
     private static NDArray divDoubleSIMD(NDArray a,NDArray b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v1b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,i*DB_BYTES,ORDER);
+            var v2a=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var v2b=DoubleVector.fromMemorySegment(SPECIESDB,b.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1a.div(v1b);
+            var vRes2=v2a.div(v2b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -512,18 +702,18 @@ class VectorOps{
     }
 
     private static NDArray divDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatB = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatB += coords[d] * b.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatB += coords[d] * (long) b.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
@@ -539,7 +729,18 @@ class VectorOps{
 
     private static NDArray addFloatSIMD(NDArray a,float b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1.add(b);
+            var vRes2=v2.add(b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -555,17 +756,17 @@ class VectorOps{
     }
 
     private static NDArray addFloatStrides(NDArray a,float b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA + b);
@@ -574,37 +775,105 @@ class VectorOps{
     }
 
     public static NDArray addInt(NDArray a,int b,NDArray resArray){
-        NDArray safeA = a.isContiguous() ? a : a.contiguous();
+        if(a.isContiguous() && resArray.isContiguous()) return addIntSIMD(a, b, resArray);
+        else return addIntStrides(a, b, resArray);
+    }
+
+    private static NDArray addIntSIMD(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(safeA.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1.add(b);
+            var vRes2=v2.add(b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
-            var v1=IntVector.fromMemorySegment(SPECIESINT,safeA.data,i*INT_BYTES,ORDER);
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
             var vRes=v1.add(b);
             vRes.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
         }
 
-        for (; i < safeA.size; i++) {
-            var val1 = safeA.data.getAtIndex(ValueLayout.JAVA_INT, i);
+        for (; i < a.size; i++) {
+            var val1 = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
             resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, val1 + b);
         }
         return resArray;
     }
 
+    private static NDArray addIntStrides(NDArray a,int b,NDArray resArray){
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                coords[d] = tempIndex % resArray.shape[d];
+                tempIndex = tempIndex / resArray.shape[d];
+            }
+            long flatA = 0, flatRes = 0;
+            for (int d = 0; d < resArray.shape.length; d++) {
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
+            }
+            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
+            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA + b);
+        }
+        return resArray;
+    }
+
     public static NDArray addDouble(NDArray a,double b,NDArray resArray){
-        NDArray safeA = a.isContiguous() ? a : a.contiguous();
+        if(a.isContiguous() && resArray.isContiguous()) return addDoubleSIMD(a, b, resArray);
+        else return addDoubleStrides(a, b, resArray);
+    }
+
+    private static NDArray addDoubleSIMD(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(safeA.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1.add(b);
+            var vRes2=v2.add(b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
-            var v1=DoubleVector.fromMemorySegment(SPECIESDB,safeA.data,i*DB_BYTES,ORDER);
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
             var vRes=v1.add(b);
             vRes.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
         }
 
-        for (; i < safeA.size; i++) {
-            var val1 = safeA.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+        for (; i < a.size; i++) {
+            var val1 = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
             resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, val1 + b);
+        }
+        return resArray;
+    }
+
+    private static NDArray addDoubleStrides(NDArray a,double b,NDArray resArray){
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                coords[d] = tempIndex % resArray.shape[d];
+                tempIndex = tempIndex / resArray.shape[d];
+            }
+            long flatA = 0, flatRes = 0;
+            for (int d = 0; d < resArray.shape.length; d++) {
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
+            }
+            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
+            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA + b);
         }
         return resArray;
     }
@@ -616,7 +885,18 @@ class VectorOps{
 
     private static NDArray subFloatSIMD(NDArray a,float b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1.sub(b);
+            var vRes2=v2.sub(b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -632,17 +912,17 @@ class VectorOps{
     }
 
     private static NDArray subFloatStrides(NDArray a,float b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA - b);
@@ -657,7 +937,18 @@ class VectorOps{
 
     private static NDArray subIntSIMD(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1.sub(b);
+            var vRes2=v2.sub(b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -673,17 +964,17 @@ class VectorOps{
     }
 
     private static NDArray subIntStrides(NDArray a,int b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA - b);
@@ -698,7 +989,18 @@ class VectorOps{
 
     private static NDArray subDoubleSIMD(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1.sub(b);
+            var vRes2=v2.sub(b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -714,17 +1016,17 @@ class VectorOps{
     }
 
     private static NDArray subDoubleStrides(NDArray a,double b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA - b);
@@ -739,7 +1041,18 @@ class VectorOps{
 
     private static NDArray mulFloatSIMD(NDArray a,float b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1.mul(b);
+            var vRes2=v2.mul(b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -755,17 +1068,17 @@ class VectorOps{
     }
 
     private static NDArray mulFloatStrides(NDArray a,float b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA * b);
@@ -780,7 +1093,18 @@ class VectorOps{
 
     private static NDArray mulIntSIMD(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1.mul(b);
+            var vRes2=v2.mul(b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -796,17 +1120,17 @@ class VectorOps{
     }
 
     private static NDArray mulIntStrides(NDArray a,int b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA * b);
@@ -821,7 +1145,18 @@ class VectorOps{
 
     private static NDArray mulDoubleSIMD(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1.mul(b);
+            var vRes2=v2.mul(b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -837,17 +1172,17 @@ class VectorOps{
     }
 
     private static NDArray mulDoubleStrides(NDArray a,double b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA * b);
@@ -862,7 +1197,18 @@ class VectorOps{
 
     private static NDArray divFloatSIMD(NDArray a,float b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
+        long loopbound=a.size - (a.size % (VL * 2));
+
+        for(;i<loopbound;i+=VL*2){
+            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES,a.data,(i+VL)*FLOAT_BYTES,ORDER);
+            var vRes1=v1.div(b);
+            var vRes2=v2.div(b);
+            vRes1.intoMemorySegment(resArray.data,i*FLOAT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+VL)*FLOAT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIES.loopBound(a.size);
 
         for(;i<loopbound;i+=VL){
             var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
@@ -878,17 +1224,17 @@ class VectorOps{
     }
 
     private static NDArray divFloatStrides(NDArray a,float b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA / b);
@@ -903,7 +1249,18 @@ class VectorOps{
 
     private static NDArray divIntSIMD(NDArray a,int b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
+        long loopbound=a.size - (a.size % (INT_VL * 2));
+
+        for(;i<loopbound;i+=INT_VL*2){
+            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIESINT,a.data,(i+INT_VL)*INT_BYTES,ORDER);
+            var vRes1=v1.div(b);
+            var vRes2=v2.div(b);
+            vRes1.intoMemorySegment(resArray.data,i*INT_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+INT_VL)*INT_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESINT.loopBound(a.size);
 
         for(;i<loopbound;i+=INT_VL){
             var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
@@ -919,17 +1276,17 @@ class VectorOps{
     }
 
     private static NDArray divIntStrides(NDArray a,int b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA / b);
@@ -944,7 +1301,18 @@ class VectorOps{
 
     private static NDArray divDoubleSIMD(NDArray a,double b,NDArray resArray){
         long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
+        long loopbound=a.size - (a.size % (DB_VL * 2));
+
+        for(;i<loopbound;i+=DB_VL*2){
+            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIESDB,a.data,(i+DB_VL)*DB_BYTES,ORDER);
+            var vRes1=v1.div(b);
+            var vRes2=v2.div(b);
+            vRes1.intoMemorySegment(resArray.data,i*DB_BYTES,ORDER);
+            vRes2.intoMemorySegment(resArray.data,(i+DB_VL)*DB_BYTES,ORDER);
+        }
+
+        loopbound=SPECIESDB.loopBound(a.size);
 
         for(;i<loopbound;i+=DB_VL){
             var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
@@ -960,167 +1328,21 @@ class VectorOps{
     }
 
     private static NDArray divDoubleStrides(NDArray a,double b,NDArray resArray){
-        for(int i=0;i<resArray.size;i++){
-            int tempIndex = i;
-            int[] coords = new int[resArray.shape.length];
+        for(long i=0;i<resArray.size;i++){
+            long tempIndex = i;
+            long[] coords = new long[resArray.shape.length];
             for (int d = resArray.shape.length - 1; d >= 0; d--) {
                 coords[d] = tempIndex % resArray.shape[d];
                 tempIndex = tempIndex / resArray.shape[d];
             }
             long flatA = 0, flatRes = 0;
             for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * a.strides[d];
-                flatRes += coords[d] * resArray.strides[d];
+                flatA += coords[d] * (long) a.strides[d];
+                flatRes += coords[d] * (long) resArray.strides[d];
             }
             double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
             resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA / b);
         }
         return resArray;
     }
-
-    public static double sumFloat(NDArray a){
-        long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
-        var vSum=FloatVector.zero(SPECIES);
-        for(;i<loopbound;i+=VL){
-            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
-            vSum=vSum.add(v1);
-        }
-        float total=vSum.reduceLanes(VectorOperators.ADD);
-        for(;i<a.size;i++){
-            total+=a.data.getAtIndex(ValueLayout.JAVA_FLOAT,i);
-        }
-        return (double) total;
-    }
-
-    public static double sumInt(NDArray a){
-        long i=0;
-        long loopbound=SPECIESINT.loopBound(a.size);
-        var vSum=IntVector.zero(SPECIESINT);
-        for(;i<loopbound;i+=INT_VL){
-            var v1=IntVector.fromMemorySegment(SPECIESINT,a.data,i*INT_BYTES,ORDER);
-            vSum=vSum.add(v1);
-        }
-        int total=vSum.reduceLanes(VectorOperators.ADD);
-        for(;i<a.size;i++){
-            total+=a.data.getAtIndex(ValueLayout.JAVA_INT,i);
-        }
-        return (double) total;
-    }
-
-    public static double sumDouble(NDArray a){
-        long i=0;
-        long loopbound=SPECIESDB.loopBound(a.size);
-        var vSum=DoubleVector.zero(SPECIESDB);
-        for(;i<loopbound;i+=DB_VL){
-            var v1=DoubleVector.fromMemorySegment(SPECIESDB,a.data,i*DB_BYTES,ORDER);
-            vSum=vSum.add(v1);
-        }
-        double total=vSum.reduceLanes(VectorOperators.ADD);
-        for(;i<a.size;i++){
-            total+=a.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i);
-        }
-        return (double) total;
-    }
-
-    public static double maxFloat(NDArray a){
-        long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
-        var vMax = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
-        for(;i<loopbound;i+=VL){
-            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
-            vMax=vMax.max(v1);
-        }
-        float finalMax=vMax.reduceLanes(VectorOperators.MAX);
-        for (; i < a.size; i++) {
-            float tailVal = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-            if (tailVal > finalMax) {
-                finalMax = tailVal;
-            }
-        }
-        return (double) finalMax;
-    }
-
-    public static double maxInt(NDArray a) {
-        long i = 0;
-        long loopbound = SPECIESINT.loopBound(a.size);
-        var vMax = IntVector.broadcast(SPECIESINT, Integer.MIN_VALUE);
-        for (; i < loopbound; i += INT_VL) {
-            var v1 = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
-            vMax = vMax.max(v1);
-        }
-        int finalMax = vMax.reduceLanes(VectorOperators.MAX);
-        for (; i < a.size; i++) {
-            int tailVal = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-            if (tailVal > finalMax) finalMax = tailVal;
-        }
-        return (double) finalMax;
-    }
-
-    public static double maxDouble(NDArray a) {
-        long i = 0;
-        long loopbound = SPECIESDB.loopBound(a.size);
-        var vMax = DoubleVector.broadcast(SPECIESDB, Double.NEGATIVE_INFINITY);
-        for (; i < loopbound; i += DB_VL) {
-            var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
-            vMax = vMax.max(v1);
-        }
-        double finalMax = vMax.reduceLanes(VectorOperators.MAX);
-        for (; i < a.size; i++) {
-            double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-            if (tailVal > finalMax) finalMax = tailVal;
-        }
-        return (double) finalMax;
-    }
-
-    public static double minFloat(NDArray a){
-        long i=0;
-        long loopbound=SPECIES.loopBound(a.size);
-        var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
-        for(;i<loopbound;i+=VL){
-            var v1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
-            vMin=vMin.min(v1);
-        }
-        float finalMin=vMin.reduceLanes(VectorOperators.MIN);
-        for (; i < a.size; i++) {
-            float tailVal = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-            if (tailVal < finalMin) {
-                finalMin = tailVal;
-            }
-        }
-        return (double) finalMin;
-    }
-
-    public static double minInt(NDArray a) {
-        long i = 0;
-        long loopbound = SPECIESINT.loopBound(a.size);
-        var vMin = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
-        for (; i < loopbound; i += INT_VL) {
-            var v1 = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
-            vMin = vMin.min(v1);
-        }
-        int finalMin = vMin.reduceLanes(VectorOperators.MIN);
-        for (; i < a.size; i++) {
-            int tailVal = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-            if (tailVal < finalMin) finalMin = tailVal;
-        }
-        return (double) finalMin;
-    }
-
-    public static double minDouble(NDArray a) {
-        long i = 0;
-        long loopbound = SPECIESDB.loopBound(a.size);
-        var vMin = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
-        for (; i < loopbound; i += DB_VL) {
-            var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
-            vMin = vMin.min(v1);
-        }
-        double finalMin = vMin.reduceLanes(VectorOperators.MIN);
-        for (; i < a.size; i++) {
-            double tailVal = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-            if (tailVal < finalMin) finalMin = tailVal;
-        }
-        return (double) finalMin;
-    }
-
 }
