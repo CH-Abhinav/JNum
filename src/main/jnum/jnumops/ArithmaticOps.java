@@ -7,8 +7,7 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorSpecies;
 import jnum.NDArray;
-import jdk.incubator.vector.VectorOperators;
-public class ArithematicOps {
+public class ArithmaticOps {
     private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Integer> SPECIESINT= IntVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Double> SPECIESDB= DoubleVector.SPECIES_PREFERRED;
@@ -21,10 +20,72 @@ public class ArithematicOps {
     private static final int DB_VL = SPECIESDB.length();
 
     //non instatitable utility class    
-    private ArithematicOps(){
+    private ArithmaticOps(){
         throw new AssertionError();
     }
 
+    @FunctionalInterface
+    public interface FloatOps {
+        float apply(float val1, float val2);
+    }
+
+    @FunctionalInterface
+    public interface IntOps{
+        int apply(int val1,int val2);
+    }
+
+    @FunctionalInterface
+    public interface DoubleOps{
+        double apply(double val1,double val2);
+    }
+
+    private static NDArray applyFloatStrides(NDArray a,NDArray b,NDArray resArray,FloatOps ops){
+        NDIter iterA=new NDIter(resArray.shape, a.strides);
+        NDIter iterB=new NDIter(resArray.shape, b.strides);
+        NDIter iterRes=new NDIter(resArray.shape, resArray.strides);
+        while(iterA.hasNext){
+            var val1=a.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+            var val2=b.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterB.offset);
+            var res=ops.apply(val1, val2);
+            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, res);
+            iterA.next();
+            iterB.next();
+            iterRes.next();
+        }
+        return resArray;
+    }
+
+    private static NDArray applyIntStrides(NDArray a,NDArray b,NDArray resArray,IntOps ops){
+        NDIter iterA=new NDIter(resArray.shape, a.strides);
+        NDIter iterB=new NDIter(resArray.shape, b.strides);
+        NDIter iterRes=new NDIter(resArray.shape, resArray.strides);
+        while(iterA.hasNext){
+            var val1=a.data.getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+            var val2=b.data.getAtIndex(ValueLayout.JAVA_INT, iterB.offset);
+            var res=ops.apply(val1, val2);
+            resArray.data.setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, res);
+            iterA.next();
+            iterB.next();
+            iterRes.next();
+        }
+        return resArray;
+    }
+
+    private static NDArray applyDoubleStrides(NDArray a,NDArray b,NDArray resArray,DoubleOps ops){
+        NDIter iterA=new NDIter(resArray.shape, a.strides);
+        NDIter iterB=new NDIter(resArray.shape, b.strides);
+        NDIter iterRes=new NDIter(resArray.shape, resArray.strides);
+        while(iterA.hasNext){
+            var val1=a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+            var val2=b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterB.offset);
+            var res=ops.apply(val1, val2);
+            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, res);
+            iterA.next();
+            iterB.next();
+            iterRes.next();
+        }
+        return resArray;
+    }
 
     public static NDArray addFloat(NDArray a,NDArray b,NDArray resArray){
         if(a.isContiguous() && b.isContiguous() && resArray.isContiguous()) return addFloatSIMD(a, b, resArray);
@@ -64,24 +125,7 @@ public class ArithematicOps {
     }
 
     private static NDArray addFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
-            float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA + valB);
-        }
-        return resArray;
+        return applyFloatStrides(a, b, resArray, (x,y)->x+y);
     }
 
     public static NDArray addInt(NDArray a,NDArray b,NDArray resArray){
@@ -122,24 +166,7 @@ public class ArithematicOps {
     }
 
     private static NDArray addIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
-            int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA + valB);
-        }
-        return resArray;
+        return applyIntStrides(a, b, resArray, (x,y)->x+y);
     }
 
     public static NDArray addDouble(NDArray a,NDArray b,NDArray resArray){
@@ -180,24 +207,7 @@ public class ArithematicOps {
     }
 
     private static NDArray addDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
-            double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA + valB);
-        }
-        return resArray;
+        return applyDoubleStrides(a, b, resArray, (x,y)->x+y);
     }
 
     public static NDArray subFloat(NDArray a,NDArray b,NDArray resArray){       
@@ -238,24 +248,7 @@ public class ArithematicOps {
     }
 
     private static NDArray subFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
-            float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA - valB);
-        }
-        return resArray;
+        return applyFloatStrides(a, b, resArray, (x,y)->x-y);
     }
 
     public static NDArray subInt(NDArray a,NDArray b,NDArray resArray){      
@@ -296,24 +289,7 @@ public class ArithematicOps {
     }
 
     private static NDArray subIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
-            int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA - valB);
-        }
-        return resArray;
+        return applyIntStrides(a, b, resArray, (x,y)->x-y);
     }
 
     public static NDArray subDouble(NDArray a,NDArray b,NDArray resArray){    
@@ -354,24 +330,7 @@ public class ArithematicOps {
     }
 
     private static NDArray subDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
-            double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA - valB);
-        }
-        return resArray;
+        return applyDoubleStrides(a, b, resArray, (x,y)->x-y);
     }
 
     public static NDArray mulFloat(NDArray a,NDArray b,NDArray resArray){     
@@ -412,24 +371,7 @@ public class ArithematicOps {
     }
 
     private static NDArray mulFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
-            float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA * valB);
-        }
-        return resArray;
+        return applyFloatStrides(a, b, resArray, (x,y)->x*y);
     }
 
     public static NDArray mulInt(NDArray a,NDArray b,NDArray resArray){  
@@ -470,24 +412,7 @@ public class ArithematicOps {
     }
 
     private static NDArray mulIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
-            int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA * valB);
-        }
-        return resArray;
+        return applyIntStrides(a, b, resArray, (x,y)->x*y);
     }
 
     public static NDArray mulDouble(NDArray a,NDArray b,NDArray resArray){        
@@ -528,24 +453,7 @@ public class ArithematicOps {
     }
 
     private static NDArray mulDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
-            double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA * valB);
-        }
-        return resArray;
+        return applyDoubleStrides(a, b, resArray, (x,y)->x*y);
     }
 
     public static NDArray divFloat(NDArray a,NDArray b,NDArray resArray){       
@@ -586,24 +494,7 @@ public class ArithematicOps {
     }
 
     private static NDArray divFloatStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatA);
-            float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, flatRes, valA / valB);
-        }
-        return resArray;
+        return applyFloatStrides(a, b, resArray, (x,y)->x/y);
     }
 
     public static NDArray divInt(NDArray a,NDArray b,NDArray resArray){       
@@ -644,24 +535,7 @@ public class ArithematicOps {
     }
 
     private static NDArray divIntStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, flatA);
-            int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_INT, flatRes, valA / valB);
-        }
-        return resArray;
+        return applyIntStrides(a, b, resArray, (x,y)->x/y);
     }
 
     public static NDArray divDouble(NDArray a,NDArray b,NDArray resArray){      
@@ -702,24 +576,7 @@ public class ArithematicOps {
     }
 
     private static NDArray divDoubleStrides(NDArray a,NDArray b,NDArray resArray){
-        for(long i=0;i<resArray.size;i++){
-            long tempIndex = i;
-            long[] coords = new long[resArray.shape.length];
-            for (int d = resArray.shape.length - 1; d >= 0; d--) {
-                coords[d] = tempIndex % resArray.shape[d];
-                tempIndex = tempIndex / resArray.shape[d];
-            }
-            long flatA = 0, flatB = 0, flatRes = 0;
-            for (int d = 0; d < resArray.shape.length; d++) {
-                flatA += coords[d] * (long) a.strides[d];
-                flatB += coords[d] * (long) b.strides[d];
-                flatRes += coords[d] * (long) resArray.strides[d];
-            }
-            double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatA);
-            double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatB);
-            resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, flatRes, valA / valB);
-        }
-        return resArray;
+        return applyDoubleStrides(a, b, resArray, (x,y)->x/y);
     }
 
     public static NDArray addFloat(NDArray a,float b,NDArray resArray){

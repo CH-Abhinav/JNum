@@ -6,9 +6,11 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ThreadLocalRandom;
+import javax.xml.datatype.DatatypeConfigurationException;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
-import jnum.jnumops.ArithematicOps;
+import jnum.jnumops.ArithmaticOps;
 import jnum.jnumops.ExpOps;
 import jnum.jnumops.ReduceOps;
 import jnum.jnumops.TrigOps;
@@ -35,6 +37,16 @@ public class NDArray{
         for (int dim : shape) CalcSize *= dim;
         this.size = CalcSize;
         this.dtype=dType;
+    }
+
+    private static int[] calculateDefaultStrides(int[] shape){
+        int[] strides=new int[shape.length];
+        int currentstride=1;
+        for(int i=shape.length-1;i>=0;i--){
+            strides[i]=currentstride;
+            currentstride*=shape[i];
+        }
+        return strides;
     }
 
     public static NDArray zeros(int... shape){
@@ -93,17 +105,138 @@ public class NDArray{
         return new NDArray(segment, shape, calculateDefaultStrides(shape),dType);
     }
 
-    private static int[] calculateDefaultStrides(int[] shape){
-        int[] strides=new int[shape.length];
-        int currentstride=1;
-        for(int i=shape.length-1;i>=0;i--){
-            strides[i]=currentstride;
-            currentstride*=shape[i];
+    public static NDArray rand(int... shape){
+        NDArray resArray=NDArray.zeros(shape);
+        for(long i=0;i<resArray.size;i++){
+            resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat());
         }
-        return strides;
+        return resArray;
+    }
+
+    public static NDArray rand(DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat());
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, ThreadLocalRandom.current().nextInt());
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble());
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(Arena arena,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(arena,dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat());
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, ThreadLocalRandom.current().nextInt());
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble());
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(int max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(max));
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, ThreadLocalRandom.current().nextInt(max));
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(max));
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(float max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(max));
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                throw new IllegalArgumentException();
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(max));
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(double max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                throw new IllegalArgumentException();
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                throw new IllegalArgumentException();
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(max));
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(int min,int max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(min,max));
+            }}
+            case INTEGER->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, ThreadLocalRandom.current().nextInt(min, max));
+            }}
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(min,max));
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(float min,float max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(min,max));
+            }}
+            case INTEGER->throw new IllegalArgumentException();
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(min,max));
+            }}
+        }
+        return resArray;
+    }
+
+    public static NDArray rand(double min,double max,DType dType,int... shape){
+        NDArray resArray=NDArray.zeros(dType, shape);
+        switch(dType){
+            case FLOAT->throw new IllegalArgumentException();
+            case INTEGER->throw new IllegalArgumentException();
+            case DOUBLE->{for(long i=0;i<resArray.size;i++){
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(min,max));
+            }}
+        }
+        return resArray;
     }
 
     //float array from methods
+
     public static NDArray from(float[] data, int... shape) {
         return from(Arena.ofAuto(), data, shape);
     }
@@ -194,16 +327,6 @@ public class NDArray{
 
     public NDArray contiguous(){
         return contiguous(Arena.ofAuto());
-    }
-
-    public double dot(NDArray b){
-        if (this.ndim() != 1 || b.ndim() != 1) {
-            throw new IllegalArgumentException("Dot product requires 1D vectors. Shapes: " + this.shapeString() + ", " + b.shapeString());
-        }
-        if (this.size != b.size) {
-            throw new IllegalArgumentException("Vector sizes must match for dot product.");
-        }
-        return this.mul(b).sum();
     }
 
     public NDArray contiguous(Arena arena){
@@ -324,9 +447,11 @@ public class NDArray{
         int[] indices=new int[this.shape.length];
         switch(dtype){
             case FLOAT->{
-                var c= (float)b;
+            var c= (float)b;
+            var epsilon=1e-6f;
             for(long i=0;i<this.size;i++){
-                if(c==this.data.getAtIndex(ValueLayout.JAVA_FLOAT,i)){
+                float val = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                if(Math.abs(c - val) < epsilon){
                     for (int d = 0; d < this.shape.length; d++) {
                         indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
                     }
@@ -335,7 +460,7 @@ public class NDArray{
             }
         }
         case INTEGER->{
-                var c= (int)b;
+            var c= (int)b;
             for(long i=0;i<this.size;i++){
                 if(c==this.data.getAtIndex(ValueLayout.JAVA_INT,i)){
                     for (int d = 0; d < this.shape.length; d++) {
@@ -346,10 +471,11 @@ public class NDArray{
             }
         }
         case DOUBLE->{
-            
-                var c= (double)b;
+            var c= b;
+            var epsilon=1e-12;
             for(long i=0;i<this.size;i++){
-                if(c==this.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i)){
+                var val=this.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i);
+                if(Math.abs(c - val) < epsilon){
                     for (int d = 0; d < this.shape.length; d++) {
                         indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
                     }
@@ -391,7 +517,11 @@ public class NDArray{
                 i = size - (maxPrint / 2) - 1;
                 continue;
             }
-            sb.append(data.getAtIndex(ValueLayout.JAVA_FLOAT, i));
+            switch(this.dtype){
+                case INTEGER->sb.append(data.getAtIndex(ValueLayout.JAVA_INT, i));
+                case FLOAT->sb.append(data.getAtIndex(ValueLayout.JAVA_FLOAT, i));
+                case DOUBLE->sb.append(data.getAtIndex(ValueLayout.JAVA_DOUBLE, i));
+            }
             if (i < size - 1) sb.append(", ");
         }
         return sb.append("]").toString();
@@ -421,11 +551,25 @@ public class NDArray{
         };
     }
 
+    public double dot(NDArray b){
+        if (this.ndim() != 1 || b.ndim() != 1) {
+            throw new IllegalArgumentException("Dot product requires 1D vectors. Shapes: " + this.shapeString() + ", " + b.shapeString());
+        }
+        if (this.size != b.size) {
+            throw new IllegalArgumentException("Vector sizes must match for dot product.");
+        }
+        return switch(this.dtype){
+            case FLOAT->ReduceOps.dotFloat(this, b);
+            case INTEGER->ReduceOps.dotInt(this, b);
+            case DOUBLE->ReduceOps.dotDouble(this, b);
+        };
+    }
+
     public double avg() {
         return this.sum() / (double) this.size;
     }
 
-    //VectorOps 
+    //ArithmaticOps.java 
 
     //addition operation
 
@@ -433,112 +577,112 @@ public class NDArray{
         validArguments(this,b);
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
         return switch(this.dtype) {
-        case FLOAT -> ArithematicOps.addFloat(this, b, resArray);
-        case DOUBLE -> ArithematicOps.addDouble(this, b, resArray);
-        case INTEGER -> ArithematicOps.addInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.addFloat(this, b, resArray);
+        case DOUBLE -> ArithmaticOps.addDouble(this, b, resArray);
+        case INTEGER -> ArithmaticOps.addInt(this, b, resArray);
     };
     }
 
     public NDArray add(NDArray b,NDArray resArray){
         validArguments(this,b);
         return switch(this.dtype) {
-        case FLOAT -> ArithematicOps.addFloat(this, b, resArray);
-        case DOUBLE -> ArithematicOps.addDouble(this, b, resArray);
-        case INTEGER -> ArithematicOps.addInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.addFloat(this, b, resArray);
+        case DOUBLE -> ArithmaticOps.addDouble(this, b, resArray);
+        case INTEGER -> ArithmaticOps.addInt(this, b, resArray);
     };
     }
 
     public NDArray add(float b){
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.addFloat(this, b, resArray);
+        return ArithmaticOps.addFloat(this, b, resArray);
     }
 
     public NDArray add(int b){
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.addInt(this, b, resArray);
+        return ArithmaticOps.addInt(this, b, resArray);
     }
 
     public NDArray add(double b){
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.addDouble(this, b, resArray);
+        return ArithmaticOps.addDouble(this, b, resArray);
     }
 
     public NDArray add(float b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
-        return ArithematicOps.addFloat(this,b,resArray);
+        return ArithmaticOps.addFloat(this,b,resArray);
     }
 
     public NDArray add(int b,NDArray resArray){
         validArguments(this,resArray);
-        return ArithematicOps.addInt(this,b,resArray);
+        return ArithmaticOps.addInt(this,b,resArray);
     }
 
     public NDArray add(double b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
-        return ArithematicOps.addDouble(this,b,resArray);
+        return ArithmaticOps.addDouble(this,b,resArray);
     }
 
     //subtract operations
 
     public NDArray sub(NDArray b){
         validArguments(this,b);
-        NDArray resArray=NDArray.zeros(this.shape);
+        NDArray resArray=NDArray.zeros(this.dtype,this.shape);
         return switch(this.dtype) {
-        case FLOAT -> ArithematicOps.subFloat(this, b, resArray);
-        case DOUBLE -> ArithematicOps.subDouble(this, b, resArray);
-        case INTEGER -> ArithematicOps.subInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.subFloat(this, b, resArray);
+        case DOUBLE -> ArithmaticOps.subDouble(this, b, resArray);
+        case INTEGER -> ArithmaticOps.subInt(this, b, resArray);
     };
     }
 
     public NDArray sub(NDArray b,NDArray resArray){
         validArguments(this,b);
         return switch(this.dtype) {
-        case FLOAT -> ArithematicOps.subFloat(this, b, resArray);
-        case DOUBLE -> ArithematicOps.subDouble(this, b, resArray);
-        case INTEGER -> ArithematicOps.subInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.subFloat(this, b, resArray);
+        case DOUBLE -> ArithmaticOps.subDouble(this, b, resArray);
+        case INTEGER -> ArithmaticOps.subInt(this, b, resArray);
     };
     }
 
     public NDArray sub(float b){
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.subFloat(this, b, resArray);
+        return ArithmaticOps.subFloat(this, b, resArray);
     }
 
     public NDArray sub(int b){
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.subInt(this, b, resArray);
+        return ArithmaticOps.subInt(this, b, resArray);
     }
 
     public NDArray sub(double b){
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype,this.shape);
-        return ArithematicOps.subDouble(this, b, resArray);
+        return ArithmaticOps.subDouble(this, b, resArray);
     }
 
     public NDArray sub(float b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
-        return ArithematicOps.subFloat(this, b, resArray);
+        return ArithmaticOps.subFloat(this, b, resArray);
     }
 
     public NDArray sub(int b,NDArray resArray){
         validArguments(this,resArray);
-        return ArithematicOps.subInt(this, b, resArray);
+        return ArithmaticOps.subInt(this, b, resArray);
     }
 
     public NDArray sub(double b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
-        return ArithematicOps.subDouble(this, b, resArray);
+        return ArithmaticOps.subDouble(this, b, resArray);
     }
 
     //multiplication operations 
@@ -547,55 +691,55 @@ public class NDArray{
         validArguments(this, b);
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
         return switch(this.dtype) {
-            case FLOAT -> ArithematicOps.mulFloat(this, b, resArray);
-            case DOUBLE -> ArithematicOps.mulDouble(this, b, resArray);
-            case INTEGER -> ArithematicOps.mulInt(this, b, resArray);
+            case FLOAT -> ArithmaticOps.mulFloat(this, b, resArray);
+            case DOUBLE -> ArithmaticOps.mulDouble(this, b, resArray);
+            case INTEGER -> ArithmaticOps.mulInt(this, b, resArray);
         };
     }
 
     public NDArray mul(NDArray b, NDArray resArray){
         validArguments(this, b);
         return switch(this.dtype) {
-            case FLOAT -> ArithematicOps.mulFloat(this, b, resArray);
-            case DOUBLE -> ArithematicOps.mulDouble(this, b, resArray);
-            case INTEGER -> ArithematicOps.mulInt(this, b, resArray);
+            case FLOAT -> ArithmaticOps.mulFloat(this, b, resArray);
+            case DOUBLE -> ArithmaticOps.mulDouble(this, b, resArray);
+            case INTEGER -> ArithmaticOps.mulInt(this, b, resArray);
         };
     }
 
     public NDArray mul(float b){
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.shape);
-        return ArithematicOps.mulFloat(this, b, resArray);
+        return ArithmaticOps.mulFloat(this, b, resArray);
     }
 
     public NDArray mul(int b){
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
-        return ArithematicOps.mulInt(this, b, resArray);
+        return ArithmaticOps.mulInt(this, b, resArray);
     }
 
     public NDArray mul(double b){
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
-        return ArithematicOps.mulDouble(this, b, resArray);
+        return ArithmaticOps.mulDouble(this, b, resArray);
     }
 
     public NDArray mul(float b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
-        return ArithematicOps.mulFloat(this, b, resArray);
+        return ArithmaticOps.mulFloat(this, b, resArray);
     }
 
     public NDArray mul(int b,NDArray resArray){
         validArguments(this,resArray);
-        return ArithematicOps.mulInt(this, b, resArray);
+        return ArithmaticOps.mulInt(this, b, resArray);
     }
 
     public NDArray mul(double b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
-        return ArithematicOps.mulDouble(this, b, resArray);
+        return ArithmaticOps.mulDouble(this, b, resArray);
     }
 
     //division operations
@@ -604,55 +748,55 @@ public class NDArray{
         validArguments(this, b);
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
         return switch(this.dtype) {
-            case FLOAT -> ArithematicOps.divFloat(this, b, resArray);
-            case DOUBLE -> ArithematicOps.divDouble(this, b, resArray);
-            case INTEGER -> ArithematicOps.divInt(this, b, resArray);
+            case FLOAT -> ArithmaticOps.divFloat(this, b, resArray);
+            case DOUBLE -> ArithmaticOps.divDouble(this, b, resArray);
+            case INTEGER -> ArithmaticOps.divInt(this, b, resArray);
         };
     }
 
     public NDArray div(NDArray b, NDArray resArray){
         validArguments(this, b);
         return switch(this.dtype) {
-            case FLOAT -> ArithematicOps.divFloat(this, b, resArray);
-            case DOUBLE -> ArithematicOps.divDouble(this, b, resArray);
-            case INTEGER -> ArithematicOps.divInt(this, b, resArray);
+            case FLOAT -> ArithmaticOps.divFloat(this, b, resArray);
+            case DOUBLE -> ArithmaticOps.divDouble(this, b, resArray);
+            case INTEGER -> ArithmaticOps.divInt(this, b, resArray);
         };
     }
 
     public NDArray div(float b){
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.shape);
-        return ArithematicOps.divFloat(this, b, resArray);
+        return ArithmaticOps.divFloat(this, b, resArray);
     }
 
     public NDArray div(int b){
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
-        return ArithematicOps.divInt(this, b, resArray);
+        return ArithmaticOps.divInt(this, b, resArray);
     }
 
     public NDArray div(double b){
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         NDArray resArray = NDArray.zeros(this.dtype, this.shape);
-        return ArithematicOps.divDouble(this, b, resArray);
+        return ArithmaticOps.divDouble(this, b, resArray);
     }
 
     public NDArray div(float b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER) throw new IllegalArgumentException();
-        return ArithematicOps.divFloat(this, b, resArray);
+        return ArithmaticOps.divFloat(this, b, resArray);
     }
 
     public NDArray div(int b,NDArray resArray){
         validArguments(this,resArray);
-        return ArithematicOps.divInt(this, b, resArray);
+        return ArithmaticOps.divInt(this, b, resArray);
     }
 
     public NDArray div(double b,NDArray resArray){
         validArguments(this,resArray);
         if(this.dtype==DType.INTEGER || this.dtype==DType.FLOAT) throw new IllegalArgumentException();
         if(resArray.dtype==DType.INTEGER || resArray.dtype==DType.FLOAT) throw new IllegalArgumentException();
-        return ArithematicOps.divDouble(this, b, resArray);
+        return ArithmaticOps.divDouble(this, b, resArray);
     }
 
     //IN PLACE operations of VectorOps
@@ -729,47 +873,54 @@ public class NDArray{
         return this.div(b,this);
     }
 
-    //MATH OPERATIONS FROM MathOps.java 
+    //ExpOps.java methods
 
     public NDArray sqrt(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> ExpOps.sqrtFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> ExpOps.sqrtDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> ExpOps.sqrtInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> ExpOps.sqrtFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> ExpOps.sqrtDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> ExpOps.sqrtInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray abs(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> ExpOps.absFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> ExpOps.absDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> ExpOps.absInt(this, NDArray.zeros(DType.INTEGER, this.shape));
+            case FLOAT-> ExpOps.absFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> ExpOps.absDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> ExpOps.absInt(safeThis, NDArray.zeros(DType.INTEGER, this.shape));
         };
     }
 
     public NDArray exp(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> ExpOps.expFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> ExpOps.expDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> ExpOps.expInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> ExpOps.expFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> ExpOps.expDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> ExpOps.expInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray log(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> ExpOps.logFloat(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> ExpOps.logDouble(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> ExpOps.logInt(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> ExpOps.logFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> ExpOps.logDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> ExpOps.logInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
 
     public NDArray log10(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.dtype){
-            case FLOAT-> ExpOps.log10Float(this, NDArray.zeros(DType.FLOAT,this.shape));
-            case DOUBLE-> ExpOps.log10Double(this, NDArray.zeros(DType.DOUBLE,this.shape));
-            case INTEGER -> ExpOps.log10Int(this, NDArray.zeros(DType.FLOAT, this.shape));
+            case FLOAT-> ExpOps.log10Float(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> ExpOps.log10Double(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> ExpOps.log10Int(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
         };
     }
+
+    //TrigOps.java methods
 
     public NDArray sin(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
@@ -838,7 +989,15 @@ public class NDArray{
         };
     }
 
-
+    public NDArray coth(){
+        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
+        
+        return switch(this.dtype){
+            case FLOAT-> TrigOps.cothFloat(safeThis, NDArray.zeros(DType.FLOAT,this.shape));
+            case DOUBLE-> TrigOps.cothDouble(safeThis, NDArray.zeros(DType.DOUBLE,this.shape));
+            case INTEGER -> TrigOps.cothInt(safeThis, NDArray.zeros(DType.FLOAT, this.shape));
+        };
+    }
 
 
 }

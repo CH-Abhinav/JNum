@@ -769,4 +769,6 @@ public class TrigOps {
         }
         return resArray;
     }
+
+    //
 }
