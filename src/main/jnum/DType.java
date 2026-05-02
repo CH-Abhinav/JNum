@@ -6,7 +6,7 @@ public enum DType{
     INTEGER(ValueLayout.JAVA_INT),
     FLOAT(ValueLayout.JAVA_FLOAT),
     DOUBLE(ValueLayout.JAVA_DOUBLE);
-    final ValueLayout layout;
+    public final ValueLayout layout;
 
     private DType(ValueLayout layout) {
         this.layout = layout;

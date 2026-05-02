@@ -97,8 +97,8 @@ public class ArithmaticOps {
         long loopbound=a.size - (a.size % (VL * 2));
 
         for(;i<loopbound;i+=VL*2){
-            var va1=FloatVector.fromMemorySegment(SPECIES,a.data,i*FLOAT_BYTES,ORDER);
-            var vb1=FloatVector.fromMemorySegment(SPECIES,b.data,i*FLOAT_BYTES,ORDER);
+            var va1=FloatVector.fromMemorySegment(SPECIES, a.data,i*FLOAT_BYTES,ORDER);
+            var vb1=FloatVector.fromMemorySegment(SPECIES, b.data,i*FLOAT_BYTES,ORDER);
             var va2=FloatVector.fromMemorySegment(SPECIES, a.data, (i+VL)*FLOAT_BYTES, ORDER);
             var vb2=FloatVector.fromMemorySegment(SPECIES, b.data, (i+VL)*FLOAT_BYTES, ORDER);
             var vRes1=va1.add(vb1);
@@ -124,7 +124,7 @@ public class ArithmaticOps {
         return resArray;
     }
 
-    private static NDArray addFloatStrides(NDArray a,NDArray b,NDArray resArray){
+    public static NDArray addFloatStrides(NDArray a,NDArray b,NDArray resArray){
         return applyFloatStrides(a, b, resArray, (x,y)->x+y);
     }
 

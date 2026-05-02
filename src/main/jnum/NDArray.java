@@ -7,13 +7,12 @@ import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
-import javax.xml.datatype.DatatypeConfigurationException;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import jnum.jnumops.ArithmaticOps;
-import jnum.jnumops.ExpOps;
 import jnum.jnumops.ReduceOps;
 import jnum.jnumops.TrigOps;
+import jnum.templates.ExpOps;
 
 public class NDArray{
     public final MemorySegment data;
@@ -23,9 +22,6 @@ public class NDArray{
     public final DType dtype;
 
     private static void validArguments(NDArray a,NDArray b){
-        if (!Arrays.equals(a.shape, b.shape)) {
-            throw new IllegalArgumentException("Shape mismatch: " + a.shapeString() + " vs " + b.shapeString()+" cannot compute");
-        }
         if(a.dtype!=b.dtype) throw new IllegalArgumentException("Types are not aliged: object type "+a.dtype+" is not same as operand type "+b.dtype);
     }
 
@@ -362,6 +358,56 @@ public class NDArray{
         return new NDArray(segment, this.shape, newStrides, dtype);
     }
 
+    public NDArray broadcastTo(int ... shape){
+        if(Arrays.equals(this.shape,shape)) return this;
+        int ndim=shape.length;
+        if(ndim<this.ndim()){
+            throw new IllegalArgumentException();
+        }
+        int[] newStrides=new int[ndim];
+        int[] paddedShape=new int[ndim];
+        int[] paddedStrides=new int[ndim];
+        int offset=ndim=this.ndim();
+        for(int i=0;i<ndim;i++){
+            if(i<offset){
+                paddedShape[i]=1;
+                paddedStrides[i]=0;
+            }
+            else{
+                paddedShape[i]=this.shape[i-offset];
+                paddedStrides[i]=this.strides[i-offset];
+            }
+        }
+
+        for(int i=0;i<ndim;i++){
+            if(paddedShape[i]==shape[i]) newStrides[i]=paddedStrides[i];
+            else if(paddedShape[i]==1) newStrides[i]=0;
+            else throw new IllegalArgumentException();
+        }
+
+        return new NDArray(this.data, shape, newStrides, this.dtype);
+    }
+
+    public static int[] calculateBroadcastShape(int[] shapeA, int[] shapeB){
+        int maxDims=Math.max(shapeA.length, shapeB.length);
+        int[] result=new int[maxDims];
+        for (int i = 1; i <= maxDims; i++) {
+            int dimA = (shapeA.length - i >= 0) ? shapeA[shapeA.length - i] : 1;
+            int dimB = (shapeB.length - i >= 0) ? shapeB[shapeB.length - i] : 1;
+            
+            if (dimA == dimB) {
+                result[maxDims - i] = dimA;
+            } else if (dimA == 1) {
+                result[maxDims - i] = dimB;
+            } else if (dimB == 1) {
+                result[maxDims - i] = dimA;
+            } else {
+                throw new IllegalArgumentException("Shapes " + Arrays.toString(shapeA) + " and " + Arrays.toString(shapeB) + " are not broadcastable.");
+            }
+        }
+        return result;
+    }
+
 
     public String shapeString() {
         return Arrays.toString(shape).replace("[", "(").replace("]", ")");
@@ -575,20 +621,28 @@ public class NDArray{
 
     public NDArray add(NDArray b){
         validArguments(this,b);
-        NDArray resArray = NDArray.zeros(this.dtype,this.shape);
+        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = this.broadcastTo(targetShape);
+        NDArray B = b.broadcastTo(targetShape);
+        NDArray resArray = NDArray.zeros(this.dtype,targetShape);
         return switch(this.dtype) {
-        case FLOAT -> ArithmaticOps.addFloat(this, b, resArray);
-        case DOUBLE -> ArithmaticOps.addDouble(this, b, resArray);
-        case INTEGER -> ArithmaticOps.addInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.addFloat(A, B, resArray);
+        case DOUBLE -> ArithmaticOps.addDouble(A, B, resArray);
+        case INTEGER -> ArithmaticOps.addInt(A, B, resArray);
     };
     }
 
     public NDArray add(NDArray b,NDArray resArray){
         validArguments(this,b);
+        validArguments(this, resArray);
+        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = this.broadcastTo(targetShape);
+        NDArray B = b.broadcastTo(targetShape);
+        resArray=resArray.broadcastTo(targetShape);
         return switch(this.dtype) {
-        case FLOAT -> ArithmaticOps.addFloat(this, b, resArray);
-        case DOUBLE -> ArithmaticOps.addDouble(this, b, resArray);
-        case INTEGER -> ArithmaticOps.addInt(this, b, resArray);
+        case FLOAT -> ArithmaticOps.addFloat(A, B, resArray);
+        case DOUBLE -> ArithmaticOps.addDouble(A, B, resArray);
+        case INTEGER -> ArithmaticOps.addInt(A, B, resArray);
     };
     }
 
