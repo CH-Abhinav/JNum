@@ -40,4 +40,13 @@ public class NDIter {
             hasNext=false;
         }
     }
+
+    public int nextVector(int[] indexMap,int vl){
+        int count=0;
+        while(this.hasNext && count<vl){
+            indexMap[count++]=this.offset;
+            this.next();
+        }
+        return count;
+    }
 }

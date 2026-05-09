@@ -12,7 +12,8 @@ import jdk.incubator.vector.VectorSpecies;
 import jnum.jnumops.ArithmaticOps;
 import jnum.jnumops.ReduceOps;
 import jnum.jnumops.TrigOps;
-import jnum.templates.ExpOps;
+import jnum.jnumops.ExpOps;
+import jnum.jnumops.MatMulOps;
 
 public class NDArray{
     public final MemorySegment data;
@@ -631,7 +632,7 @@ public class NDArray{
         case INTEGER -> ArithmaticOps.addInt(A, B, resArray);
     };
     }
-
+    
     public NDArray add(NDArray b,NDArray resArray){
         validArguments(this,b);
         validArguments(this, resArray);
@@ -1053,5 +1054,34 @@ public class NDArray{
         };
     }
 
+    //MatMulOps.java methods
 
+    public NDArray matmul(NDArray b){
+        if(this.ndim()!=2 || b.ndim()!=2){
+            throw new IllegalArgumentException();
+        }
+        if (this.shape[1] != b.shape[0]) {
+            throw new IllegalArgumentException();
+        }
+        NDArray resArray = NDArray.zeros(this.dtype, this.shape[0], b.shape[1]);
+        return switch(this.dtype){
+            case FLOAT->MatMulOps.matmulFloat(this, b, resArray);
+            case DOUBLE -> MatMulOps.matmulDouble(this, b, resArray);
+            case INTEGER -> MatMulOps.matmulInt(this, b, resArray);
+        };
+    }
+
+    public NDArray matmul(NDArray b, NDArray resArray){
+        if(this.ndim()!=2 || b.ndim()!=2){
+            throw new IllegalArgumentException();
+        }
+        if (this.shape[1] != b.shape[0]) {
+            throw new IllegalArgumentException();
+        }
+        return switch(this.dtype){
+            case FLOAT -> MatMulOps.matmulFloat(this, b, resArray);
+            case DOUBLE -> MatMulOps.matmulDouble(this, b, resArray);
+            case INTEGER -> MatMulOps.matmulInt(this, b, resArray);
+        };
+    }
 }
