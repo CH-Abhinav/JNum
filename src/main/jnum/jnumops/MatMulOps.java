@@ -12,12 +12,7 @@ import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 import jnum.NDArray;
-import jnum.jnumops.MatMulOps.AVX2Double;
-import jnum.jnumops.MatMulOps.AVX2Float;
-import jnum.jnumops.MatMulOps.AVX2Int;
-import jnum.jnumops.MatMulOps.FJ_Packed_Double;
-import jnum.jnumops.MatMulOps.FJ_Packed_Float;
-import jnum.jnumops.MatMulOps.FJ_Packed_Int;
+
 
 public class MatMulOps {
 

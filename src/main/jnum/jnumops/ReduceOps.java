@@ -72,6 +72,129 @@ public class ReduceOps {
         return (double) total;
     }
 
+    public static NDArray sumFloatAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = FloatVector.zero(SPECIES);
+                int k = 0;
+                int loopbound = SPECIES.loopBound(size);
+                for(; k<loopbound ;k += VL){
+                    var vVal = FloatVector.fromMemorySegment(SPECIES, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.add(vVal);
+                }
+                float acc = vAcc.reduceLanes(VectorOperators.ADD);
+                for (; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }else{
+                float acc = 0f;
+                for (int k = 0; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k * strideA);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
+    public static NDArray sumIntAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = IntVector.zero(SPECIESINT);
+                int k = 0;
+                int loopbound = SPECIESINT.loopBound(size);
+                for(; k<loopbound ;k += INT_VL){
+                    var vVal = IntVector.fromMemorySegment(SPECIESINT, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.add(vVal);
+                }
+                int acc = vAcc.reduceLanes(VectorOperators.ADD);
+                for (; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }else{
+                int acc = 0;
+                for (int k = 0; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k * strideA);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
+    public static NDArray sumDoubleAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = DoubleVector.zero(SPECIESDB);
+                int k = 0;
+                int loopbound = SPECIESDB.loopBound(size);
+                for(; k<loopbound ;k += DB_VL){
+                    var vVal = DoubleVector.fromMemorySegment(SPECIESDB, a.data, (baseOffset + k) * 8L, ORDER);
+                    vAcc = vAcc.add(vVal);
+                }
+                double acc = vAcc.reduceLanes(VectorOperators.ADD);
+                for (; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }else{
+                double acc = 0f;
+                for (int k = 0; k < size; k++) {
+                    acc += a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k * strideA);
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
     public static double maxFloat(NDArray a){
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
@@ -90,6 +213,47 @@ public class ReduceOps {
         return (double) finalMax;
     }
 
+    public static NDArray maxFloatAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
+                int k = 0;
+                int loopbound = SPECIES.loopBound(size);
+                for(; k<loopbound ;k += VL){
+                    var vVal = FloatVector.fromMemorySegment(SPECIES, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.max(vVal);
+                }
+                float acc = vAcc.reduceLanes(VectorOperators.MAX);
+                for (; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }else{
+                float acc = Float.NEGATIVE_INFINITY;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
     public static double maxInt(NDArray a) {
         long i = 0;
         long loopbound = SPECIESINT.loopBound(a.size);
@@ -106,6 +270,47 @@ public class ReduceOps {
         return (double) finalMax;
     }
 
+    public static NDArray maxIntAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = IntVector.broadcast(SPECIESINT, Integer.MIN_VALUE);
+                int k = 0;
+                int loopbound = SPECIESINT.loopBound(size);
+                for(; k<loopbound ;k += INT_VL){
+                    var vVal = IntVector.fromMemorySegment(SPECIESINT, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.max(vVal);
+                }
+                int acc = vAcc.reduceLanes(VectorOperators.MAX);
+                for (; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }else{
+                int acc = Integer.MIN_VALUE;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
     public static double maxDouble(NDArray a) {
         long i = 0;
         long loopbound = SPECIESDB.loopBound(a.size);
@@ -120,6 +325,47 @@ public class ReduceOps {
             if (tailVal > finalMax) finalMax = tailVal;
         }
         return (double) finalMax;
+    }
+
+    public static NDArray maxDoubleAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = DoubleVector.broadcast(SPECIESDB, Double.NEGATIVE_INFINITY);
+                int k = 0;
+                int loopbound = SPECIESDB.loopBound(size);
+                for(; k<loopbound ;k += DB_VL){
+                    var vVal = DoubleVector.fromMemorySegment(SPECIESDB, a.data, (baseOffset + k) * 8L, ORDER);
+                    vAcc = vAcc.max(vVal);
+                }
+                double acc = vAcc.reduceLanes(VectorOperators.MAX);
+                for (; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }else{
+                double acc = Double.NEGATIVE_INFINITY;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.max(acc, a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }
+        }
+        return resArray;
     }
 
     public static double minFloat(NDArray a){
@@ -140,6 +386,47 @@ public class ReduceOps {
         return (double) finalMin;
     }
 
+    public static NDArray minFloatAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = FloatVector.broadcast(SPECIES, Float.POSITIVE_INFINITY);
+                int k = 0;
+                int loopbound = SPECIES.loopBound(size);
+                for(; k<loopbound ;k += VL){
+                    var vVal = FloatVector.fromMemorySegment(SPECIES, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.min(vVal);
+                }
+                float acc = vAcc.reduceLanes(VectorOperators.MIN);
+                for (; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }else{
+                float acc = Float.POSITIVE_INFINITY;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_FLOAT, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
     public static double minInt(NDArray a) {
         long i = 0;
         long loopbound = SPECIESINT.loopBound(a.size);
@@ -156,6 +443,47 @@ public class ReduceOps {
         return (double) finalMin;
     }
 
+    public static NDArray minIntAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
+                int k = 0;
+                int loopbound = SPECIESINT.loopBound(size);
+                for(; k<loopbound ;k += INT_VL){
+                    var vVal = IntVector.fromMemorySegment(SPECIESINT, a.data, (baseOffset + k) * 4L, ORDER);
+                    vAcc = vAcc.min(vVal);
+                }
+                int acc = vAcc.reduceLanes(VectorOperators.MIN);
+                for (; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }else{
+                int acc = Integer.MAX_VALUE;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_INT, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_INT, offsetRes, acc);
+            }
+        }
+        return resArray;
+    }
+
     public static double minDouble(NDArray a) {
         long i = 0;
         long loopbound = SPECIESDB.loopBound(a.size);
@@ -170,6 +498,47 @@ public class ReduceOps {
             if (tailVal < finalMin) finalMin = tailVal;
         }
         return (double) finalMin;
+    }
+
+    public static NDArray minDoubleAxis(NDArray a,int axis,NDArray resArray){
+        int size=a.shape[axis];
+        long strideA=a.strides[axis];
+
+        for(int i=0;i<resArray.size();i++){
+            long tempIndex=i;
+            long baseOffset=0;
+            long offsetRes=0;
+            for (int d = resArray.shape.length - 1; d >= 0; d--) {
+                long coord = tempIndex % resArray.shape[d];
+                tempIndex /= resArray.shape[d];
+                offsetRes += coord * resArray.strides[d];
+                
+                int aDim = (d >= axis) ? d + 1 : d;
+                baseOffset += coord * a.strides[aDim];
+            }
+
+            if(strideA==1){
+                var vAcc = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
+                int k = 0;
+                int loopbound = SPECIESDB.loopBound(size);
+                for(; k<loopbound ;k += DB_VL){
+                    var vVal = DoubleVector.fromMemorySegment(SPECIESDB, a.data, (baseOffset + k) * 8L, ORDER);
+                    vAcc = vAcc.min(vVal);
+                }
+                double acc = vAcc.reduceLanes(VectorOperators.MIN);
+                for (; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }else{
+                double acc = Double.POSITIVE_INFINITY;
+                for (int k = 0; k < size; k++) {
+                    acc = Math.min(acc, a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k * strideA));
+                }
+                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
+            }
+        }
+        return resArray;
     }
 
     public static double dotFloat(NDArray a,NDArray b){
