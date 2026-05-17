@@ -7,7 +7,6 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorOperators;
-
 import jnum.NDArray;
 
 public class ReduceOps {
