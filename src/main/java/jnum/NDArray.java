@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import jnum.jnumops.ArithmaticOps;
+import jnum.jnumops.CompareOps;
 import jnum.jnumops.ReduceOps;
 import jnum.jnumops.TrigOps;
 import jnum.jnumops.ExpOps;
@@ -716,6 +717,106 @@ public class NDArray{
 
     public double avg() {
         return this.sum() / (double) this.size;
+    }
+
+    public NDArray maximum(NDArray b){
+        DType targetType = promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray resArray = NDArray.zeros(targetType, targetShape);
+
+        return switch(targetType){
+            case FLOAT->CompareOps.maximumFloat(A, B, resArray);
+            case INTEGER->CompareOps.maximumInt(A, B, resArray);
+            case DOUBLE->CompareOps.maximumDouble(A, B, resArray);
+        };
+    }
+
+    public NDArray maximum(float b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> CompareOps.maximumFloat(A, b, resArray);
+            case INTEGER->throw new UnsupportedOperationException();
+            case DOUBLE->CompareOps.maximumDouble(A, b, resArray);
+        };
+    }
+
+    public NDArray maximum(int b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> CompareOps.maximumFloat(A, b, resArray);
+            case INTEGER->CompareOps.maximumInt(A, b, resArray);
+            case DOUBLE->CompareOps.maximumDouble(A, b, resArray);
+        };
+    }
+
+    public NDArray maximum(double b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> throw new UnsupportedOperationException();
+            case INTEGER-> throw new UnsupportedOperationException();
+            case DOUBLE-> CompareOps.maximumDouble(A, b, resArray);
+        };
+    }
+
+    public NDArray minimum(NDArray b){
+        DType targetType = promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray resArray = NDArray.zeros(targetType, targetShape);
+
+        return switch(targetType){
+            case FLOAT->CompareOps.minimumFloat(A, B, resArray);
+            case INTEGER->CompareOps.minimumInt(A, B, resArray);
+            case DOUBLE->CompareOps.minimumDouble(A, B, resArray);
+        };
+    }
+
+    public NDArray minimum(float b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> CompareOps.minimumFloat(A, b, resArray);
+            case INTEGER->throw new UnsupportedOperationException();
+            case DOUBLE->CompareOps.minimumDouble(A, b, resArray);
+        };
+    }
+
+    public NDArray minimum(int b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> CompareOps.minimumFloat(A, b, resArray);
+            case INTEGER->CompareOps.minimumInt(A, b, resArray);
+            case DOUBLE->CompareOps.minimumDouble(A, b, resArray);
+        };
+    }
+
+    public NDArray minimum(double b) {
+        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        NDArray A = this.cast(targetType);
+        NDArray resArray = NDArray.zeros(targetType, this.shape);
+        
+        return switch (targetType) {
+            case FLOAT -> throw new UnsupportedOperationException();
+            case INTEGER-> throw new UnsupportedOperationException();
+            case DOUBLE-> CompareOps.minimumDouble(A, b, resArray);
+        };
     }
 
     //ArithmaticOps.java 

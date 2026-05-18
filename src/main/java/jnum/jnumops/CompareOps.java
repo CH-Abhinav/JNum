@@ -158,7 +158,7 @@ public class CompareOps {
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopBound = SPECIESINT.loopBound(a.size);
-            
+
             for (; i < loopBound; i += INT_VL) {
                 var vA = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
                 var vB = IntVector.fromMemorySegment(SPECIESINT, b.data, i * INT_BYTES, ORDER);
