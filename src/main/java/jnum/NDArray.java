@@ -7,14 +7,15 @@ import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
-import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorSpecies;
 import jnum.jnumops.ArithmaticOps;
 import jnum.jnumops.CompareOps;
-import jnum.jnumops.ReduceOps;
-import jnum.jnumops.TrigOps;
 import jnum.jnumops.ExpOps;
 import jnum.jnumops.MatMulOps;
+import jnum.jnumops.ReduceOps;
+import jnum.jnumops.TrigOps;
+import jnum.jnumutils.ShapeUtil;
+import jnum.jnumutils.TypeUtil;
+import jnum.jnumutils.ValidUtil;
 
 public class NDArray{
     public final MemorySegment data;
@@ -33,16 +34,6 @@ public class NDArray{
         this.dtype=dType;
     }
 
-    private static int[] calculateDefaultStrides(int[] shape){
-        int[] strides=new int[shape.length];
-        int currentstride=1;
-        for(int i=shape.length-1;i>=0;i--){
-            strides[i]=currentstride;
-            currentstride*=shape[i];
-        }
-        return strides;
-    }
-
     public static NDArray zeros(int... shape){
         return zeros(Arena.ofAuto(),DType.FLOAT,shape);
     }
@@ -59,7 +50,7 @@ public class NDArray{
         long Size=1;
         for(int dim:shape) Size*=dim;
         MemorySegment segment=arena.allocate(dType.layout,Size);
-        return new NDArray(segment,shape,calculateDefaultStrides(shape),dType);
+        return new NDArray(segment,shape,ShapeUtil.calculateDefaultStrides(shape),dType);
     }
 
     public static NDArray ones(int... shape){
@@ -96,7 +87,7 @@ public class NDArray{
             }
             default -> throw new AssertionError();
         }
-        return new NDArray(segment, shape, calculateDefaultStrides(shape),dType);
+        return new NDArray(segment, shape, ShapeUtil.calculateDefaultStrides(shape),dType);
     }
 
     public static NDArray rand(int... shape){
@@ -244,7 +235,7 @@ public class NDArray{
         DType dType = DType.FLOAT;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
         MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
-        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
+        return new NDArray(segment, shape, ShapeUtil.calculateDefaultStrides(shape), dType);
     }
 
     //int array from methods
@@ -261,7 +252,7 @@ public class NDArray{
         DType dType = DType.INTEGER;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
         MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
-        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
+        return new NDArray(segment, shape, ShapeUtil.calculateDefaultStrides(shape), dType);
     }
 
     // DOUBLE array from method
@@ -278,7 +269,7 @@ public class NDArray{
         DType dType = DType.DOUBLE;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
         MemorySegment.copy(data, 0, segment, dType.layout, 0, data.length);
-        return new NDArray(segment, shape, calculateDefaultStrides(shape), dType);
+        return new NDArray(segment, shape, ShapeUtil.calculateDefaultStrides(shape), dType);
     }
 
     public NDArray reshape(int... newShape) {
@@ -287,7 +278,7 @@ public class NDArray{
         if (newCalcSize != this.size) {
             throw new IllegalArgumentException("Cannot reshape array of size " + this.size + " into shape " + Arrays.toString(newShape));
         }
-        return new NDArray(this.data, newShape, calculateDefaultStrides(newShape),this.dtype);
+        return new NDArray(this.data, newShape, ShapeUtil.calculateDefaultStrides(newShape),this.dtype);
     }
 
     public NDArray reshape(DType dType,int... newShape) {
@@ -296,7 +287,7 @@ public class NDArray{
         if (newCalcSize != this.size) {
             throw new IllegalArgumentException("Cannot reshape array of size " + this.size + " into shape " + Arrays.toString(newShape));
         }
-        return new NDArray(this.data, newShape, calculateDefaultStrides(newShape),dType);
+        return this.reshape(newShape).cast(dType);
     }
 
     public NDArray transpose(){
@@ -326,7 +317,7 @@ public class NDArray{
     public NDArray contiguous(Arena arena){
         if(this.isContiguous()) return this;
         var segment=arena.allocate(this.dtype.layout,this.size);
-        var newStrides=calculateDefaultStrides(this.shape);
+        var newStrides=ShapeUtil.calculateDefaultStrides(this.shape);
         for(int i=0;i<this.size;i++){
             var tempindex=i;
             var coord=new int[this.shape.length];
@@ -365,7 +356,7 @@ public class NDArray{
         int[] newStrides=new int[ndim];
         int[] paddedShape=new int[ndim];
         int[] paddedStrides=new int[ndim];
-        int offset=ndim=this.ndim();
+        int offset=ndim-this.ndim();
         for(int i=0;i<ndim;i++){
             if(i<offset){
                 paddedShape[i]=1;
@@ -384,80 +375,6 @@ public class NDArray{
         }
 
         return new NDArray(this.data, shape, newStrides, this.dtype);
-    }
-
-    public static int[] calculateBroadcastShape(int[] shapeA, int[] shapeB){
-        int maxDims=Math.max(shapeA.length, shapeB.length);
-        int[] result=new int[maxDims];
-        for (int i = 1; i <= maxDims; i++) {
-            int dimA = (shapeA.length - i >= 0) ? shapeA[shapeA.length - i] : 1;
-            int dimB = (shapeB.length - i >= 0) ? shapeB[shapeB.length - i] : 1;
-            
-            if (dimA == dimB) {
-                result[maxDims - i] = dimA;
-            } else if (dimA == 1) {
-                result[maxDims - i] = dimB;
-            } else if (dimB == 1) {
-                result[maxDims - i] = dimA;
-            } else {
-                throw new IllegalArgumentException("Shapes " + Arrays.toString(shapeA) + " and " + Arrays.toString(shapeB) + " are not broadcastable.");
-            }
-        }
-        return result;
-    }
-
-    public static DType promoteTypes(DType a, DType b) {
-        if (a == DType.DOUBLE || b == DType.DOUBLE) return DType.DOUBLE;
-        if (a == DType.FLOAT || b == DType.FLOAT) return DType.FLOAT;
-        return DType.INTEGER;
-    }
-
-    private static DType scalarType(int value) {
-        return DType.INTEGER;
-    }
-
-    private static DType scalarType(float value) {
-        return DType.FLOAT;
-    }
-
-    private static DType scalarType(double value) {
-        return DType.DOUBLE;
-    }
-
-    private static NDArray prepareBroadcastOperand(NDArray array, int[] targetShape, DType targetType) {
-        return array.broadcastTo(targetShape).cast(targetType);
-    }
-
-    private static NDArray validateResultArray(NDArray resArray, DType targetType, int[] targetShape) {
-        if (resArray.dtype != targetType) {
-            throw new IllegalArgumentException("Result dtype must be " + targetType + " but was " + resArray.dtype);
-        }
-        if (!Arrays.equals(resArray.shape, targetShape)) {
-            throw new IllegalArgumentException("Result shape must be " + Arrays.toString(targetShape) + " but was " + Arrays.toString(resArray.shape));
-        }
-        return resArray;
-    }
-
-    private static void validateMatmulInputs(NDArray a, NDArray b) {
-        if (a.ndim() != 2 || b.ndim() != 2) {
-            throw new IllegalArgumentException();
-        }
-        if (a.shape[1] != b.shape[0]) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    private static int[] calculateReductionShape(int[] shape, int axis) {
-        if (axis < 0 || axis >= shape.length) {
-            throw new IllegalArgumentException("Axis " + axis + " is out of bounds for shape " + Arrays.toString(shape));
-        }
-        int[] reducedShape = new int[shape.length - 1];
-        for (int i = 0, j = 0; i < shape.length; i++) {
-            if (i != axis) {
-                reducedShape[j++] = shape[i];
-            }
-        }
-        return reducedShape;
     }
 
     public NDArray cast(DType target){
@@ -493,11 +410,60 @@ public class NDArray{
         return dups;
     }
 
-    public boolean equals(NDArray a){
-        if (!Arrays.equals(this.shape, a.shape)) return false;
-        if(this.dtype!=a.dtype) return false;
-        long mismatch=this.data.mismatch(a.data);
-        return mismatch==-1;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NDArray)) return false;
+        NDArray other = (NDArray) o;
+
+        if (this.dtype != other.dtype) return false;
+        if (!Arrays.equals(this.shape, other.shape)) return false;
+
+        if (this.isContiguous() && other.isContiguous()) {
+            return this.data.mismatch(other.data) == -1;
+        }
+
+        for (long i = 0; i < this.size; i++) {
+            long offsetThis = getPhysicalOffset(i, this.shape, this.strides);
+            long offsetOther = getPhysicalOffset(i, other.shape, other.strides);
+
+            boolean match = switch(this.dtype) {
+                case FLOAT -> this.data.getAtIndex(ValueLayout.JAVA_FLOAT, offsetThis) == other.data.getAtIndex(ValueLayout.JAVA_FLOAT, offsetOther);
+                case DOUBLE -> this.data.getAtIndex(ValueLayout.JAVA_DOUBLE, offsetThis) == other.data.getAtIndex(ValueLayout.JAVA_DOUBLE, offsetOther);
+                case INTEGER -> this.data.getAtIndex(ValueLayout.JAVA_INT, offsetThis) == other.data.getAtIndex(ValueLayout.JAVA_INT, offsetOther);
+            };
+            if (!match) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(shape);
+        result = 31 * result + dtype.hashCode();
+
+        int elementsToHash = (int) Math.min(size, 5);
+        for (long i = 0; i < elementsToHash; i++) {
+            long physicalOffset = getPhysicalOffset(i, this.shape, this.strides);
+            int valHash = switch (dtype) {
+                case FLOAT -> Float.hashCode(data.getAtIndex(ValueLayout.JAVA_FLOAT, physicalOffset));
+                case DOUBLE -> Double.hashCode(data.getAtIndex(ValueLayout.JAVA_DOUBLE, physicalOffset));
+                case INTEGER -> Integer.hashCode(data.getAtIndex(ValueLayout.JAVA_INT, physicalOffset));
+            };
+            result = 31 * result + valHash;
+        }
+        return result;
+    }
+
+    private static long getPhysicalOffset(long logicalIndex, int[] shape, int[] strides) {
+        long remaining = logicalIndex;
+        long offset = 0;
+        for (int i = shape.length - 1; i >= 0; i--) {
+            int coord = (int) (remaining % shape[i]);
+            remaining /= shape[i];
+            offset += (long) coord * strides[i];
+        }
+        return offset;
     }
 
     public double getFlat(long index){
@@ -672,7 +638,7 @@ public class NDArray{
     }
 
     public NDArray sum(int axis){
-        int[] reducedShape = calculateReductionShape(this.shape, axis);
+        int[] reducedShape = ShapeUtil.calculateReductionShape(this.shape, axis);
         NDArray resArray = NDArray.zeros(this.dtype, reducedShape);
         return switch(this.dtype) {
             case FLOAT -> ReduceOps.sumFloatAxis(this,axis,resArray);
@@ -682,7 +648,7 @@ public class NDArray{
     }
 
     public NDArray max(int axis) {
-        int[] reducedShape = calculateReductionShape(this.shape, axis);
+        int[] reducedShape = ShapeUtil.calculateReductionShape(this.shape, axis);
         NDArray resArray = NDArray.zeros(this.dtype, reducedShape);
         return switch(this.dtype) {
             case FLOAT -> ReduceOps.maxFloatAxis(this, axis, resArray);
@@ -692,7 +658,7 @@ public class NDArray{
     }
 
     public NDArray min(int axis) {
-        int[] reducedShape = calculateReductionShape(this.shape, axis);
+        int[] reducedShape = ShapeUtil.calculateReductionShape(this.shape, axis);
         NDArray resArray = NDArray.zeros(this.dtype, reducedShape);
         return switch(this.dtype) {
             case FLOAT -> ReduceOps.minFloatAxis(this, axis, resArray);
@@ -720,10 +686,10 @@ public class NDArray{
     }
 
     public NDArray maximum(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
 
         return switch(targetType){
@@ -734,7 +700,7 @@ public class NDArray{
     }
 
     public NDArray maximum(float b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -746,7 +712,7 @@ public class NDArray{
     }
 
     public NDArray maximum(int b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -758,7 +724,7 @@ public class NDArray{
     }
 
     public NDArray maximum(double b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -770,10 +736,10 @@ public class NDArray{
     }
 
     public NDArray minimum(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
 
         return switch(targetType){
@@ -784,7 +750,7 @@ public class NDArray{
     }
 
     public NDArray minimum(float b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -796,7 +762,7 @@ public class NDArray{
     }
 
     public NDArray minimum(int b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -808,7 +774,7 @@ public class NDArray{
     }
 
     public NDArray minimum(double b) {
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         
@@ -824,10 +790,10 @@ public class NDArray{
     //addition operation
 
     public NDArray add(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.addFloat(A, B, resArray);
@@ -837,11 +803,11 @@ public class NDArray{
     }
     
     public NDArray add(NDArray b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, targetShape);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.addFloat(A, B, targetRes);
             case DOUBLE -> ArithmaticOps.addDouble(A, B, targetRes);
@@ -850,7 +816,7 @@ public class NDArray{
     }
 
     public NDArray add(float b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -861,7 +827,7 @@ public class NDArray{
     }
 
     public NDArray add(int b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -872,7 +838,7 @@ public class NDArray{
     }
 
     public NDArray add(double b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -883,9 +849,9 @@ public class NDArray{
     }
 
     public NDArray add(float b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.addFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.addDouble(A, b, targetRes);
@@ -894,9 +860,9 @@ public class NDArray{
     }
 
     public NDArray add(int b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.addFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.addDouble(A, b, targetRes);
@@ -905,9 +871,9 @@ public class NDArray{
     }
 
     public NDArray add(double b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.addFloat(A, (float) b, targetRes);
             case DOUBLE -> ArithmaticOps.addDouble(A, b, targetRes);
@@ -918,10 +884,10 @@ public class NDArray{
     //subtract operations
 
     public NDArray sub(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.subFloat(A, B, resArray);
@@ -931,11 +897,11 @@ public class NDArray{
     }
 
     public NDArray sub(NDArray b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, targetShape);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.subFloat(A, B, targetRes);
             case DOUBLE -> ArithmaticOps.subDouble(A, B, targetRes);
@@ -944,7 +910,7 @@ public class NDArray{
     }
 
     public NDArray sub(float b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -955,7 +921,7 @@ public class NDArray{
     }
 
     public NDArray sub(int b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -966,7 +932,7 @@ public class NDArray{
     }
 
     public NDArray sub(double b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -977,9 +943,9 @@ public class NDArray{
     }
 
     public NDArray sub(float b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.subFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.subDouble(A, b, targetRes);
@@ -988,9 +954,9 @@ public class NDArray{
     }
 
     public NDArray sub(int b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.subFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.subDouble(A, b, targetRes);
@@ -999,9 +965,9 @@ public class NDArray{
     }
 
     public NDArray sub(double b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.subFloat(A, (float) b, targetRes);
             case DOUBLE -> ArithmaticOps.subDouble(A, b, targetRes);
@@ -1012,10 +978,10 @@ public class NDArray{
     //multiplication operations 
 
     public NDArray mul(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.mulFloat(A, B, resArray);
@@ -1025,11 +991,11 @@ public class NDArray{
     }
 
     public NDArray mul(NDArray b, NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, targetShape);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.mulFloat(A, B, targetRes);
             case DOUBLE -> ArithmaticOps.mulDouble(A, B, targetRes);
@@ -1038,7 +1004,7 @@ public class NDArray{
     }
 
     public NDArray mul(float b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1049,7 +1015,7 @@ public class NDArray{
     }
 
     public NDArray mul(int b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1060,7 +1026,7 @@ public class NDArray{
     }
 
     public NDArray mul(double b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1071,9 +1037,9 @@ public class NDArray{
     }
 
     public NDArray mul(float b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.mulFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.mulDouble(A, b, targetRes);
@@ -1082,9 +1048,9 @@ public class NDArray{
     }
 
     public NDArray mul(int b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.mulFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.mulDouble(A, b, targetRes);
@@ -1093,9 +1059,9 @@ public class NDArray{
     }
 
     public NDArray mul(double b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.mulFloat(A, (float) b, targetRes);
             case DOUBLE -> ArithmaticOps.mulDouble(A, b, targetRes);
@@ -1106,10 +1072,10 @@ public class NDArray{
     //division operations
 
     public NDArray div(NDArray b){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
         NDArray resArray = NDArray.zeros(targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.divFloat(A, B, resArray);
@@ -1119,11 +1085,11 @@ public class NDArray{
     }
 
     public NDArray div(NDArray b, NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, b.dtype);
-        int[] targetShape = calculateBroadcastShape(this.shape, b.shape);
-        NDArray A = prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, targetShape);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        int[] targetShape = ShapeUtil.calculateBroadcastShape(this.shape, b.shape);
+        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
+        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         return switch(targetType) {
             case FLOAT -> ArithmaticOps.divFloat(A, B, targetRes);
             case DOUBLE -> ArithmaticOps.divDouble(A, B, targetRes);
@@ -1132,7 +1098,7 @@ public class NDArray{
     }
 
     public NDArray div(float b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1143,7 +1109,7 @@ public class NDArray{
     }
 
     public NDArray div(int b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1154,7 +1120,7 @@ public class NDArray{
     }
 
     public NDArray div(double b){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
         NDArray resArray = NDArray.zeros(targetType, this.shape);
         return switch (targetType) {
@@ -1165,9 +1131,9 @@ public class NDArray{
     }
 
     public NDArray div(float b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.divFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.divDouble(A, b, targetRes);
@@ -1176,9 +1142,9 @@ public class NDArray{
     }
 
     public NDArray div(int b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.divFloat(A, b, targetRes);
             case DOUBLE -> ArithmaticOps.divDouble(A, b, targetRes);
@@ -1187,9 +1153,9 @@ public class NDArray{
     }
 
     public NDArray div(double b,NDArray resArray){
-        DType targetType = promoteTypes(this.dtype, scalarType(b));
+        DType targetType = TypeUtil.promoteTypes(this.dtype, TypeUtil.scalarType(b));
         NDArray A = this.cast(targetType);
-        NDArray targetRes = validateResultArray(resArray, targetType, this.shape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.shape);
         return switch (targetType) {
             case FLOAT -> ArithmaticOps.divFloat(A, (float) b, targetRes);
             case DOUBLE -> ArithmaticOps.divDouble(A, b, targetRes);
@@ -1400,8 +1366,8 @@ public class NDArray{
     //MatMulOps.java methods
 
     public NDArray matmul(NDArray b){
-        validateMatmulInputs(this, b);
-        DType targetType = promoteTypes(this.dtype, b.dtype);
+        ValidUtil.validateMatmulInputs(this, b);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
         NDArray A = this.cast(targetType);
         NDArray B = b.cast(targetType);
         int[] targetShape = new int[]{this.shape[0], b.shape[1]};
@@ -1414,12 +1380,12 @@ public class NDArray{
     }
 
     public NDArray matmul(NDArray b, NDArray resArray){
-        validateMatmulInputs(this, b);
-        DType targetType = promoteTypes(this.dtype, b.dtype);
+        ValidUtil.validateMatmulInputs(this, b);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
         NDArray A = this.cast(targetType);
         NDArray B = b.cast(targetType);
         int[] targetShape = new int[]{this.shape[0], b.shape[1]};
-        NDArray targetRes = validateResultArray(resArray, targetType, targetShape);
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         return switch(targetType){
             case FLOAT -> MatMulOps.matmulFloat(A, B, targetRes);
             case DOUBLE -> MatMulOps.matmulDouble(A, B, targetRes);
