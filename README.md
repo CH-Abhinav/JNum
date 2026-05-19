@@ -1,3 +1,38 @@
-#JNum
-JNum is a native Java library that gives you the massive number-crunching power and simplicity of Python's NumPy.
-It bypasses normal Java limits to talk directly to your processor, calculating millions of numbers simultaneously instead of one by one.
+# JNum: A Pure Java Numerical Library
+
+JNum is a high-performance numerical computing library built entirely in Java, leveraging the modern **Foreign Function & Memory (FFM) API** and the **Vector API (Project Panama)**.
+
+## Why JNum? (The Pure Java Advantage)
+
+Most existing Java tensor and math libraries (such as ND4J) rely heavily on C++ backends. They execute mathematical operations by calling native code via **JNI (Java Native Interface)** and manipulating memory using `sun.misc.Unsafe`.
+
+This legacy approach introduces several significant problems for modern Java applications:
+1. **Deprecation of Unsafe:** The `sun.misc.Unsafe` API is officially scheduled for removal in future Java releases. Java is actively transitioning to the FFM API as the secure, standard alternative.
+2. **JNI Overhead:** JNI is notorious for being slow, bloated, and difficult to maintain. Crossing the boundary between Java and native C++ code incurs a measurable performance penalty.
+3. **Native Call Latency:** Invoking methods outside the JVM is often slower than keeping the execution within the highly optimized Java environment.
+
+### Our Solution
+JNum solves these issues by completely eliminating the C++ backend. By staying 100% pure Java, we avoid the JNI bridge entirely. 
+
+### Memory Footprint and Portability
+One of the most massive advantages of using JNum over traditional libraries is the file size and portability.
+* **JNum:** Currently under **100 KB** in total size.
+* **Traditional Libraries:** Often exceed **100s of MBs** because they are forced to bundle and export native binaries (`.dll` for Windows, `.so` for Linux, `.dylib` for macOS) just to maintain "Write Once, Run Anywhere" compatibility.
+
+## Installation
+
+### System Requirements
+* **Java:** Works on Java 22 or higher (**Java 25 is highly recommended**).
+* **Build System:** Because JNum utilizes incubating hardware features, you must explicitly configure your build system to enable the Vector API.
+
+### Maven Setup
+
+1. **Install the Binary:** Download the `jnum-0.1.0-PREVIEW.jar` and install it into your local Maven repository (or include it in your project's `lib` folder).
+2. **Add the Dependency:** Add the following configuration to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.github.ch-abhinav</groupId>
+    <artifactId>jnum</artifactId>
+    <version>0.1.0-PREVIEW</version>
+</dependency>

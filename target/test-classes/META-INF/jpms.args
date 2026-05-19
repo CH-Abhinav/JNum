@@ -1,0 +1,6 @@
+--add-modules
+jdk.incubator.vector
+--patch-module
+jnum=_
+--add-reads
+jnum=ALL-UNNAMED
