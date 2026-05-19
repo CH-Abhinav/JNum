@@ -36,3 +36,36 @@ One of the most massive advantages of using JNum over traditional libraries is t
     <artifactId>jnum</artifactId>
     <version>0.1.0-PREVIEW</version>
 </dependency>
+```
+
+3. **Enable Hardware Acceleration:** You must add the following configuration to the `maven-compiler-plugin` inside your `pom.xml` to allow the JVM to execute the SIMD Vector instructions:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.11.0</version>
+    <configuration>
+        <compilerArgs>
+            <arg>--add-modules</arg>
+            <arg>jdk.incubator.vector</arg>
+        </compilerArgs>
+    </configuration>
+</plugin>
+```
+
+## Running the Code (Single-File Scripts)
+
+Because JNum relies on incubating hardware APIs, you cannot simply run `java Main.java`. You must explicitly unlock the Vector API and point the Java runtime to the JNum `.jar` file.
+
+To compile and run a single-file program from your terminal, use the following commands:
+
+**On Windows:**
+```bash
+java --add-modules jdk.incubator.vector -cp ".;jnum-0.1.0-PREVIEW.jar" Main.java
+```
+
+**On Linux / macOS:**
+```bash
+java --add-modules jdk.incubator.vector -cp ".:jnum-0.1.0-PREVIEW.jar" Main.java
+```
