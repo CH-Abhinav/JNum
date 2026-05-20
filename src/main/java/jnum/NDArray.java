@@ -250,7 +250,11 @@ public class NDArray{
         long CalcSize = 1;
         for (int dim : shape) CalcSize *= dim;
         if (CalcSize != data.length) {
-            throw new IllegalArgumentException("Shape dimensions do not match data size.");
+            throw new IllegalArgumentException(
+                "Requested shape " + Arrays.toString(shape) +
+                " requires size " + CalcSize +
+                ", but the provided array has length " + data.length + "."
+            );
         }
         DType dType = DType.FLOAT;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
@@ -267,7 +271,11 @@ public class NDArray{
         long CalcSize = 1;
         for (int dim : shape) CalcSize *= dim;
         if (CalcSize != data.length) {
-            throw new IllegalArgumentException("Shape dimensions do not match data size.");
+            throw new IllegalArgumentException(
+                "Requested shape " + Arrays.toString(shape) +
+                " requires size " + CalcSize +
+                ", but the provided array has length " + data.length + "."
+            );
         }
         DType dType = DType.INTEGER;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
@@ -284,7 +292,11 @@ public class NDArray{
         long CalcSize = 1;
         for (int dim : shape) CalcSize *= dim;
         if (CalcSize != data.length) {
-            throw new IllegalArgumentException("Shape dimensions do not match data size.");
+            throw new IllegalArgumentException(
+                "Requested shape " + Arrays.toString(shape) +
+                " requires size " + CalcSize +
+                ", but the provided array has length " + data.length + "."
+            );
         }
         DType dType = DType.DOUBLE;
         MemorySegment segment = arena.allocate(dType.layout, CalcSize);
