@@ -24,12 +24,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${jmh.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.jupiter.version}</version>
@@ -59,24 +53,22 @@
                 <configuration>
                     <useModulePath>false</useModulePath>
                     <argLine>--add-modules jdk.incubator.vector</argLine>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*Benchmark.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>pw.krejci</groupId>
+                <artifactId>jmh-maven-plugin</artifactId>
+                <version>0.2.2</version>
                 <configuration>
-                    <executable>java</executable>
-                    <classpathScope>test</classpathScope>
-                    <arguments>
-                        <argument>--add-modules</argument>
-                        <argument>jdk.incubator.vector</argument>
-                        <argument>-classpath</argument>
-                        <classpath/>
-                        <argument>org.openjdk.jmh.Main</argument>
-                        <argument>.*MatmulBenchmark.*</argument> 
-                    </arguments>
+                    <benchmarks>jnum\.benchmark\..*</benchmarks>
+                    <jvmArgsPrepend>--add-modules jdk.incubator.vector</jvmArgsPrepend>
                 </configuration>
             </plugin>
         </plugins>

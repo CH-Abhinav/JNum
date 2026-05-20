@@ -371,7 +371,11 @@ public class NDArray{
         if(Arrays.equals(this.shape,shape)) return this;
         int ndim=shape.length;
         if(ndim<this.ndim()){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(
+                "Cannot broadcast array of shape " + Arrays.toString(this.shape) +
+                " to target shape " + Arrays.toString(shape) +
+                " because the target has fewer dimensions."
+            );
         }
         int[] newStrides=new int[ndim];
         int[] paddedShape=new int[ndim];
@@ -391,7 +395,14 @@ public class NDArray{
         for(int i=0;i<ndim;i++){
             if(paddedShape[i]==shape[i]) newStrides[i]=paddedStrides[i];
             else if(paddedShape[i]==1) newStrides[i]=0;
-            else throw new IllegalArgumentException();
+            else {
+                throw new IllegalArgumentException(
+                    "Cannot broadcast array of shape " + Arrays.toString(this.shape) +
+                    " to target shape " + Arrays.toString(shape) +
+                    " because dimension " + i + " is incompatible: source dimension " +
+                    paddedShape[i] + " cannot expand to " + shape[i]
+                );
+            }
         }
 
         return new NDArray(this.data, shape, newStrides, this.dtype);

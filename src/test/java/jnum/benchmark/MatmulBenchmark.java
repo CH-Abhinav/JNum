@@ -1,4 +1,4 @@
-package jnum;
+package jnum.benchmark;
 
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +15,9 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
+
+import jnum.DType;
+import jnum.NDArray;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

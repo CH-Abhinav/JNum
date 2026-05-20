@@ -68,4 +68,63 @@ class NDArrayTest {
 
         assertTrue(ex.getMessage().contains("contiguous"));
     }
+
+    @Test
+    void addBroadcastsSmallerArrayAcrossLargerArray() {
+        NDArray left = NDArray.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
+        NDArray right = NDArray.from(new float[]{10f, 20f}, 2);
+
+        NDArray result = left.add(right);
+
+        assertArrayEquals(new int[]{2, 2}, result.shape());
+        assertEquals(11f, result.getFloat(0, 0), 1e-6f);
+        assertEquals(22f, result.getFloat(0, 1), 1e-6f);
+        assertEquals(13f, result.getFloat(1, 0), 1e-6f);
+        assertEquals(24f, result.getFloat(1, 1), 1e-6f);
+    }
+
+    @Test
+    void axisReductionsWorkForContiguousAndTransposedViews() {
+        NDArray dense = NDArray.from(new float[]{1f, 2f, 3f, 4f, 5f, 6f}, 2, 3);
+        NDArray transposed = dense.transpose();
+
+        NDArray denseSumAxisOne = dense.sum(1);
+        NDArray transposedSumAxisOne = transposed.sum(1);
+        NDArray transposedMaxAxisZero = transposed.max(0);
+
+        assertArrayEquals(new int[]{2}, denseSumAxisOne.shape());
+        assertEquals(6f, denseSumAxisOne.getFloat(0), 1e-6f);
+        assertEquals(15f, denseSumAxisOne.getFloat(1), 1e-6f);
+
+        assertArrayEquals(new int[]{3}, transposedSumAxisOne.shape());
+        assertEquals(5f, transposedSumAxisOne.getFloat(0), 1e-6f);
+        assertEquals(7f, transposedSumAxisOne.getFloat(1), 1e-6f);
+        assertEquals(9f, transposedSumAxisOne.getFloat(2), 1e-6f);
+
+        assertArrayEquals(new int[]{2}, transposedMaxAxisZero.shape());
+        assertEquals(3f, transposedMaxAxisZero.getFloat(0), 1e-6f);
+        assertEquals(6f, transposedMaxAxisZero.getFloat(1), 1e-6f);
+    }
+
+    @Test
+    void vectorizedExpTrigAndSqrtOpsProduceCorrectResults() {
+        NDArray sqrtInput = NDArray.from(new float[]{1f, 4f, 9f, 16f}, 4);
+        NDArray sinInput = NDArray.from(new double[]{0.0, Math.PI / 2.0}, 2);
+        NDArray expInput = NDArray.from(new double[]{0.0, 1.0}, 2);
+
+        NDArray sqrtResult = sqrtInput.sqrt();
+        NDArray sinResult = sinInput.sin();
+        NDArray expResult = expInput.exp();
+
+        assertEquals(1f, sqrtResult.getFloat(0), 1e-6f);
+        assertEquals(2f, sqrtResult.getFloat(1), 1e-6f);
+        assertEquals(3f, sqrtResult.getFloat(2), 1e-6f);
+        assertEquals(4f, sqrtResult.getFloat(3), 1e-6f);
+
+        assertEquals(0.0, sinResult.get(0), 1e-9);
+        assertEquals(1.0, sinResult.get(1), 1e-9);
+
+        assertEquals(1.0, expResult.get(0), 1e-9);
+        assertEquals(Math.E, expResult.get(1), 1e-9);
+    }
 }
