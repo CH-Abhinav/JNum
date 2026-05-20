@@ -8,6 +8,7 @@ import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorOperators;
 import jnum.NDArray;
+import jnum.jnumutils.ShapeUtil;
 
 public class ReduceOps {
     private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
@@ -27,6 +28,16 @@ public class ReduceOps {
     }
 
     public static double sumFloat(NDArray a){
+        if(!a.isContiguous()){
+            double total = 0.0;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                total += a.data.get(ValueLayout.JAVA_FLOAT, byteOffset);
+                iter.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vSum=FloatVector.zero(SPECIES);
@@ -42,6 +53,16 @@ public class ReduceOps {
     }
 
     public static double sumInt(NDArray a){
+        if(!a.isContiguous()){
+            double total = 0.0;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                total += a.data.get(ValueLayout.JAVA_INT, byteOffset);
+                iter.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=SPECIESINT.loopBound(a.size);
         var vSum=IntVector.zero(SPECIESINT);
@@ -57,6 +78,16 @@ public class ReduceOps {
     }
 
     public static double sumDouble(NDArray a){
+        if(!a.isContiguous()){
+            double total = 0.0;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                total += a.data.get(ValueLayout.JAVA_DOUBLE, byteOffset);
+                iter.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=SPECIESDB.loopBound(a.size);
         var vSum=DoubleVector.zero(SPECIESDB);
@@ -195,6 +226,16 @@ public class ReduceOps {
     }
 
     public static double maxFloat(NDArray a){
+        if(!a.isContiguous()){
+            float finalMax = Float.NEGATIVE_INFINITY;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMax = Math.max(finalMax, a.data.get(ValueLayout.JAVA_FLOAT, byteOffset));
+                iter.next();
+            }
+            return (double) finalMax;
+        }
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMax = FloatVector.broadcast(SPECIES, Float.NEGATIVE_INFINITY);
@@ -254,6 +295,16 @@ public class ReduceOps {
     }
 
     public static double maxInt(NDArray a) {
+        if(!a.isContiguous()){
+            int finalMax = Integer.MIN_VALUE;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMax = Math.max(finalMax, a.data.get(ValueLayout.JAVA_INT, byteOffset));
+                iter.next();
+            }
+            return (double) finalMax;
+        }
         long i = 0;
         long loopbound = SPECIESINT.loopBound(a.size);
         var vMax = IntVector.broadcast(SPECIESINT, Integer.MIN_VALUE);
@@ -311,6 +362,16 @@ public class ReduceOps {
     }
 
     public static double maxDouble(NDArray a) {
+        if(!a.isContiguous()){
+            double finalMax = Double.NEGATIVE_INFINITY;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMax = Math.max(finalMax, a.data.get(ValueLayout.JAVA_DOUBLE, byteOffset));
+                iter.next();
+            }
+            return finalMax;
+        }
         long i = 0;
         long loopbound = SPECIESDB.loopBound(a.size);
         var vMax = DoubleVector.broadcast(SPECIESDB, Double.NEGATIVE_INFINITY);
@@ -368,6 +429,16 @@ public class ReduceOps {
     }
 
     public static double minFloat(NDArray a){
+        if(!a.isContiguous()){
+            float finalMin = Float.POSITIVE_INFINITY;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMin = Math.min(finalMin, a.data.get(ValueLayout.JAVA_FLOAT, byteOffset));
+                iter.next();
+            }
+            return (double) finalMin;
+        }
         long i=0;
         long loopbound=SPECIES.loopBound(a.size);
         var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
@@ -427,6 +498,16 @@ public class ReduceOps {
     }
 
     public static double minInt(NDArray a) {
+        if(!a.isContiguous()){
+            int finalMin = Integer.MAX_VALUE;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMin = Math.min(finalMin, a.data.get(ValueLayout.JAVA_INT, byteOffset));
+                iter.next();
+            }
+            return (double) finalMin;
+        }
         long i = 0;
         long loopbound = SPECIESINT.loopBound(a.size);
         var vMin = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
@@ -484,6 +565,16 @@ public class ReduceOps {
     }
 
     public static double minDouble(NDArray a) {
+        if(!a.isContiguous()){
+            double finalMin = Double.POSITIVE_INFINITY;
+            NDIter iter = new NDIter(a.shape);
+            while(iter.hasNext){
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.strides, a.dtype);
+                finalMin = Math.min(finalMin, a.data.get(ValueLayout.JAVA_DOUBLE, byteOffset));
+                iter.next();
+            }
+            return finalMin;
+        }
         long i = 0;
         long loopbound = SPECIESDB.loopBound(a.size);
         var vMin = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
@@ -541,6 +632,19 @@ public class ReduceOps {
     }
 
     public static double dotFloat(NDArray a,NDArray b){
+        if(!a.isContiguous() || !b.isContiguous()){
+            double total = 0.0;
+            NDIter iterA = new NDIter(a.shape);
+            NDIter iterB = new NDIter(b.shape);
+            while(iterA.hasNext){
+                long byteOffsetA = ShapeUtil.getByteOffset(iterA.coords, a.strides, a.dtype);
+                long byteOffsetB = ShapeUtil.getByteOffset(iterB.coords, b.strides, b.dtype);
+                total += a.data.get(ValueLayout.JAVA_FLOAT, byteOffsetA) * b.data.get(ValueLayout.JAVA_FLOAT, byteOffsetB);
+                iterA.next();
+                iterB.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=a.size - (a.size % (VL * 2));
         var vSum1 = FloatVector.zero(SPECIES);
@@ -574,6 +678,19 @@ public class ReduceOps {
     }
 
     public static double dotInt(NDArray a,NDArray b){
+        if(!a.isContiguous() || !b.isContiguous()){
+            double total = 0.0;
+            NDIter iterA = new NDIter(a.shape);
+            NDIter iterB = new NDIter(b.shape);
+            while(iterA.hasNext){
+                long byteOffsetA = ShapeUtil.getByteOffset(iterA.coords, a.strides, a.dtype);
+                long byteOffsetB = ShapeUtil.getByteOffset(iterB.coords, b.strides, b.dtype);
+                total += (double) a.data.get(ValueLayout.JAVA_INT, byteOffsetA) * (double) b.data.get(ValueLayout.JAVA_INT, byteOffsetB);
+                iterA.next();
+                iterB.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=a.size - (a.size % (INT_VL * 2));
         var vSum1 = IntVector.zero(SPECIESINT);
@@ -607,6 +724,19 @@ public class ReduceOps {
     }
 
     public static double dotDouble(NDArray a,NDArray b){
+        if(!a.isContiguous() || !b.isContiguous()){
+            double total = 0.0;
+            NDIter iterA = new NDIter(a.shape);
+            NDIter iterB = new NDIter(b.shape);
+            while(iterA.hasNext){
+                long byteOffsetA = ShapeUtil.getByteOffset(iterA.coords, a.strides, a.dtype);
+                long byteOffsetB = ShapeUtil.getByteOffset(iterB.coords, b.strides, b.dtype);
+                total += a.data.get(ValueLayout.JAVA_DOUBLE, byteOffsetA) * b.data.get(ValueLayout.JAVA_DOUBLE, byteOffsetB);
+                iterA.next();
+                iterB.next();
+            }
+            return total;
+        }
         long i=0;
         long loopbound=a.size - (a.size % (DB_VL * 2));
         var vSum1 = DoubleVector.zero(SPECIESDB);

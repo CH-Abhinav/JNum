@@ -2,6 +2,8 @@ package jnum.jnumutils;
 
 import java.util.Arrays;
 
+import jnum.DType;
+
 public class ShapeUtil {
 
     public static int[] calculateDefaultStrides(int[] shape){
@@ -45,5 +47,13 @@ public class ShapeUtil {
             }
         }
         return reducedShape;
+    }
+
+    public static long getByteOffset(int[] coords, int[] strides, DType dtype) {
+        long elementOffset = 0;
+        for (int i = 0; i < coords.length; i++) {
+            elementOffset += (long) coords[i] * strides[i];
+        }
+        return elementOffset * dtype.layout.byteSize();
     }
 }

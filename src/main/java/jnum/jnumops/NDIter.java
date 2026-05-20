@@ -1,5 +1,7 @@
 package jnum.jnumops;
 
+import jnum.jnumutils.ShapeUtil;
+
 public class NDIter {
     public final int[] shape;
     public final int[] strides;
@@ -8,6 +10,10 @@ public class NDIter {
     public final int[] backstrides;
     public int offset;
     public boolean hasNext;
+
+    public NDIter(int[] shape){
+        this(shape, ShapeUtil.calculateDefaultStrides(shape));
+    }
     
     public NDIter(int[] shape,int[] strides){
         this.shape = shape;
@@ -22,7 +28,7 @@ public class NDIter {
         }
     }
 
-    void next(){
+    public void next(){
         int last=rank-1;
         while(last>=0){
             coords[last]++;

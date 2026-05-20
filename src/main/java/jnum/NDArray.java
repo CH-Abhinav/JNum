@@ -7,10 +7,12 @@ import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
+
 import jnum.jnumops.ArithmaticOps;
 import jnum.jnumops.CompareOps;
 import jnum.jnumops.ExpOps;
 import jnum.jnumops.MatMulOps;
+import jnum.jnumops.NDIter;
 import jnum.jnumops.ReduceOps;
 import jnum.jnumops.TrigOps;
 import jnum.jnumutils.ShapeUtil;
@@ -153,7 +155,10 @@ public class NDArray{
                 resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(max));
             }}
             case INTEGER->{for(long i=0;i<resArray.size;i++){
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException(
+                    "rand(float max, DType, shape) cannot generate FLOAT random values into dtype " +
+                    dType + " for shape " + Arrays.toString(shape)
+                );
             }}
             case DOUBLE->{for(long i=0;i<resArray.size;i++){
                 resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(max));
@@ -166,10 +171,16 @@ public class NDArray{
         NDArray resArray=NDArray.zeros(dType, shape);
         switch(dType){
             case FLOAT->{for(long i=0;i<resArray.size;i++){
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException(
+                    "rand(double max, DType, shape) cannot generate DOUBLE random values into dtype " +
+                    dType + " for shape " + Arrays.toString(shape)
+                );
             }}
             case INTEGER->{for(long i=0;i<resArray.size;i++){
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException(
+                    "rand(double max, DType, shape) cannot generate DOUBLE random values into dtype " +
+                    dType + " for shape " + Arrays.toString(shape)
+                );
             }}
             case DOUBLE->{for(long i=0;i<resArray.size;i++){
                 resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(max));
@@ -200,7 +211,10 @@ public class NDArray{
             case FLOAT->{for(long i=0;i<resArray.size;i++){
                 resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, ThreadLocalRandom.current().nextFloat(min,max));
             }}
-            case INTEGER->throw new IllegalArgumentException();
+            case INTEGER->throw new IllegalArgumentException(
+                "rand(float min, float max, DType, shape) cannot generate FLOAT random values into dtype " +
+                dType + " for shape " + Arrays.toString(shape)
+            );
             case DOUBLE->{for(long i=0;i<resArray.size;i++){
                 resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(min,max));
             }}
@@ -211,8 +225,14 @@ public class NDArray{
     public static NDArray rand(double min,double max,DType dType,int... shape){
         NDArray resArray=NDArray.zeros(dType, shape);
         switch(dType){
-            case FLOAT->throw new IllegalArgumentException();
-            case INTEGER->throw new IllegalArgumentException();
+            case FLOAT->throw new IllegalArgumentException(
+                "rand(double min, double max, DType, shape) cannot generate DOUBLE random values into dtype " +
+                dType + " for shape " + Arrays.toString(shape)
+            );
+            case INTEGER->throw new IllegalArgumentException(
+                "rand(double min, double max, DType, shape) cannot generate DOUBLE random values into dtype " +
+                dType + " for shape " + Arrays.toString(shape)
+            );
             case DOUBLE->{for(long i=0;i<resArray.size;i++){
                 resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, ThreadLocalRandom.current().nextDouble(min,max));
             }}
@@ -406,7 +426,22 @@ public class NDArray{
 
     public NDArray copy(){
         NDArray dups=NDArray.zeros(this.dtype, this.shape);
-        MemorySegment.copy(this.data, 0, dups.data, 0, this.data.byteSize());
+        if(this.isContiguous()){
+            MemorySegment.copy(this.data, 0, dups.data, 0, this.data.byteSize());
+            return dups;
+        }
+        NDIter srcIter = new NDIter(this.shape);
+        long dstIndex = 0;
+        while(srcIter.hasNext){
+            long byteOffset = ShapeUtil.getByteOffset(srcIter.coords, this.strides, this.dtype);
+            switch(this.dtype){
+                case FLOAT -> dups.data.setAtIndex(ValueLayout.JAVA_FLOAT, dstIndex, this.data.get(ValueLayout.JAVA_FLOAT, byteOffset));
+                case INTEGER -> dups.data.setAtIndex(ValueLayout.JAVA_INT, dstIndex, this.data.get(ValueLayout.JAVA_INT, byteOffset));
+                case DOUBLE -> dups.data.setAtIndex(ValueLayout.JAVA_DOUBLE, dstIndex, this.data.get(ValueLayout.JAVA_DOUBLE, byteOffset));
+            }
+            dstIndex++;
+            srcIter.next();
+        }
         return dups;
     }
 
@@ -466,25 +501,39 @@ public class NDArray{
         return offset;
     }
 
+    private void validateFlatIndex(long index) {
+        if (index < 0 || index >= this.size) {
+            throw new IndexOutOfBoundsException("Flat index " + index + " is out of bounds for size " + this.size);
+        }
+    }
+
     public double getFlat(long index){
+        validateFlatIndex(index);
+        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.shape, this.strides);
         return switch(this.dtype){
-            case FLOAT ->data.getAtIndex(ValueLayout.JAVA_FLOAT, index);
-            case INTEGER ->data.getAtIndex(ValueLayout.JAVA_INT, index);
-            case DOUBLE ->data.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
+            case FLOAT ->data.getAtIndex(ValueLayout.JAVA_FLOAT, physicalOffset);
+            case INTEGER ->data.getAtIndex(ValueLayout.JAVA_INT, physicalOffset);
+            case DOUBLE ->data.getAtIndex(ValueLayout.JAVA_DOUBLE, physicalOffset);
             default -> throw new AssertionError();
         };
     }
 
     public float getFlatFloat(long index) {
-        return data.getAtIndex(ValueLayout.JAVA_FLOAT, index);
+        validateFlatIndex(index);
+        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.shape, this.strides);
+        return data.getAtIndex(ValueLayout.JAVA_FLOAT, physicalOffset);
     }
 
     public int getFlatInt(long index){
-        return data.getAtIndex(ValueLayout.JAVA_INT, index);
+        validateFlatIndex(index);
+        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.shape, this.strides);
+        return data.getAtIndex(ValueLayout.JAVA_INT, physicalOffset);
     }
 
     public double getFlatDouble(long index){
-        return data.getAtIndex(ValueLayout.JAVA_DOUBLE, index);
+        validateFlatIndex(index);
+        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.shape, this.strides);
+        return data.getAtIndex(ValueLayout.JAVA_DOUBLE, physicalOffset);
     }
 
     public double get(int... indices){
@@ -498,7 +547,11 @@ public class NDArray{
             }
             flatIndex+=(long)indices[i]*strides[i];
         }
-        return getFlat(flatIndex);
+        return switch(this.dtype){
+            case FLOAT -> data.getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
+            case INTEGER -> data.getAtIndex(ValueLayout.JAVA_INT, flatIndex);
+            case DOUBLE -> data.getAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex);
+        };
     }
 
     public int getInt(int... indices){
@@ -512,7 +565,7 @@ public class NDArray{
             }
             flatIndex+=(long)indices[i]*strides[i];
         }
-        return getFlatInt(flatIndex);
+        return data.getAtIndex(ValueLayout.JAVA_INT, flatIndex);
     }
 
     public float getFloat(int... indices){
@@ -526,51 +579,48 @@ public class NDArray{
             }
             flatIndex+=(long)indices[i]*strides[i];
         }
-        return getFlatFloat(flatIndex);
+        return data.getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
     }
 
     public int[] indexOf(double b){
-        int[] indices=new int[this.shape.length];
+        NDIter iter = new NDIter(this.shape);
         switch(dtype){
             case FLOAT->{
-            var c= (float)b;
-            var epsilon=1e-6f;
-            for(long i=0;i<this.size;i++){
-                float val = this.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                if(Math.abs(c - val) < epsilon){
-                    for (int d = 0; d < this.shape.length; d++) {
-                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
+                var c= (float)b;
+                var epsilon=1e-6f;
+                while(iter.hasNext){
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, this.strides, this.dtype);
+                    float val = this.data.get(ValueLayout.JAVA_FLOAT, byteOffset);
+                    if(Math.abs(c - val) < epsilon){
+                        return iter.coords.clone();
                     }
-                    return indices;
+                    iter.next();
+                }
+            }
+            case INTEGER->{
+                var c= (int)b;
+                while(iter.hasNext){
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, this.strides, this.dtype);
+                    if(c==this.data.get(ValueLayout.JAVA_INT, byteOffset)){
+                        return iter.coords.clone();
+                    }
+                    iter.next();
+                }
+            }
+            case DOUBLE->{
+                var c= b;
+                var epsilon=1e-12;
+                while(iter.hasNext){
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, this.strides, this.dtype);
+                    var val=this.data.get(ValueLayout.JAVA_DOUBLE, byteOffset);
+                    if(Math.abs(c - val) < epsilon){
+                        return iter.coords.clone();
+                    }
+                    iter.next();
                 }
             }
         }
-        case INTEGER->{
-            var c= (int)b;
-            for(long i=0;i<this.size;i++){
-                if(c==this.data.getAtIndex(ValueLayout.JAVA_INT,i)){
-                    for (int d = 0; d < this.shape.length; d++) {
-                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
-                    }
-                    return indices;
-                }
-            }
-        }
-        case DOUBLE->{
-            var c= b;
-            var epsilon=1e-12;
-            for(long i=0;i<this.size;i++){
-                var val=this.data.getAtIndex(ValueLayout.JAVA_DOUBLE,i);
-                if(Math.abs(c - val) < epsilon){
-                    for (int d = 0; d < this.shape.length; d++) {
-                        indices[d] = (int) ((i / this.strides[d]) % this.shape[d]);
-                    }
-                    return indices;
-                    }
-                }
-            }
-        }
-    throw new NoSuchElementException();    
+        throw new NoSuchElementException();    
     }
 
     public int[] shape() {
@@ -597,18 +647,20 @@ public class NDArray{
     public String toString(){
         StringBuilder sb = new StringBuilder("NDArray" + shapeString() + " [");
         int maxPrint = 6;
+        NDIter iter = new NDIter(this.shape);
         for (long i = 0; i < size; i++) {
             if (i == maxPrint / 2 && size > maxPrint) {
                 sb.append("..., ");
-                i = size - (maxPrint / 2) - 1;
-                continue;
+            } else if (size <= maxPrint || i < maxPrint / 2 || i >= size - (maxPrint / 2)) {
+                long byteOffset = ShapeUtil.getByteOffset(iter.coords, this.strides, this.dtype);
+                switch(this.dtype){
+                    case INTEGER->sb.append(data.get(ValueLayout.JAVA_INT, byteOffset));
+                    case FLOAT->sb.append(data.get(ValueLayout.JAVA_FLOAT, byteOffset));
+                    case DOUBLE->sb.append(data.get(ValueLayout.JAVA_DOUBLE, byteOffset));
+                }
+                if (i < size - 1) sb.append(", ");
             }
-            switch(this.dtype){
-                case INTEGER->sb.append(data.getAtIndex(ValueLayout.JAVA_INT, i));
-                case FLOAT->sb.append(data.getAtIndex(ValueLayout.JAVA_FLOAT, i));
-                case DOUBLE->sb.append(data.getAtIndex(ValueLayout.JAVA_DOUBLE, i));
-            }
-            if (i < size - 1) sb.append(", ");
+            iter.next();
         }
         return sb.append("]").toString();
     }
@@ -674,10 +726,19 @@ public class NDArray{
         if (this.size != b.size) {
             throw new IllegalArgumentException("Vector sizes must match for dot product.");
         }
-        return switch(this.dtype){
-            case FLOAT->ReduceOps.dotFloat(this, b);
-            case INTEGER->ReduceOps.dotInt(this, b);
-            case DOUBLE->ReduceOps.dotDouble(this, b);
+        DType targetType = TypeUtil.promoteTypes(this.dtype, b.dtype);
+        NDArray A = this.cast(targetType);
+        NDArray B = b.cast(targetType);
+        if (!A.isContiguous()) {
+            A = A.contiguous();
+        }
+        if (!B.isContiguous()) {
+            B = B.contiguous();
+        }
+        return switch(targetType){
+            case FLOAT->ReduceOps.dotFloat(A, B);
+            case INTEGER->ReduceOps.dotInt(A, B);
+            case DOUBLE->ReduceOps.dotDouble(A, B);
         };
     }
 
@@ -1386,6 +1447,7 @@ public class NDArray{
         NDArray B = b.cast(targetType);
         int[] targetShape = new int[]{this.shape[0], b.shape[1]};
         NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
+        ValidUtil.validateOutputBuffer(targetRes);
         return switch(targetType){
             case FLOAT -> MatMulOps.matmulFloat(A, B, targetRes);
             case DOUBLE -> MatMulOps.matmulDouble(A, B, targetRes);

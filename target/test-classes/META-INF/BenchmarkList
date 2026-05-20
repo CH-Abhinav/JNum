@@ -1,1 +1,0 @@
-JMH S 20 jnum.MatmulBenchmark S 61 jnum.jmh_generated.MatmulBenchmark_testHardwareMatmul_jmhTest S 18 testHardwareMatmul S 11 AverageTime I 1 1 A 1 1 1 E I 1 2 T 3 2 s E I 2 50 T 3 2 s E I 1 1 E E E E E M 1 1 N 3 8 yAQNAYDA 8 1AQMAIDA 16 xAAMAIDA0AA===== U 12 MILLISECONDS E E 
