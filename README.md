@@ -22,7 +22,7 @@ One of the most massive advantages of using JNum over traditional libraries is t
 ## Installation
 
 ### System Requirements
-* **Java:** Works on Java 22 or higher (**Java 25 is highly recommended**).
+* **Java:** Works on Java 25.
 * **Build System:** Because JNum utilizes incubating hardware features, you must explicitly configure your build system to enable the Vector API.
 
 ### Maven Setup
