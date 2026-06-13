@@ -6,9 +6,10 @@ import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
+
+import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 import jnum.NDArray;
@@ -41,7 +42,7 @@ public class MatMulOps {
             MemorySegment memB_T = fastTranspose2D_Float(b.data, arena, m, p);
             MemorySegment memC = resArray.data;
 
-            if (n >= 1024 || m >= 1024 || p >= 1024) {
+            if (n >= 2048 || m >= 2048 || p >= 2048) {
                 POOL.invoke(new FJ_Packed_Float(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Float(memA, memB_T, memC, n, m, p, 0, n));
@@ -223,7 +224,7 @@ public class MatMulOps {
             MemorySegment memB_T = fastTranspose2D_Double(b.data, arena, m, p);
             MemorySegment memC = resArray.data;
 
-            if (n >= 1024 || m >= 1024 || p >= 1024) {
+            if (n >= 2048 || m >= 2048 || p >= 2048) {
                 POOL.invoke(new FJ_Packed_Double(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Double(memA, memB_T, memC, n, m, p, 0, n));
@@ -405,7 +406,7 @@ public class MatMulOps {
             MemorySegment memB_T = fastTranspose2D_Int(b.data, arena, m, p);
             MemorySegment memC = resArray.data;
 
-            if (n >= 1024 || m >= 1024 || p >= 1024) {
+            if (n >= 2048 || m >= 2048 || p >= 2048) {
                 POOL.invoke(new FJ_Packed_Int(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Int(memA, memB_T, memC, n, m, p, 0, n));
