@@ -12,7 +12,7 @@ public class ValidUtil {
             return array.broadcastTo(targetShape).cast(targetType);
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException(
-                "Cannot broadcast shape " + Arrays.toString(array.shape) +
+                "Cannot broadcast shape " + Arrays.toString(array.internalShapeUnsafe()) +
                 " to target shape " + Arrays.toString(targetShape) +
                 " for dtype promotion to " + targetType,
                 ex
@@ -21,11 +21,11 @@ public class ValidUtil {
     }
 
     public static NDArray validateResultArray(NDArray resArray, DType targetType, int[] targetShape) {
-        if (resArray.dtype != targetType) {
-            throw new IllegalArgumentException("Result dtype must be " + targetType + " but was " + resArray.dtype);
+        if (resArray.getDType() != targetType) {
+            throw new IllegalArgumentException("Result dtype must be " + targetType + " but was " + resArray.getDType());
         }
-        if (!Arrays.equals(resArray.shape, targetShape)) {
-            throw new IllegalArgumentException("Result shape must be " + Arrays.toString(targetShape) + " but was " + Arrays.toString(resArray.shape));
+        if (!Arrays.equals(resArray.internalShapeUnsafe(), targetShape)) {
+            throw new IllegalArgumentException("Result shape must be " + Arrays.toString(targetShape) + " but was " + Arrays.toString(resArray.internalShapeUnsafe()));
         }
         return resArray;
     }
@@ -34,22 +34,22 @@ public class ValidUtil {
         if (a.ndim() != 2 || b.ndim() != 2) {
             throw new IllegalArgumentException(
                 "Matmul requires 2D arrays, but got shapes " +
-                Arrays.toString(a.shape) + " and " + Arrays.toString(b.shape)
+                Arrays.toString(a.internalShapeUnsafe()) + " and " + Arrays.toString(b.internalShapeUnsafe())
             );
         }
-        if (a.shape[1] != b.shape[0]) {
+        if (a.internalShapeUnsafe()[1] != b.internalShapeUnsafe()[0]) {
             throw new IllegalArgumentException(
-                "Matmul shape mismatch: left shape " + Arrays.toString(a.shape) +
-                " and right shape " + Arrays.toString(b.shape) +
-                " are incompatible because " + a.shape[1] + " != " + b.shape[0]
+                "Matmul shape mismatch: left shape " + Arrays.toString(a.internalShapeUnsafe()) +
+                " and right shape " + Arrays.toString(b.internalShapeUnsafe()) +
+                " are incompatible because " + a.internalShapeUnsafe()[1] + " != " + b.internalShapeUnsafe()[0]
             );
         }
     }
 
     public static void checkSameDtype(NDArray a, NDArray b) {
-    if (a.dtype != b.dtype) {
+    if (a.getDType() != b.getDType()) {
         throw new IllegalArgumentException(
-            "DType mismatch: Cannot perform operation between " + a.dtype + " and " + b.dtype
+            "DType mismatch: Cannot perform operation between " + a.getDType() + " and " + b.getDType()
         );
     }
     }
@@ -58,7 +58,7 @@ public class ValidUtil {
         if (!res.isContiguous()) {
             throw new IllegalArgumentException(
                 "Output buffer must be contiguous, but got shape " +
-                Arrays.toString(res.shape) + " with strides " + Arrays.toString(res.strides)
+                Arrays.toString(res.internalShapeUnsafe()) + " with strides " + Arrays.toString(res.internalStridesUnsafe())
             );
         }
     }

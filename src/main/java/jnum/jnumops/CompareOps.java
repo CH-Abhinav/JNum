@@ -29,29 +29,29 @@ public class CompareOps {
     public static NDArray maximumFloat(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.size);
+            long loopBound = SPECIES.loopBound(a.getSize());
             
             for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.data, i * FLOAT_BYTES, ORDER);
-                var vB = FloatVector.fromMemorySegment(SPECIES, b.data, i * FLOAT_BYTES, ORDER);
+                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
+                var vB = FloatVector.fromMemorySegment(SPECIES, b.getData(), i * FLOAT_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.max(valA, valB));
+            for (; i < a.getSize(); i++) {
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                float valB = b.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.max(valA, valB));
             }
     }else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
-                float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.max(valA, valB));
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+                float valB = b.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.max(valA, valB));
                 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -64,25 +64,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.size);
+            long loopBound = SPECIES.loopBound(a.getSize());
             
             for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.data, i * FLOAT_BYTES, ORDER);
+                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.max(valA, b));
+            for (; i < a.getSize(); i++) {
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.max(valA, b));
             }
         }else{
-            var iterA=new NDIter(resArray.shape, a.strides);
-            var iterRes=new NDIter(resArray.shape, resArray.strides);
+            var iterA=new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes=new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                float valA= a.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.max(valA,b));
+                float valA= a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.max(valA,b));
                 
                 iterA.next(); iterRes.next();
             }
@@ -93,29 +93,29 @@ public class CompareOps {
     public static NDArray maximumDouble(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.size);
+            long loopBound = SPECIESDB.loopBound(a.getSize());
             
             for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
-                var vB = DoubleVector.fromMemorySegment(SPECIESDB, b.data, i * DB_BYTES, ORDER);
+                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+                var vB = DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), i * DB_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.max(valA, valB));
+            for (; i < a.getSize(); i++) {
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                double valB = b.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.max(valA, valB));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
-                double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.max(valA, valB));
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+                double valB = b.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.max(valA, valB));
 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -128,25 +128,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.size);
+            long loopBound = SPECIESDB.loopBound(a.getSize());
             
             for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
+                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.max(valA, b));
+            for (; i < a.getSize(); i++) {
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.max(valA, b));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.max(valA, b));
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.max(valA, b));
                 
                 iterA.next(); iterRes.next();
             }
@@ -157,29 +157,29 @@ public class CompareOps {
     public static NDArray maximumInt(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.size);
+            long loopBound = SPECIESINT.loopBound(a.getSize());
 
             for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
-                var vB = IntVector.fromMemorySegment(SPECIESINT, b.data, i * INT_BYTES, ORDER);
+                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vB = IntVector.fromMemorySegment(SPECIESINT, b.getData(), i * INT_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, Math.max(valA, valB));
+            for (; i < a.getSize(); i++) {
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                int valB = b.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, Math.max(valA, valB));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
-                int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.max(valA, valB));
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                int valB = b.getData().getAtIndex(ValueLayout.JAVA_INT, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.max(valA, valB));
 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -192,25 +192,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.size);
+            long loopBound = SPECIESINT.loopBound(a.getSize());
             
             for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
+                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.data, i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, Math.max(valA, b));
+            for (; i < a.getSize(); i++) {
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, Math.max(valA, b));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.max(valA, b));
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.max(valA, b));
                 
                 iterA.next(); iterRes.next();
             }
@@ -221,29 +221,29 @@ public class CompareOps {
     public static NDArray minimumFloat(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.size);
+            long loopBound = SPECIES.loopBound(a.getSize());
             
             for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.data, i * FLOAT_BYTES, ORDER);
-                var vB = FloatVector.fromMemorySegment(SPECIES, b.data, i * FLOAT_BYTES, ORDER);
+                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
+                var vB = FloatVector.fromMemorySegment(SPECIES, b.getData(), i * FLOAT_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.min(valA, valB));
+            for (; i < a.getSize(); i++) {
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                float valB = b.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.min(valA, valB));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
-                float valB = b.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.min(valA, valB));
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+                float valB = b.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.min(valA, valB));
                 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -256,25 +256,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.size);
+            long loopBound = SPECIES.loopBound(a.getSize());
             
             for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.data, i * FLOAT_BYTES, ORDER);
+                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.min(valA, b));
+            for (; i < a.getSize(); i++) {
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, Math.min(valA, b));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                float valA = a.data.getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.min(valA, b));
+                float valA = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, Math.min(valA, b));
                 
                 iterA.next(); iterRes.next();
             }
@@ -285,29 +285,29 @@ public class CompareOps {
     public static NDArray minimumDouble(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.size);
+            long loopBound = SPECIESDB.loopBound(a.getSize());
             
             for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
-                var vB = DoubleVector.fromMemorySegment(SPECIESDB, b.data, i * DB_BYTES, ORDER);
+                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+                var vB = DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), i * DB_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.min(valA, valB));
+            for (; i < a.getSize(); i++) {
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                double valB = b.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.min(valA, valB));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
-                double valB = b.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.min(valA, valB));
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+                double valB = b.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.min(valA, valB));
 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -320,25 +320,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.size);
+            long loopBound = SPECIESDB.loopBound(a.getSize());
             
             for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.data, i * DB_BYTES, ORDER);
+                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.min(valA, b));
+            for (; i < a.getSize(); i++) {
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.min(valA, b));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                double valA = a.data.getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.min(valA, b));
+                double valA = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.min(valA, b));
                 
                 iterA.next(); iterRes.next();
             }
@@ -349,29 +349,29 @@ public class CompareOps {
     public static NDArray minimumInt(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.size);
+            long loopBound = SPECIESINT.loopBound(a.getSize());
             
             for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
-                var vB = IntVector.fromMemorySegment(SPECIESINT, b.data, i * INT_BYTES, ORDER);
+                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vB = IntVector.fromMemorySegment(SPECIESINT, b.getData(), i * INT_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, Math.min(valA, valB));
+            for (; i < a.getSize(); i++) {
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                int valB = b.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, Math.min(valA, valB));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterB = new NDIter(resArray.shape, b.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
-                int valB = b.data.getAtIndex(ValueLayout.JAVA_INT, iterB.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.min(valA, valB));
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                int valB = b.getData().getAtIndex(ValueLayout.JAVA_INT, iterB.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.min(valA, valB));
 
                 iterA.next(); iterB.next(); iterRes.next();
             }
@@ -384,25 +384,25 @@ public class CompareOps {
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.size);
+            long loopBound = SPECIESINT.loopBound(a.getSize());
             
             for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.data, i * INT_BYTES, ORDER);
+                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vRes = vA.min(vB);
-                vRes.intoMemorySegment(resArray.data, i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
             }
 
-            for (; i < a.size; i++) {
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, i);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, i, Math.min(valA, b));
+            for (; i < a.getSize(); i++) {
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, Math.min(valA, b));
             }
         } else {
-            var iterA = new NDIter(resArray.shape, a.strides);
-            var iterRes = new NDIter(resArray.shape, resArray.strides);
+            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while(iterA.hasNext){
-                int valA = a.data.getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
-                resArray.data.setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.min(valA, b));
+                int valA = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.min(valA, b));
                 
                 iterA.next(); iterRes.next();
             }

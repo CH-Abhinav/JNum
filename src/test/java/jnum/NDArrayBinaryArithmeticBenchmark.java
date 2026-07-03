@@ -22,7 +22,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @Fork(1)
 @Threads(1)
 @Warmup(iterations = 1, time = 200, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 50, time = 200, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 200, timeUnit = TimeUnit.MILLISECONDS)
 public class NDArrayBinaryArithmeticBenchmark {
 
     @Param({"1024"})

@@ -30,19 +30,20 @@ public class MatMulOps {
     }
 
 
-    private static final int BLOCK_SIZE_Float = 64;
+    private static final int BLOCK_SIZE_Float = 32;
     private static final ThreadLocal<MemorySegment> threadLocalA_Float = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Float * BLOCK_SIZE_Float * 4L));
     private static final ThreadLocal<MemorySegment> threadLocalB_Float = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Float * BLOCK_SIZE_Float * 4L));
     private static final ThreadLocal<MemorySegment> threadLocalC_Float = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Float * BLOCK_SIZE_Float * 4L));
 
     public static NDArray matmulFloat(NDArray a, NDArray b, NDArray resArray) {
-        int n = a.shape[0]; int m = a.shape[1]; int p = b.shape[1];
+        int n = a.internalShapeUnsafe()[0]; int m = a.internalShapeUnsafe()[1]; int p = b.internalShapeUnsafe()[1];
         try(Arena arena = Arena.ofShared()) {
-            MemorySegment memA = a.isContiguous() ? a.data : a.contiguous(arena).data;
-            MemorySegment memB_T = fastTranspose2D_Float(b.data, arena, m, p);
-            MemorySegment memC = resArray.data;
+            MemorySegment memA = a.isContiguous() ? a.getData() : a.contiguous(arena).getData();
+            MemorySegment memB= b.isContiguous() ? b.getData() : b.contiguous().getData();
+            MemorySegment memB_T = fastTranspose2D_Float(memB, arena, m, p);
+            MemorySegment memC = resArray.getData();
 
-            if (n >= 2048 || m >= 2048 || p >= 2048) {
+            if (n >= 3072 || m >= 3072 || p >= 3072) {
                 POOL.invoke(new FJ_Packed_Float(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Float(memA, memB_T, memC, n, m, p, 0, n));
@@ -218,13 +219,14 @@ public class MatMulOps {
     private static final ThreadLocal<MemorySegment> threadLocalC_Double = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Double * BLOCK_SIZE_Double * 8L));
 
     public static NDArray matmulDouble(NDArray a, NDArray b, NDArray resArray) {
-        int n = a.shape[0]; int m = a.shape[1]; int p = b.shape[1];
+        int n = a.internalShapeUnsafe()[0]; int m = a.internalShapeUnsafe()[1]; int p = b.internalShapeUnsafe()[1];
         try(Arena arena = Arena.ofShared()) {
-            MemorySegment memA = a.isContiguous() ? a.data : a.contiguous(arena).data;
-            MemorySegment memB_T = fastTranspose2D_Double(b.data, arena, m, p);
-            MemorySegment memC = resArray.data;
+            MemorySegment memA = a.isContiguous() ? a.getData() : a.contiguous(arena).getData();
+            MemorySegment memB= b.isContiguous() ? b.getData() : b.contiguous().getData();
+            MemorySegment memB_T = fastTranspose2D_Double(memB, arena, m, p);
+            MemorySegment memC = resArray.getData();
 
-            if (n >= 2048 || m >= 2048 || p >= 2048) {
+            if (n >= 3072 || m >= 3072 || p >= 3072) {
                 POOL.invoke(new FJ_Packed_Double(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Double(memA, memB_T, memC, n, m, p, 0, n));
@@ -394,19 +396,20 @@ public class MatMulOps {
     }
 
 
-    private static final int BLOCK_SIZE_Int = 64;
+    private static final int BLOCK_SIZE_Int = 32;
     private static final ThreadLocal<MemorySegment> threadLocalA_Int = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Int * BLOCK_SIZE_Int * 4L));
     private static final ThreadLocal<MemorySegment> threadLocalB_Int = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Int * BLOCK_SIZE_Int * 4L));
     private static final ThreadLocal<MemorySegment> threadLocalC_Int = ThreadLocal.withInitial(() -> Arena.ofAuto().allocate((long) BLOCK_SIZE_Int * BLOCK_SIZE_Int * 4L));
 
     public static NDArray matmulInt(NDArray a, NDArray b, NDArray resArray) {
-        int n = a.shape[0]; int m = a.shape[1]; int p = b.shape[1];
+        int n = a.internalShapeUnsafe()[0]; int m = a.internalShapeUnsafe()[1]; int p = b.internalShapeUnsafe()[1];
         try(Arena arena = Arena.ofShared()) {
-            MemorySegment memA = a.isContiguous() ? a.data : a.contiguous(arena).data;
-            MemorySegment memB_T = fastTranspose2D_Int(b.data, arena, m, p);
-            MemorySegment memC = resArray.data;
+            MemorySegment memA = a.isContiguous() ? a.getData() : a.contiguous(arena).getData();
+            MemorySegment memB= b.isContiguous() ? b.getData() : b.contiguous().getData();
+            MemorySegment memB_T = fastTranspose2D_Int(memB, arena, m, p);
+            MemorySegment memC = resArray.getData();
 
-            if (n >= 2048 || m >= 2048 || p >= 2048) {
+            if (n >= 3072 || m >= 3072 || p >= 3072) {
                 POOL.invoke(new FJ_Packed_Int(memA, memB_T, memC, n, m, p, 0, n));
             } else {
                 POOL.invoke(new AVX2Int(memA, memB_T, memC, n, m, p, 0, n));
