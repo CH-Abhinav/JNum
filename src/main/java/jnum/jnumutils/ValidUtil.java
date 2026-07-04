@@ -31,7 +31,7 @@ public class ValidUtil {
     }
 
     public static void validateMatmulInputs(NDArray a, NDArray b) {
-        if (a.ndim() != 2 || b.ndim() != 2) {
+        if (a.dim() != 2 || b.dim() != 2) {
             throw new IllegalArgumentException(
                 "Matmul requires 2D arrays, but got shapes " +
                 Arrays.toString(a.internalShapeUnsafe()) + " and " + Arrays.toString(b.internalShapeUnsafe())

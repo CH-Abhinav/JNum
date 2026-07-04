@@ -6,7 +6,7 @@
 
     <groupId>com.github.ch-abhinav</groupId>
     <artifactId>jnum</artifactId>
-    <version>0.1.0-PREVIEW</version>
+    <version>0.1</version>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source> 

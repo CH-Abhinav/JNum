@@ -72,7 +72,7 @@ public class NDArrayBinaryArithmeticTest {
     }
 
     private static void assertMatrixEquals(float[][] expected, NDArray actual) {
-        assertArrayEquals(new int[]{expected.length, expected[0].length}, actual.shape());
+        assertArrayEquals(new int[]{expected.length, expected[0].length}, actual.getShape());
         for (int row = 0; row < expected.length; row++) {
             for (int col = 0; col < expected[row].length; col++) {
                 assertEquals(expected[row][col], actual.getFloat(row, col), 1e-5f);

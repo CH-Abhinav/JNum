@@ -324,7 +324,7 @@ public class NDArray{
     }
 
     public NDArray transpose(){
-        if(ndim()<2) return this;
+        if(dim()<2) return this;
         var newShape=new int[this.internalShapeUnsafe().length];
         var newStrides=new int[this.internalStridesUnsafe().length];
         for(int i = 0; i< this.internalShapeUnsafe().length; i++){
@@ -383,7 +383,7 @@ public class NDArray{
     public NDArray broadcastTo(int ... shape){
         if(Arrays.equals(this.internalShapeUnsafe(),shape)) return this;
         int ndim=shape.length;
-        if(ndim<this.ndim()){
+        if(ndim<this.dim()){
             throw new IllegalArgumentException(
                 "Cannot broadcast array of shape " + Arrays.toString(this.internalShapeUnsafe()) +
                 " to target shape " + Arrays.toString(shape) +
@@ -393,7 +393,7 @@ public class NDArray{
         int[] newStrides=new int[ndim];
         int[] paddedShape=new int[ndim];
         int[] paddedStrides=new int[ndim];
-        int offset=ndim-this.ndim();
+        int offset=ndim-this.dim();
         for(int i=0;i<ndim;i++){
             if(i<offset){
                 paddedShape[i]=1;
@@ -652,14 +652,13 @@ public class NDArray{
         throw new NoSuchElementException();    
     }
 
-    public int[] shape() {
+    public int[] getShape() {
         return internalShapeUnsafe().clone();
     }
 
-    public int ndim() {
+    public int dim() {
         return internalShapeUnsafe().length;
     }
-
 
     public DType getDType(){
         return dtype;
@@ -762,7 +761,7 @@ public class NDArray{
     }
 
     public double dot(NDArray b){
-        if (this.ndim() != 1 || b.ndim() != 1) {
+        if (this.dim() != 1 || b.dim() != 1) {
             throw new IllegalArgumentException("Dot product requires 1D vectors. Shapes: " + this.shapeString() + ", " + b.shapeString());
         }
         if (this.getSize() != b.getSize()) {

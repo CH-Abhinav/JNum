@@ -48,7 +48,7 @@ class NDArrayTest {
         NDArray result = left.matmul(right);
 
         assertEquals(DType.DOUBLE, result.getDType());
-        assertArrayEquals(new int[]{2, 2}, result.shape());
+        assertArrayEquals(new int[]{2, 2}, result.getShape());
         assertEquals(19.0, result.get(0, 0), 1e-9);
         assertEquals(22.0, result.get(0, 1), 1e-9);
         assertEquals(43.0, result.get(1, 0), 1e-9);
@@ -76,7 +76,7 @@ class NDArrayTest {
 
         NDArray result = left.add(right);
 
-        assertArrayEquals(new int[]{2, 2}, result.shape());
+        assertArrayEquals(new int[]{2, 2}, result.getShape());
         assertEquals(11f, result.getFloat(0, 0), 1e-6f);
         assertEquals(22f, result.getFloat(0, 1), 1e-6f);
         assertEquals(13f, result.getFloat(1, 0), 1e-6f);
@@ -92,16 +92,16 @@ class NDArrayTest {
         NDArray transposedSumAxisOne = transposed.sum(1);
         NDArray transposedMaxAxisZero = transposed.max(0);
 
-        assertArrayEquals(new int[]{2}, denseSumAxisOne.shape());
+        assertArrayEquals(new int[]{2}, denseSumAxisOne.getShape());
         assertEquals(6f, denseSumAxisOne.getFloat(0), 1e-6f);
         assertEquals(15f, denseSumAxisOne.getFloat(1), 1e-6f);
 
-        assertArrayEquals(new int[]{3}, transposedSumAxisOne.shape());
+        assertArrayEquals(new int[]{3}, transposedSumAxisOne.getShape());
         assertEquals(5f, transposedSumAxisOne.getFloat(0), 1e-6f);
         assertEquals(7f, transposedSumAxisOne.getFloat(1), 1e-6f);
         assertEquals(9f, transposedSumAxisOne.getFloat(2), 1e-6f);
 
-        assertArrayEquals(new int[]{2}, transposedMaxAxisZero.shape());
+        assertArrayEquals(new int[]{2}, transposedMaxAxisZero.getShape());
         assertEquals(3f, transposedMaxAxisZero.getFloat(0), 1e-6f);
         assertEquals(6f, transposedMaxAxisZero.getFloat(1), 1e-6f);
     }
