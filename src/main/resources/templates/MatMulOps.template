@@ -6,11 +6,12 @@ import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
+
+import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.DoubleVector;
-import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.VectorOperators;
 import jnum.NDArray;
 
 public class MatMulOps {
@@ -19,8 +20,16 @@ public class MatMulOps {
     private static final VectorSpecies<Integer> SPECIESINT = IntVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Double> SPECIESDB = DoubleVector.SPECIES_PREFERRED;
     
-    private static final ForkJoinPool POOL = ForkJoinPool.commonPool();
+    private static final ForkJoinPool POOL = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
     private static final int THRESHOLD = 64;
+    private static final ByteOrder NATIVE= ByteOrder.nativeOrder();
+
+    private static final int MC = 96;
+    private static final int KC = 256;
+    private static final int NC_ARM = 1024;
+    private static final int NC_AARCH = 1008;
+
+    // non instanciable utility class
 
     private MatMulOps() {
         throw new AssertionError();

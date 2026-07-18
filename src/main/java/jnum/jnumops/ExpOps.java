@@ -8,6 +8,7 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorOperators;
 import jnum.NDArray;
+import jnum.jnumops.NDIter;
 
 public class ExpOps {
     private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
@@ -30,7 +31,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (VL * 2));
-            
+                         
             for (; i < loopbound; i += VL * 2) {
                 var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
@@ -39,23 +40,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIES.loopBound(a.getSize());
             for (; i < loopbound; i += VL) {
                 var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.SQRT);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.sqrt(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.sqrt(val));
@@ -71,7 +70,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
-            
+                         
             for (; i < loopbound; i += DB_VL * 2) {
                 var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
@@ -80,23 +79,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
             }
-
             loopbound = SPECIESDB.loopBound(a.getSize());
             for (; i < loopbound; i += DB_VL) {
                 var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.SQRT);
                 VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.sqrt(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.sqrt(val));
@@ -112,7 +109,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
-            
+                         
             for (; i < loopbound; i += INT_VL * 2) {
                 var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
@@ -123,7 +120,6 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIESINT.loopBound(a.getSize());
             for (; i < loopbound; i += INT_VL) {
                 var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
@@ -131,16 +127,15 @@ public class ExpOps {
                 var VRes = vFloat.lanewise(VectorOperators.SQRT);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.sqrt(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.sqrt(val));
@@ -156,7 +151,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (VL * 2));
-            
+                         
             for (; i < loopbound; i += VL * 2) {
                 var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
@@ -165,23 +160,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIES.loopBound(a.getSize());
             for (; i < loopbound; i += VL) {
                 var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.ABS);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.abs(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.abs(val));
@@ -197,7 +190,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
-            
+                         
             for (; i < loopbound; i += DB_VL * 2) {
                 var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
@@ -206,23 +199,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
             }
-
             loopbound = SPECIESDB.loopBound(a.getSize());
             for (; i < loopbound; i += DB_VL) {
                 var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.ABS);
                 VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.abs(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.abs(val));
@@ -238,7 +229,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
-            
+                         
             for (; i < loopbound; i += INT_VL * 2) {
                 var v1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var v2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
@@ -247,23 +238,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * INT_BYTES, ORDER);
             }
-
             loopbound = SPECIESINT.loopBound(a.getSize());
             for (; i < loopbound; i += INT_VL) {
                 var v = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.ABS);
                 VRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, (int) Math.abs(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, (int) Math.abs(val));
@@ -279,7 +268,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (VL * 2));
-            
+                         
             for (; i < loopbound; i += VL * 2) {
                 var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
@@ -288,23 +277,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIES.loopBound(a.getSize());
             for (; i < loopbound; i += VL) {
                 var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.EXP);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.exp(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.exp(val));
@@ -320,7 +307,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
-            
+                         
             for (; i < loopbound; i += DB_VL * 2) {
                 var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
@@ -329,23 +316,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
             }
-
             loopbound = SPECIESDB.loopBound(a.getSize());
             for (; i < loopbound; i += DB_VL) {
                 var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.EXP);
                 VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.exp(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.exp(val));
@@ -361,7 +346,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
-            
+                         
             for (; i < loopbound; i += INT_VL * 2) {
                 var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
@@ -372,7 +357,6 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIESINT.loopBound(a.getSize());
             for (; i < loopbound; i += INT_VL) {
                 var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
@@ -380,16 +364,15 @@ public class ExpOps {
                 var VRes = vFloat.lanewise(VectorOperators.EXP);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.exp(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.exp(val));
@@ -405,7 +388,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (VL * 2));
-            
+                         
             for (; i < loopbound; i += VL * 2) {
                 var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
@@ -414,23 +397,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIES.loopBound(a.getSize());
             for (; i < loopbound; i += VL) {
                 var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.LOG);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.log(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.log(val));
@@ -446,7 +427,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
-            
+                         
             for (; i < loopbound; i += DB_VL * 2) {
                 var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
@@ -455,23 +436,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
             }
-
             loopbound = SPECIESDB.loopBound(a.getSize());
             for (; i < loopbound; i += DB_VL) {
                 var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.LOG);
                 VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.log(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.log(val));
@@ -487,7 +466,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
-            
+                         
             for (; i < loopbound; i += INT_VL * 2) {
                 var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
@@ -498,7 +477,6 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIESINT.loopBound(a.getSize());
             for (; i < loopbound; i += INT_VL) {
                 var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
@@ -506,16 +484,15 @@ public class ExpOps {
                 var VRes = vFloat.lanewise(VectorOperators.LOG);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.log(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.log(val));
@@ -531,7 +508,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (VL * 2));
-            
+                         
             for (; i < loopbound; i += VL * 2) {
                 var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
@@ -540,23 +517,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIES.loopBound(a.getSize());
             for (; i < loopbound; i += VL) {
                 var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.LOG10);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.log10(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.log10(val));
@@ -572,7 +547,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
-            
+                         
             for (; i < loopbound; i += DB_VL * 2) {
                 var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
@@ -581,23 +556,21 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
             }
-
             loopbound = SPECIESDB.loopBound(a.getSize());
             for (; i < loopbound; i += DB_VL) {
                 var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
                 var VRes = v.lanewise(VectorOperators.LOG10);
                 VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, Math.log10(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, Math.log10(val));
@@ -613,7 +586,7 @@ public class ExpOps {
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
-            
+                         
             for (; i < loopbound; i += INT_VL * 2) {
                 var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
                 var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
@@ -624,7 +597,6 @@ public class ExpOps {
                 VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
             }
-
             loopbound = SPECIESINT.loopBound(a.getSize());
             for (; i < loopbound; i += INT_VL) {
                 var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
@@ -632,16 +604,15 @@ public class ExpOps {
                 var VRes = vFloat.lanewise(VectorOperators.LOG10);
                 VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
             }
-
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) Math.log10(val));
             }
-            
+                     
         } else {
             jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
             jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
-            
+                         
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.log10(val));

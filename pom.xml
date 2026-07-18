@@ -92,6 +92,54 @@
                     <jvmArgsPrepend>--add-modules jdk.incubator.vector</jvmArgsPrepend>
                 </configuration>
             </plugin>
+            <plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>exec-maven-plugin</artifactId>
+    <version>3.1.0</version>
+    <executions>
+        <execution>
+            <id>generate-arithmetic-ops</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>exec</goal>
+            </goals>
+            <configuration>
+                <executable>python</executable>
+                <arguments>
+                    <argument>${project.basedir}/generators/generate_arithmetic.py</argument>
+                </arguments>
+            </configuration>
+        </execution>
+        
+        <execution>
+            <id>generate-exp-ops</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>exec</goal>
+            </goals>
+            <configuration>
+                <executable>python</executable>
+                <arguments>
+                    <argument>${project.basedir}/generators/generate_exp.py</argument>
+                </arguments>
+            </configuration>
+        </execution>
+        
+        <execution>
+            <id>generate-matmul-ops</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>exec</goal>
+            </goals>
+            <configuration>
+                <executable>python</executable>
+                <arguments>
+                    <argument>${project.basedir}/generators/generate_matmul.py</argument>
+                </arguments>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
         </plugins>
     </build>
     

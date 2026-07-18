@@ -25,9 +25,9 @@ import jnum.NDArray;
 @Fork(1)
 @Threads(1)
 @Warmup(iterations = 2, time = 2)
-@Measurement(iterations = 20, time = 2)
+@Measurement(iterations = 5, time = 2)
 public class MatmulBenchmark {
-    @Param({"256", "512", "1024","2048","4096"})
+    @Param({"128","256", "512", "1024","2048","4096","8192"})
     private int N;
 
     private NDArray A;

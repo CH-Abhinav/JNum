@@ -9,7 +9,7 @@ import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorMask;
 import jnum.NDArray;
 
-public class ArithmaticOps {
+public class ArithmeticOps {
     private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Integer> SPECIESINT = IntVector.SPECIES_PREFERRED;
     private static final VectorSpecies<Double> SPECIESDB = DoubleVector.SPECIES_PREFERRED;
@@ -22,7 +22,7 @@ public class ArithmaticOps {
     private static final int DB_VL = SPECIESDB.length();
 
     // Non-instantiable utility class    
-    private ArithmaticOps() {
+    private ArithmeticOps() {
         throw new AssertionError();
     }
 
