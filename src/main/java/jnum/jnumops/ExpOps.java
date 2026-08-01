@@ -246,7 +246,7 @@ public class ExpOps {
             }
             for (; i < a.getSize(); i++) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
-                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, (int) Math.abs(val));
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, i, Math.abs(val));
             }
                      
         } else {
@@ -255,7 +255,7 @@ public class ExpOps {
                          
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
-                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, (int) Math.abs(val));
+                resArray.getData().setAtIndex(ValueLayout.JAVA_INT, iterRes.offset, Math.abs(val));
                 iterA.next();
                 iterRes.next();
             }
@@ -616,6 +616,129 @@ public class ExpOps {
             while (iterA.hasNext) {
                 int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
                 resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) Math.log10(val));
+                iterA.next();
+                iterRes.next();
+            }
+        }
+        return resArray;
+    }
+
+
+    public static NDArray sigmoidFloat(NDArray a, NDArray resArray) {
+        var vOne = FloatVector.broadcast(SPECIES, 1.0f);
+        if (a.isContiguous() && resArray.isContiguous()) {
+            long i = 0;
+            long loopbound = a.getSize() - (a.getSize() % (VL * 2));
+                         
+            for (; i < loopbound; i += VL * 2) {
+                var v1 = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
+                var v2 = FloatVector.fromMemorySegment(SPECIES, a.getData(), (i + VL) * FLOAT_BYTES, ORDER);
+                var VRes1 = vOne.div(v1.neg().lanewise(VectorOperators.EXP).add(vOne));
+                var VRes2 = vOne.div(v2.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + VL) * FLOAT_BYTES, ORDER);
+            }
+            loopbound = SPECIES.loopBound(a.getSize());
+            for (; i < loopbound; i += VL) {
+                var v = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
+                var VRes = vOne.div(v.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+            }
+            for (; i < a.getSize(); i++) {
+                float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) (1.0f / (1.0f + Math.exp(-val))));
+            }
+                     
+        } else {
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+                         
+            while (iterA.hasNext) {
+                float val = a.getData().getAtIndex(ValueLayout.JAVA_FLOAT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) (1.0f / (1.0f + Math.exp(-val))));
+                iterA.next();
+                iterRes.next();
+            }
+        }
+        return resArray;
+    }
+
+
+    public static NDArray sigmoidDouble(NDArray a, NDArray resArray) {
+        var vOne = DoubleVector.broadcast(SPECIESDB, 1.0);
+        if (a.isContiguous() && resArray.isContiguous()) {
+            long i = 0;
+            long loopbound = a.getSize() - (a.getSize() % (DB_VL * 2));
+                         
+            for (; i < loopbound; i += DB_VL * 2) {
+                var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+                var v2 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i + DB_VL) * DB_BYTES, ORDER);
+                var VRes1 = vOne.div(v1.neg().lanewise(VectorOperators.EXP).add(vOne));
+                var VRes2 = vOne.div(v2.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes1.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + DB_VL) * DB_BYTES, ORDER);
+            }
+            loopbound = SPECIESDB.loopBound(a.getSize());
+            for (; i < loopbound; i += DB_VL) {
+                var v = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+                var VRes = vOne.div(v.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
+            }
+            for (; i < a.getSize(); i++) {
+                double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, i, (1.0 / (1.0 + Math.exp(-val))));
+            }
+                     
+        } else {
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+                         
+            while (iterA.hasNext) {
+                double val = a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, iterRes.offset, (1.0 / (1.0 + Math.exp(-val))));
+                iterA.next();
+                iterRes.next();
+            }
+        }
+        return resArray;
+    }
+
+
+    public static NDArray sigmoidInt(NDArray a, NDArray resArray) {
+        var vOne = FloatVector.broadcast(SPECIES, 1.0f);
+        if (a.isContiguous() && resArray.isContiguous()) {
+            long i = 0;
+            long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
+                         
+            for (; i < loopbound; i += INT_VL * 2) {
+                var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
+                var vFloat1 = vInt1.convert(VectorOperators.I2F, 0);
+                var vFloat2 = vInt2.convert(VectorOperators.I2F, 0);
+                var VRes1 = vOne.div(vFloat1.neg().lanewise(VectorOperators.EXP).add(vOne));
+                var VRes2 = vOne.div(vFloat2.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
+            }
+            loopbound = SPECIESINT.loopBound(a.getSize());
+            for (; i < loopbound; i += INT_VL) {
+                var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vFloat = vInt.convert(VectorOperators.I2F, 0);
+                var VRes = vOne.div(vFloat.neg().lanewise(VectorOperators.EXP).add(vOne));
+                VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+            }
+            for (; i < a.getSize(); i++) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) (1.0f / (1.0f + Math.exp(-val))));
+            }
+                     
+        } else {
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+                         
+            while (iterA.hasNext) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) (1.0f / (1.0f + Math.exp(-val))));
                 iterA.next();
                 iterRes.next();
             }

@@ -4,144 +4,191 @@ TYPE_MAPPINGS = [
     {
         "Title": "Float", "primitive": "float", "VectorClass": "FloatVector",
         "Species": "SPECIES", "Layout": "ValueLayout.JAVA_FLOAT",
-        "Bytes": "FLOAT_BYTES", "Vl": "VL"
+        "Bytes": "FLOAT_BYTES", "Vl": "VL", "MathCast": "(float) ", "ScalarSuffix": "f"
     },
     {
         "Title": "Double", "primitive": "double", "VectorClass": "DoubleVector",
         "Species": "SPECIESDB", "Layout": "ValueLayout.JAVA_DOUBLE",
-        "Bytes": "DB_BYTES", "Vl": "DB_VL"
+        "Bytes": "DB_BYTES", "Vl": "DB_VL", "MathCast": "", "ScalarSuffix": ""
     },
     {
         "Title": "Int", "primitive": "int", "VectorClass": "IntVector",
         "Species": "SPECIESINT", "Layout": "ValueLayout.JAVA_INT",
-        "Bytes": "INT_BYTES", "Vl": "INT_VL"
+        "Bytes": "INT_BYTES", "Vl": "INT_VL", "MathCast": "(float) ", "ScalarSuffix": "f"
     }
 ]
 
 OPERATIONS = [
-    {"name": "add", "VectorOp": "add", "ScalarOp": "+"},
-    {"name": "sub", "VectorOp": "sub", "ScalarOp": "-"},
-    {"name": "mul", "VectorOp": "mul", "ScalarOp": "*"},
-    {"name": "div", "VectorOp": "div", "ScalarOp": "/"}
+    {"name": "sqrt", "VectorOp": "lanewise(VectorOperators.SQRT)", "ScalarOp": "Math.sqrt"},
+    {"name": "abs",  "VectorOp": "lanewise(VectorOperators.ABS)",  "ScalarOp": "Math.abs"},
+    {"name": "exp",  "VectorOp": "lanewise(VectorOperators.EXP)",  "ScalarOp": "Math.exp"},
+    {"name": "log",  "VectorOp": "lanewise(VectorOperators.LOG)",  "ScalarOp": "Math.log"},
+    {"name": "log10",  "VectorOp": "lanewise(VectorOperators.LOG10)",  "ScalarOp": "Math.log10"},
+    {"name": "sigmoid", "VectorOp": "", "ScalarOp": ""} # Handled via custom templates
 ]
 
-ARITHMETIC_TEMPLATE = """
-    public static NDArray <OpName><Title>(NDArray a, NDArray b, NDArray resArray) {
-        if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
+STANDARD_TEMPLATE = """
+    public static NDArray <OpName><Title>(NDArray a, NDArray resArray) {
+        if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (<Vl> * 2));
                          
             for (; i < loopbound; i += <Vl> * 2) {
-                var vA1 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
-                var vA2 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), (i + <Vl>) * <Bytes>, ORDER);
-                var vB1 = <VectorClass>.fromMemorySegment(<Species>, b.getData(), i * <Bytes>, ORDER);
-                var vB2 = <VectorClass>.fromMemorySegment(<Species>, b.getData(), (i + <Vl>) * <Bytes>, ORDER);
-                                 
-                var VRes1 = vA1.<VectorOp>(vB1);
-                var VRes2 = vA2.<VectorOp>(vB2);
-                                 
+                var v1 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
+                var v2 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), (i + <Vl>) * <Bytes>, ORDER);
+                var VRes1 = v1.<VectorOp>;
+                var VRes2 = v2.<VectorOp>;
                 VRes1.intoMemorySegment(resArray.getData(), i * <Bytes>, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + <Vl>) * <Bytes>, ORDER);
             }
             loopbound = <Species>.loopBound(a.getSize());
             for (; i < loopbound; i += <Vl>) {
-                var vA = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
-                var vB = <VectorClass>.fromMemorySegment(<Species>, b.getData(), i * <Bytes>, ORDER);
-                var VRes = vA.<VectorOp>(vB);
+                var v = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
+                var VRes = v.<VectorOp>;
                 VRes.intoMemorySegment(resArray.getData(), i * <Bytes>, ORDER);
             }
             for (; i < a.getSize(); i++) {
-                <primitive> valA = a.getData().getAtIndex(<Layout>, i);
-                <primitive> valB = b.getData().getAtIndex(<Layout>, i);
-                resArray.getData().setAtIndex(<Layout>, i, (<primitive>)(valA <ScalarOp> valB));
+                <primitive> val = a.getData().getAtIndex(<Layout>, i);
+                resArray.getData().setAtIndex(<Layout>, i, <MathCast><ScalarOp>(val));
             }
+                     
         } else {
-            int vl = <Species>.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
                          
-            <primitive>[] bufA = new <primitive>[vl];
-            <primitive>[] bufB = new <primitive>[vl];
-            <primitive>[] bufRes = new <primitive>[vl];
-            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            var iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
-            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
             while (iterA.hasNext) {
-                int validLanes = iterA.nextVector(mapA, vl);
-                iterB.nextVector(mapB, vl);
-                iterRes.nextVector(mapRes, vl);
-                for(int k=0; k < validLanes; k++) {
-                    bufA[k] = a.getData().getAtIndex(<Layout>, mapA[k]);
-                    bufB[k] = b.getData().getAtIndex(<Layout>, mapB[k]);
-                }
-                var mask = <Species>.indexInRange(0, validLanes);
-                var vA = <VectorClass>.fromArray(<Species>, bufA, 0, mask);
-                var vB = <VectorClass>.fromArray(<Species>, bufB, 0, mask);
-                                 
-                var vRes = vA.<VectorOp>(vB);
-                                 
-                vRes.intoArray(bufRes, 0, mask);
-                for(int k=0; k < validLanes; k++) {
-                    resArray.getData().setAtIndex(<Layout>, mapRes[k], bufRes[k]);
-                }
+                <primitive> val = a.getData().getAtIndex(<Layout>, iterA.offset);
+                resArray.getData().setAtIndex(<Layout>, iterRes.offset, <MathCast><ScalarOp>(val));
+                iterA.next();
+                iterRes.next();
             }
         }
         return resArray;
     }
 """
 
-SCALAR_TEMPLATE = """
-    public static NDArray <OpName><Title>(NDArray a, <primitive> b, NDArray resArray) {
-        var vB = <VectorClass>.broadcast(<Species>, b);
-                 
+INT_CAST_TEMPLATE = """
+    public static NDArray <OpName><Title>(NDArray a, NDArray resArray) {
+        if (a.isContiguous() && resArray.isContiguous()) {
+            long i = 0;
+            long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
+                         
+            for (; i < loopbound; i += INT_VL * 2) {
+                var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
+                var vFloat1 = vInt1.convert(VectorOperators.I2F, 0);
+                var vFloat2 = vInt2.convert(VectorOperators.I2F, 0);
+                var VRes1 = vFloat1.<VectorOp>;
+                var VRes2 = vFloat2.<VectorOp>;
+                VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
+            }
+            loopbound = SPECIESINT.loopBound(a.getSize());
+            for (; i < loopbound; i += INT_VL) {
+                var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vFloat = vInt.convert(VectorOperators.I2F, 0);
+                var VRes = vFloat.<VectorOp>;
+                VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+            }
+            for (; i < a.getSize(); i++) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) <ScalarOp>(val));
+            }
+                     
+        } else {
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+                         
+            while (iterA.hasNext) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) <ScalarOp>(val));
+                iterA.next();
+                iterRes.next();
+            }
+        }
+        return resArray;
+    }
+"""
+
+SIGMOID_TEMPLATE = """
+    public static NDArray sigmoid<Title>(NDArray a, NDArray resArray) {
+        var vOne = <VectorClass>.broadcast(<Species>, 1.0<ScalarSuffix>);
         if (a.isContiguous() && resArray.isContiguous()) {
             long i = 0;
             long loopbound = a.getSize() - (a.getSize() % (<Vl> * 2));
                          
             for (; i < loopbound; i += <Vl> * 2) {
-                var vA1 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
-                var vA2 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), (i + <Vl>) * <Bytes>, ORDER);
-                var VRes1 = vA1.<VectorOp>(vB);
-                var VRes2 = vA2.<VectorOp>(vB);
-                                 
+                var v1 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
+                var v2 = <VectorClass>.fromMemorySegment(<Species>, a.getData(), (i + <Vl>) * <Bytes>, ORDER);
+                var VRes1 = vOne.div(v1.neg().lanewise(VectorOperators.EXP).add(1.0<ScalarSuffix>));
+                var VRes2 = vOne.div(v2.neg().lanewise(VectorOperators.EXP).add(1.0<ScalarSuffix>));
                 VRes1.intoMemorySegment(resArray.getData(), i * <Bytes>, ORDER);
                 VRes2.intoMemorySegment(resArray.getData(), (i + <Vl>) * <Bytes>, ORDER);
             }
             loopbound = <Species>.loopBound(a.getSize());
             for (; i < loopbound; i += <Vl>) {
-                var vA = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
-                var VRes = vA.<VectorOp>(vB);
+                var v = <VectorClass>.fromMemorySegment(<Species>, a.getData(), i * <Bytes>, ORDER);
+                var VRes = vOne.div(v.neg().lanewise(VectorOperators.EXP).add(1.0<ScalarSuffix>));
                 VRes.intoMemorySegment(resArray.getData(), i * <Bytes>, ORDER);
             }
             for (; i < a.getSize(); i++) {
-                <primitive> valA = a.getData().getAtIndex(<Layout>, i);
-                resArray.getData().setAtIndex(<Layout>, i, (<primitive>)(valA <ScalarOp> b));
+                <primitive> val = a.getData().getAtIndex(<Layout>, i);
+                resArray.getData().setAtIndex(<Layout>, i, <MathCast>(1.0<ScalarSuffix> / (1.0<ScalarSuffix> + Math.exp(-val))));
             }
+                     
         } else {
-            int vl = <Species>.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
                          
-            <primitive>[] bufA = new <primitive>[vl];
-            <primitive>[] bufRes = new <primitive>[vl];
-            var iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            var iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
             while (iterA.hasNext) {
-                int validLanes = iterA.nextVector(mapA, vl);
-                iterRes.nextVector(mapRes, vl);
-                for(int k=0; k < validLanes; k++) {
-                    bufA[k] = a.getData().getAtIndex(<Layout>, mapA[k]);
-                }
-                var mask = <Species>.indexInRange(0, validLanes);
-                var vA = <VectorClass>.fromArray(<Species>, bufA, 0, mask);
-                                 
-                var vRes = vA.<VectorOp>(vB);
-                                 
-                vRes.intoArray(bufRes, 0, mask);
-                for(int k=0; k < validLanes; k++) {
-                    resArray.getData().setAtIndex(<Layout>, mapRes[k], bufRes[k]);
-                }
+                <primitive> val = a.getData().getAtIndex(<Layout>, iterA.offset);
+                resArray.getData().setAtIndex(<Layout>, iterRes.offset, <MathCast>(1.0<ScalarSuffix> / (1.0<ScalarSuffix> + Math.exp(-val))));
+                iterA.next();
+                iterRes.next();
+            }
+        }
+        return resArray;
+    }
+"""
+
+SIGMOID_INT_TEMPLATE = """
+    public static NDArray sigmoidInt(NDArray a, NDArray resArray) {
+        var vOne = FloatVector.broadcast(SPECIES, 1.0f);
+        if (a.isContiguous() && resArray.isContiguous()) {
+            long i = 0;
+            long loopbound = a.getSize() - (a.getSize() % (INT_VL * 2));
+                         
+            for (; i < loopbound; i += INT_VL * 2) {
+                var vInt1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vInt2 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i + INT_VL) * INT_BYTES, ORDER);
+                var vFloat1 = vInt1.convert(VectorOperators.I2F, 0);
+                var vFloat2 = vInt2.convert(VectorOperators.I2F, 0);
+                var VRes1 = vOne.div(vFloat1.neg().lanewise(VectorOperators.EXP).add(1.0f));
+                var VRes2 = vOne.div(vFloat2.neg().lanewise(VectorOperators.EXP).add(1.0f));
+                VRes1.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + INT_VL) * FLOAT_BYTES, ORDER);
+            }
+            loopbound = SPECIESINT.loopBound(a.getSize());
+            for (; i < loopbound; i += INT_VL) {
+                var vInt = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+                var vFloat = vInt.convert(VectorOperators.I2F, 0);
+                var VRes = vOne.div(vFloat.neg().lanewise(VectorOperators.EXP).add(1.0f));
+                VRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+            }
+            for (; i < a.getSize(); i++) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, i);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, i, (float) (1.0f / (1.0f + Math.exp(-val))));
+            }
+                     
+        } else {
+            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+                         
+            while (iterA.hasNext) {
+                int val = a.getData().getAtIndex(ValueLayout.JAVA_INT, iterA.offset);
+                resArray.getData().setAtIndex(ValueLayout.JAVA_FLOAT, iterRes.offset, (float) (1.0f / (1.0f + Math.exp(-val))));
+                iterA.next();
+                iterRes.next();
             }
         }
         return resArray;
@@ -152,13 +199,23 @@ def generate_code():
     generated_methods = []
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
-         
-    template_path = os.path.join(project_root, "src", "main", "resources", "templates", "ArithmeticOps.template")
-    output_path = os.path.join(project_root, "src", "main", "java", "jnum", "jnumops", "ArithmeticOps.java")
-         
+
+    template_path = os.path.join(project_root, "src", "main", "resources", "templates", "ExpOps.template")
+    output_path = os.path.join(project_root, "src", "main", "java", "jnum", "jnumops", "ExpOps.java")
+
     for op in OPERATIONS:
         for t in TYPE_MAPPINGS:
-            array_method = ARITHMETIC_TEMPLATE \
+            if op["name"] == "sigmoid":
+                if t["Title"] == "Int":
+                    template_to_use = SIGMOID_INT_TEMPLATE
+                else:
+                    template_to_use = SIGMOID_TEMPLATE
+            elif t["Title"] == "Int" and op["name"] != "abs":
+                template_to_use = INT_CAST_TEMPLATE
+            else:
+                template_to_use = STANDARD_TEMPLATE
+
+            method_code = template_to_use \
                 .replace("<OpName>", op["name"]) \
                 .replace("<Title>", t["Title"]) \
                 .replace("<primitive>", t["primitive"]) \
@@ -168,36 +225,25 @@ def generate_code():
                 .replace("<Bytes>", t["Bytes"]) \
                 .replace("<Vl>", t["Vl"]) \
                 .replace("<VectorOp>", op["VectorOp"]) \
-                .replace("<ScalarOp>", op["ScalarOp"])
-            generated_methods.append(array_method)
-                         
-            scalar_method = SCALAR_TEMPLATE \
-                .replace("<OpName>", op["name"]) \
-                .replace("<Title>", t["Title"]) \
-                .replace("<primitive>", t["primitive"]) \
-                .replace("<VectorClass>", t["VectorClass"]) \
-                .replace("<Species>", t["Species"]) \
-                .replace("<Layout>", t["Layout"]) \
-                .replace("<Bytes>", t["Bytes"]) \
-                .replace("<Vl>", t["Vl"]) \
-                .replace("<VectorOp>", op["VectorOp"]) \
-                .replace("<ScalarOp>", op["ScalarOp"])
-            generated_methods.append(scalar_method)
-                 
+                .replace("<ScalarOp>", op["ScalarOp"]) \
+                .replace("<MathCast>", t["MathCast"]) \
+                .replace("<ScalarSuffix>", t.get("ScalarSuffix", ""))
+            generated_methods.append(method_code)
+
     try:
         with open(template_path, "r") as file:
             template_content = file.read()
     except FileNotFoundError:
         print(f"ERROR: Could not find template path at {template_path}")
         return
-             
+
     final_java_code = template_content.replace("// --- GENERATED METHODS ---", "\n".join(generated_methods))
-         
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as file:
         file.write(final_java_code)
-             
-    print(f"Successfully generated ArithmeticOps.java at target destination!")
+
+    print("Successfully generated ExpOps.java at target destination!")
 
 if __name__ == "__main__":
     generate_code()

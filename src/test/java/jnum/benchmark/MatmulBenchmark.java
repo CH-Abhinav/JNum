@@ -36,9 +36,9 @@ public class MatmulBenchmark {
 
     @Setup(Level.Trial)
     public void setup() {
-        A = NDArray.rand(DType.FLOAT, N, N);
-        B = NDArray.rand(DType.FLOAT, N, N);
-        resArray = NDArray.zeros(DType.FLOAT, N, N);
+        A = NDArray.rand(DType.f32, N, N);
+        B = NDArray.rand(DType.f32, N, N);
+        resArray = NDArray.zeros(DType.f32, N, N);
     }
 
     @Benchmark

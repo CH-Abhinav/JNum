@@ -29,9 +29,9 @@ TYPE_MAPPINGS = [
 
 ROUTER_TEMPLATE = """
     public static NDArray matmul<Title>(NDArray a, NDArray b, NDArray resArray) {
-        int n = a.internalShapeUnsafe()[0]; 
-        int m = a.internalShapeUnsafe()[1]; 
-        int p = b.internalShapeUnsafe()[1];
+        int n = (int) a.internalShapeUnsafe()[0]; 
+        int m = (int) a.internalShapeUnsafe()[1]; 
+        int p = (int) b.internalShapeUnsafe()[1];
         
         try (Arena arena = Arena.ofShared()) {
             MemorySegment memA = a.isContiguous() ? a.getData() : a.contiguous(arena).getData();

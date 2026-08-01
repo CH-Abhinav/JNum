@@ -1,5 +1,6 @@
 package jnum;
 
+import static jnum.DType.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,7 +24,7 @@ class NDArrayTest {
         NDArray copied = transposed.copy();
 
         assertTrue(copied.isContiguous());
-        assertEquals(DType.FLOAT, copied.getDType());
+        assertEquals(f32, copied.getDType());
         assertEquals(1f, copied.getFloat(0, 0), 1e-6f);
         assertEquals(3f, copied.getFloat(0, 1), 1e-6f);
         assertEquals(2f, copied.getFloat(1, 0), 1e-6f);
@@ -47,8 +48,8 @@ class NDArrayTest {
 
         NDArray result = left.matmul(right);
 
-        assertEquals(DType.DOUBLE, result.getDType());
-        assertArrayEquals(new int[]{2, 2}, result.getShape());
+        assertEquals(DType.f64, result.getDType());
+        assertArrayEquals(new long[]{2, 2}, result.getShape());
         assertEquals(19.0, result.get(0, 0), 1e-9);
         assertEquals(22.0, result.get(0, 1), 1e-9);
         assertEquals(43.0, result.get(1, 0), 1e-9);
@@ -57,9 +58,9 @@ class NDArrayTest {
 
     @Test
     void matmulRejectsNonContiguousOutputBuffer() {
-        NDArray left = NDArray.ones(DType.FLOAT, 2, 2);
-        NDArray right = NDArray.ones(DType.FLOAT, 2, 2);
-        NDArray nonContiguousOutput = NDArray.zeros(DType.FLOAT, 2, 2).transpose();
+        NDArray left = NDArray.ones(f32, 2, 2);
+        NDArray right = NDArray.ones(f32, 2, 2);
+        NDArray nonContiguousOutput = NDArray.zeros(f32, 2, 2).transpose();
 
         IllegalArgumentException ex = assertThrows(
             IllegalArgumentException.class,
@@ -76,7 +77,7 @@ class NDArrayTest {
 
         NDArray result = left.add(right);
 
-        assertArrayEquals(new int[]{2, 2}, result.getShape());
+        assertArrayEquals(new long[]{2, 2}, result.getShape());
         assertEquals(11f, result.getFloat(0, 0), 1e-6f);
         assertEquals(22f, result.getFloat(0, 1), 1e-6f);
         assertEquals(13f, result.getFloat(1, 0), 1e-6f);
@@ -92,16 +93,16 @@ class NDArrayTest {
         NDArray transposedSumAxisOne = transposed.sum(1);
         NDArray transposedMaxAxisZero = transposed.max(0);
 
-        assertArrayEquals(new int[]{2}, denseSumAxisOne.getShape());
+        assertArrayEquals(new long[]{2}, denseSumAxisOne.getShape());
         assertEquals(6f, denseSumAxisOne.getFloat(0), 1e-6f);
         assertEquals(15f, denseSumAxisOne.getFloat(1), 1e-6f);
 
-        assertArrayEquals(new int[]{3}, transposedSumAxisOne.getShape());
+        assertArrayEquals(new long[]{3}, transposedSumAxisOne.getShape());
         assertEquals(5f, transposedSumAxisOne.getFloat(0), 1e-6f);
         assertEquals(7f, transposedSumAxisOne.getFloat(1), 1e-6f);
         assertEquals(9f, transposedSumAxisOne.getFloat(2), 1e-6f);
 
-        assertArrayEquals(new int[]{2}, transposedMaxAxisZero.getShape());
+        assertArrayEquals(new long[]{2}, transposedMaxAxisZero.getShape());
         assertEquals(3f, transposedMaxAxisZero.getFloat(0), 1e-6f);
         assertEquals(6f, transposedMaxAxisZero.getFloat(1), 1e-6f);
     }
@@ -126,5 +127,51 @@ class NDArrayTest {
 
         assertEquals(1.0, expResult.get(0), 1e-9);
         assertEquals(Math.E, expResult.get(1), 1e-9);
+    }
+
+    @Test
+    void booleanLifecycleAndOperationsWorkCorrectly() {
+        NDArray boolArr = NDArray.from(new boolean[]{true, false, true, false}, 2, 2);
+
+        assertEquals(DType.bool, boolArr.getDType());
+        assertTrue(boolArr.getBoolean(0, 0));
+        assertFalse(boolArr.getBoolean(0, 1));
+        assertTrue(boolArr.getFlatBoolean(2));
+
+        // toString() check
+        String str = boolArr.toString();
+        assertTrue(str.contains("true") && str.contains("false"));
+
+        // copy() & contiguous() check
+        NDArray transposedBool = boolArr.transpose();
+        assertFalse(transposedBool.isContiguous());
+        NDArray contiguousBool = transposedBool.contiguous();
+        assertTrue(contiguousBool.isContiguous());
+        assertEquals(DType.bool, contiguousBool.getDType());
+        assertTrue(contiguousBool.getBoolean(0, 1)); // row 0 col 1 in transposed is row 1 col 0 in orig (true)
+
+        NDArray copyBool = boolArr.copy();
+        assertEquals(boolArr, copyBool);
+        assertEquals(boolArr.hashCode(), copyBool.hashCode());
+
+        // cast() check
+        NDArray castInt = boolArr.cast(DType.i32);
+        assertEquals(DType.i32, castInt.getDType());
+        assertEquals(1, castInt.getInt(0, 0));
+        assertEquals(0, castInt.getInt(0, 1));
+
+        // Boolean operations check (and, or, xor)
+        NDArray b2 = NDArray.from(new boolean[]{true, true, false, false}, 2, 2);
+        NDArray andRes = boolArr.and(b2);
+        assertTrue(andRes.getBoolean(0, 0));
+        assertFalse(andRes.getBoolean(0, 1));
+
+        NDArray orRes = boolArr.or(b2);
+        assertTrue(orRes.getBoolean(0, 0));
+        assertTrue(orRes.getBoolean(0, 1));
+
+        NDArray xorRes = boolArr.xor(b2);
+        assertFalse(xorRes.getBoolean(0, 0));
+        assertTrue(xorRes.getBoolean(0, 1));
     }
 }

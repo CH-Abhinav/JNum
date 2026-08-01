@@ -58,9 +58,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufB = new float[vl];
@@ -120,8 +120,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufRes = new float[vl];
@@ -179,9 +179,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufB = new double[vl];
@@ -241,8 +241,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufRes = new double[vl];
@@ -300,9 +300,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufB = new int[vl];
@@ -362,8 +362,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufRes = new int[vl];
@@ -421,9 +421,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufB = new float[vl];
@@ -483,8 +483,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufRes = new float[vl];
@@ -542,9 +542,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufB = new double[vl];
@@ -604,8 +604,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufRes = new double[vl];
@@ -663,9 +663,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufB = new int[vl];
@@ -725,8 +725,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufRes = new int[vl];
@@ -784,9 +784,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufB = new float[vl];
@@ -846,8 +846,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufRes = new float[vl];
@@ -905,9 +905,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufB = new double[vl];
@@ -967,8 +967,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufRes = new double[vl];
@@ -1026,9 +1026,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufB = new int[vl];
@@ -1088,8 +1088,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufRes = new int[vl];
@@ -1147,9 +1147,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufB = new float[vl];
@@ -1209,8 +1209,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIES.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             float[] bufA = new float[vl];
             float[] bufRes = new float[vl];
@@ -1268,9 +1268,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufB = new double[vl];
@@ -1330,8 +1330,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESDB.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             double[] bufA = new double[vl];
             double[] bufRes = new double[vl];
@@ -1389,9 +1389,9 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapB = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapB = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufB = new int[vl];
@@ -1451,8 +1451,8 @@ public class ArithmeticOps {
             }
         } else {
             int vl = SPECIESINT.length();
-            int[] mapA = new int[vl];
-            int[] mapRes = new int[vl];
+            long[] mapA = new long[vl];
+            long[] mapRes = new long[vl];
                          
             int[] bufA = new int[vl];
             int[] bufRes = new int[vl];

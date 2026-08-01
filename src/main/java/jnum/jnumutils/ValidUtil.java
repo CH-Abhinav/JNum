@@ -7,7 +7,7 @@ import jnum.NDArray;
 
 public class ValidUtil {
 
-    public static NDArray prepareBroadcastOperand(NDArray array, int[] targetShape, DType targetType) {
+    public static NDArray prepareBroadcastOperand(NDArray array, long[] targetShape, DType targetType) {
         try {
             return array.broadcastTo(targetShape).cast(targetType);
         } catch (IllegalArgumentException ex) {
@@ -20,7 +20,7 @@ public class ValidUtil {
         }
     }
 
-    public static NDArray validateResultArray(NDArray resArray, DType targetType, int[] targetShape) {
+    public static NDArray validateResultArray(NDArray resArray, DType targetType, long[] targetShape) {
         if (resArray.getDType() != targetType) {
             throw new IllegalArgumentException("Result dtype must be " + targetType + " but was " + resArray.getDType());
         }

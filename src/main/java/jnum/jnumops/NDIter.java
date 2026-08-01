@@ -3,24 +3,24 @@ package jnum.jnumops;
 import jnum.jnumutils.ShapeUtil;
 
 public class NDIter {
-    public final int[] shape;
-    public final int[] strides;
+    public final long[] shape;
+    public final long[] strides;
     public final int rank;
-    public int[] coords;
-    public final int[] backstrides;
-    public int offset;
+    public long[] coords;
+    public final long[] backstrides;
+    public long offset;
     public boolean hasNext;
 
-    public NDIter(int[] shape){
+    public NDIter(long[] shape){
         this(shape, ShapeUtil.calculateDefaultStrides(shape));
     }
     
-    public NDIter(int[] shape,int[] strides){
+    public NDIter(long[] shape,long[] strides){
         this.shape = shape;
         this.strides = strides;
         this.rank = shape.length;
-        this.coords = new int[rank];
-        this.backstrides = new int[rank];
+        this.coords = new long[rank];
+        this.backstrides = new long[rank];
         this.offset = 0;
         this.hasNext = true;
         for (int i = 0; i < rank; i++) {
@@ -47,7 +47,7 @@ public class NDIter {
         }
     }
 
-    public int nextVector(int[] indexMap,int vl){
+    public int nextVector(long[] indexMap,int vl){
         int count=0;
         while(this.hasNext && count<vl){
             indexMap[count++]=this.offset;

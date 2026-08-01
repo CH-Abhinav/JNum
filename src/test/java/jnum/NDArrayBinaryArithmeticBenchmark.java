@@ -36,8 +36,8 @@ public class NDArrayBinaryArithmeticBenchmark {
 
     @Setup(Level.Trial)
     public void setupOperands() {
-        NDArray denseLeft = NDArray.rand(1f, 10f, DType.FLOAT, size, size);
-        NDArray denseRight = NDArray.rand(1f, 10f, DType.FLOAT, size, size);
+        NDArray denseLeft = NDArray.rand(1f, 10f, DType.f32, size, size);
+        NDArray denseRight = NDArray.rand(1f, 10f, DType.f32, size, size);
 
         if ("NON_CONTIGUOUS".equals(layout)) {
             left = denseLeft.transpose();

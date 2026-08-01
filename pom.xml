@@ -35,6 +35,12 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 
@@ -135,6 +141,20 @@
                 <executable>python</executable>
                 <arguments>
                     <argument>${project.basedir}/generators/generate_matmul.py</argument>
+                </arguments>
+            </configuration>
+        </execution>
+
+        <execution>
+            <id>generate-boolean-ops</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>exec</goal>
+            </goals>
+            <configuration>
+                <executable>python</executable>
+                <arguments>
+                    <argument>${project.basedir}/generators/generate_boolean.py</argument>
                 </arguments>
             </configuration>
         </execution>

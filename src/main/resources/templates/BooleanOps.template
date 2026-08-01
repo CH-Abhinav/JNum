@@ -1,0 +1,22 @@
+package jnum.jnumops;
+
+import java.lang.foreign.ValueLayout;
+import java.nio.ByteOrder;
+import jdk.incubator.vector.ByteVector;
+import jdk.incubator.vector.VectorOperators;
+import jdk.incubator.vector.VectorSpecies;
+import jnum.NDArray;
+
+public class BooleanOps {
+    private static final VectorSpecies<Byte> SPECIES_BOOL = ByteVector.SPECIES_PREFERRED;
+    private static final long BOOL_BYTES = ValueLayout.JAVA_BYTE.byteSize();
+    private static final int BOOL_VL = SPECIES_BOOL.length();
+    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
+
+    private BooleanOps() {
+        throw new AssertionError();
+    }
+
+// --- GENERATED METHODS ---
+
+}
