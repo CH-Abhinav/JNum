@@ -14,7 +14,7 @@ TYPE_MAPPINGS = [
     {
         "Title": "Int", "primitive": "int", "VectorClass": "IntVector",
         "Species": "SPECIESINT", "Layout": "ValueLayout.JAVA_INT",
-        "Bytes": "INT_BYTES", "Vl": "INT_VL", "MathCast": "", "ScalarSuffix": "f"  # Fixed: MathCast is empty for Int
+        "Bytes": "INT_BYTES", "Vl": "INT_VL", "MathCast": "", "ScalarSuffix": "f"
     }
 ]
 
@@ -201,7 +201,7 @@ def generate_code():
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
 
     template_path = os.path.join(project_root, "src", "main", "resources", "templates", "ExpOps.template")
-    output_path = os.path.join(project_root, "src", "main", "java", "jnum", "jnumops", "ExpOps.java")
+    output_path = os.path.join(project_root, "target", "generated-sources", "jnum", "jnumops", "ExpOps.java")
 
     for op in OPERATIONS:
         for t in TYPE_MAPPINGS:

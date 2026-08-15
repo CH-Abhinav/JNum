@@ -513,7 +513,7 @@ def generate_code():
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
     
     template_path = os.path.join(project_root, "src", "main", "resources", "templates", "MatMulOps.template")
-    output_path = os.path.join(project_root, "src", "main", "java", "jnum", "jnumops", "MatMulOps.java")
+    output_path = os.path.join(project_root, "target", "generated-sources", "jnum", "jnumops", "MatMulOps.java")
     
     for t in TYPE_MAPPINGS:
         block = ROUTER_TEMPLATE + TILING_PIPELINE_TEMPLATE

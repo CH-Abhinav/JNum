@@ -46,9 +46,9 @@ public class BooleanOps {
                 resArray.getData().setAtIndex(ValueLayout.JAVA_BYTE, i, (byte) (valA & valB));
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterB = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+            NDIter iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            NDIter iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
                 byte valA = a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset);
@@ -91,9 +91,9 @@ public class BooleanOps {
                 resArray.getData().setAtIndex(ValueLayout.JAVA_BYTE, i, (byte) (valA | valB));
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterB = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+            NDIter iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            NDIter iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
                 byte valA = a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset);
@@ -136,9 +136,9 @@ public class BooleanOps {
                 resArray.getData().setAtIndex(ValueLayout.JAVA_BYTE, i, (byte) (valA ^ valB));
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterB = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+            NDIter iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterB = new NDIter(resArray.internalShapeUnsafe(), b.internalStridesUnsafe());
+            NDIter iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
                 byte valA = a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset);
@@ -177,8 +177,8 @@ public class BooleanOps {
                 resArray.getData().setAtIndex(ValueLayout.JAVA_BYTE, i, (byte) (~valA));
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
-            jnum.jnumops.NDIter iterRes = new jnum.jnumops.NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
+            NDIter iterA = new NDIter(resArray.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterRes = new NDIter(resArray.internalShapeUnsafe(), resArray.internalStridesUnsafe());
 
             while (iterA.hasNext) {
                 byte valA = a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset);
@@ -204,7 +204,7 @@ public class BooleanOps {
                 if (a.getData().getAtIndex(ValueLayout.JAVA_BYTE, i) != 0) return true;
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(a.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterA = new NDIter(a.internalShapeUnsafe(), a.internalStridesUnsafe());
             while (iterA.hasNext) {
                 if (a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset) != 0) return true;
                 iterA.next();
@@ -227,7 +227,7 @@ public class BooleanOps {
                 if (a.getData().getAtIndex(ValueLayout.JAVA_BYTE, i) == 0) return false;
             }
         } else {
-            jnum.jnumops.NDIter iterA = new jnum.jnumops.NDIter(a.internalShapeUnsafe(), a.internalStridesUnsafe());
+            NDIter iterA = new NDIter(a.internalShapeUnsafe(), a.internalStridesUnsafe());
             while (iterA.hasNext) {
                 if (a.getData().getAtIndex(ValueLayout.JAVA_BYTE, iterA.offset) == 0) return false;
                 iterA.next();

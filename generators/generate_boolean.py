@@ -130,7 +130,7 @@ def generate_code():
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
 
     template_path = os.path.join(project_root, "src", "main", "resources", "templates", "BooleanOps.template")
-    output_path = os.path.join(project_root, "src", "main", "java", "jnum", "jnumops", "BooleanOps.java")
+    output_path = os.path.join(project_root, "target", "generated-sources", "jnum", "jnumops", "BooleanOps.java")
 
     # Generate Binary Operations
     for op in BINARY_OPERATIONS:

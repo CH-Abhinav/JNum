@@ -8,7 +8,6 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.VectorSpecies;
 import jdk.incubator.vector.VectorOperators;
 import jnum.NDArray;
-import jnum.jnumops.NDIter;
 
 public class ExpOps {
     private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
