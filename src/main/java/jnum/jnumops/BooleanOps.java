@@ -236,5 +236,4 @@ public class BooleanOps {
         return true;
     }
 
-
 }

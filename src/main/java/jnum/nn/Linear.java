@@ -30,18 +30,18 @@ public class Linear {
 
         NDArray flattenedInput = input.dim() == 2 ? input : input.reshape(collapsedBatch, inFeatures);
 
-        NDArray out2D = flattenedInput.matmul(weights.transpose());
+        NDArray output = flattenedInput.matmul(weights.transpose());
         if (bias != null) {
-            out2D.addi(bias);
+            output.addi(bias);
         }
 
         if (dims > 2) {
             long[] outShape = originalShape.clone();
             outShape[dims - 1] = weights.internalShapeUnsafe()[0];
-            return out2D.reshape(outShape);
+            return output.reshape(outShape);
         }
 
-        return out2D;
+        return output;
     }
 
 }
