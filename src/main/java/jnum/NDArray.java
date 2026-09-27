@@ -344,7 +344,7 @@ public class NDArray{
             if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
                 throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
             }
-            flatIndex+=(long)indices[i]* internalStridesUnsafe()[i];
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
         }
         return switch(this.getDType()){
             case f32 -> getData().getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
@@ -364,7 +364,7 @@ public class NDArray{
             if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
                 throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
             }
-            flatIndex+=(long)indices[i]* internalStridesUnsafe()[i];
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
         }
         switch(this.getDType()){
             case f32 -> getData().setAtIndex(ValueLayout.JAVA_FLOAT, flatIndex, (float) val);
@@ -394,6 +394,19 @@ public class NDArray{
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         return data.get(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1] + z * strides[2]) * Float.BYTES);
     }
+    public float getFloat(long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        return getData().getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
+    }
 
     public void setFloat(float val, long x) {
         long dim0 = shape[0];
@@ -412,6 +425,19 @@ public class NDArray{
         if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         data.set(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1] + z * strides[2]) * Float.BYTES, val);
+    }
+    public void setFloat(float val,long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        getData().setAtIndex(ValueLayout.JAVA_FLOAT, flatIndex, val);
     }
 
     // --- DOUBLE ---
@@ -433,6 +459,19 @@ public class NDArray{
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         return data.get(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1] + z * strides[2]) * Double.BYTES);
     }
+    public double getDouble(long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        return getData().getAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex);
+    }
 
     public void setDouble(double val, long x) {
         long dim0 = shape[0];
@@ -451,6 +490,19 @@ public class NDArray{
         if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         data.set(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1] + z * strides[2]) * Double.BYTES, val);
+    }
+    public void setFloat(double val,long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        getData().setAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex, val);
     }
 
     // --- INT ---
@@ -491,6 +543,19 @@ public class NDArray{
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         data.set(ValueLayout.JAVA_INT, (x * strides[0] + y * strides[1] + z * strides[2]) * Integer.BYTES, val);
     }
+    public void setInt(int val,long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        getData().setAtIndex(ValueLayout.JAVA_INT, flatIndex, val);
+    }
 
     // --- BOOLEAN ---
     public boolean getBoolean(long x) {
@@ -530,6 +595,113 @@ public class NDArray{
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         data.set(ValueLayout.JAVA_BYTE, x * strides[0] + y * strides[1] + z * strides[2], (byte) (val ? 1 : 0));
     }
+    public void setBoolean(boolean val,long... indices){
+        if(indices.length!= internalShapeUnsafe().length){
+            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
+        }
+        long flatIndex=0;
+        for(int i=0;i<indices.length;i++){
+            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
+                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
+            }
+            flatIndex+=indices[i]* internalStridesUnsafe()[i];
+        }
+        getData().setAtIndex(ValueLayout.JAVA_BYTE, flatIndex, (byte) (val ? 1 : 0));
+    }
+
+    /*
+        view and slice
+     */
+
+    public NDArray subview(long index) {
+        if (this.dim() == 0) {
+            throw new IllegalStateException("Cannot take a subview of a 0-dimensional scalar array.");
+        }
+
+        long dim0 = this.shape[0];
+        if (index < 0) index += dim0;
+        if (index < 0 || index >= dim0) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for axis 0 with size " + dim0);
+        }
+
+        long byteOffset = index * this.strides[0] * this.dtype.layout.byteSize();
+        MemorySegment subSegment = this.data.asSlice(byteOffset);
+
+        long[] subShape = Arrays.copyOfRange(this.shape, 1, this.shape.length);
+        long[] subStrides = Arrays.copyOfRange(this.strides, 1, this.strides.length);
+
+        return NDArray.ofRaw(subSegment, subShape, subStrides, this.dtype);
+    }
+
+    public NDArray subview(long... indices) {
+        if (indices.length >= this.dim()) {
+            throw new IllegalArgumentException("Cannot strip " + indices.length + " dimensions from an array of rank " + this.dim() + ". Use scalar getters instead.");
+        }
+
+        long byteOffset = 0;
+        for (int d = 0; d < indices.length; d++) {
+            long idx = indices[d];
+            long dimSize = this.shape[d];
+            if (idx < 0) idx += dimSize;
+            if (idx < 0 || idx >= dimSize) {
+                throw new IndexOutOfBoundsException("Index " + idx + " out of bounds for axis " + d + " with size " + dimSize);
+            }
+            byteOffset += idx * this.strides[d];
+        }
+
+        byteOffset *= this.dtype.layout.byteSize();
+        MemorySegment subSegment = this.data.asSlice(byteOffset);
+
+        long[] subShape = Arrays.copyOfRange(this.shape, indices.length, this.shape.length);
+        long[] subStrides = Arrays.copyOfRange(this.strides, indices.length, this.strides.length);
+
+        return NDArray.ofRaw(subSegment, subShape, subStrides, this.dtype);
+    }
+
+    public NDArray slice(Slice... slices) {
+        int rank = this.dim();
+        if (slices.length > rank) {
+            throw new IllegalArgumentException("Too many slices: " + slices.length + " provided for array of rank " + rank);
+        }
+
+        long[] newShape = new long[rank];
+        long[] newStrides = new long[rank];
+        long baseElementOffset = 0;
+
+        for (int d = 0; d < rank; d++) {
+            Slice s = d < slices.length ? slices[d] : Slice.all();
+            Slice.ResolvedSlice resolved = s.resolve(this.shape[d]);
+            newShape[d] = resolved.length();
+            newStrides[d] = this.strides[d] * resolved.step();
+            baseElementOffset += resolved.start() * this.strides[d];
+        }
+
+        long byteOffset = baseElementOffset * this.dtype.layout.byteSize();
+        MemorySegment slicedSegment = this.data.asSlice(byteOffset);
+
+        return NDArray.ofRaw(slicedSegment, newShape, newStrides, this.dtype);
+    }
+
+    public NDArray slice(String sliceExpr) {
+        String[] parts = sliceExpr.split(",");
+        Slice[] sliceObjs = new Slice[parts.length];
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim();
+            if (part.equals(":")) {
+                sliceObjs[i] = Slice.all();
+                continue;
+            }
+            String[] tokens = part.split(":", -1);
+            long step = tokens.length == 3 && !tokens[2].isEmpty() ? Long.parseLong(tokens[2]) : 1;
+            long start = tokens.length > 0 && !tokens[0].isEmpty() ? Long.parseLong(tokens[0]) : (step > 0 ? Slice.UNBOUNDED_START : Slice.UNBOUNDED_STOP);
+            long stop = tokens.length > 1 && !tokens[1].isEmpty() ? Long.parseLong(tokens[1]) : (step > 0 ? Slice.UNBOUNDED_STOP : Slice.UNBOUNDED_START);
+
+            sliceObjs[i] = new Slice(start, stop, step);
+        }
+        return this.slice(sliceObjs);
+    }
+
 
     public long[] indexOf(double b){
         NDIter iter = new NDIter(this.internalShapeUnsafe());
