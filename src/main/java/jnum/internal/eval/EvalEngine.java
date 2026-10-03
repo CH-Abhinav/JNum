@@ -45,8 +45,21 @@ public class EvalEngine {
                 return new FloatEval(genericTree);
             }).execute(promotedVars);
 
+            case f64 -> DOUBLE_CACHE.computeIfAbsent(cacheKey, k -> {
+                ASTNode genericTree = (varNames == null)
+                        ? ExprParser.parsePositional(pureExpr)
+                        : ExprParser.parseNamed(pureExpr, varNames);
+                return new DoubleEval(genericTree);
+            }).execute(promotedVars);
+
+            case i32 -> INT_CACHE.computeIfAbsent(cacheKey, k -> {
+                ASTNode genericTree = (varNames == null)
+                        ? ExprParser.parsePositional(pureExpr)
+                        : ExprParser.parseNamed(pureExpr, varNames);
+                return new IntEval(genericTree);
+            }).execute(promotedVars);
+
             case bool -> throw new IllegalArgumentException("Math eval() does not support booleans.");
-            default -> throw new UnsupportedOperationException("Eval engine currently supports f32 only. Generate DoubleEval and IntEval to support " + targetType);
         };
     }
 }
