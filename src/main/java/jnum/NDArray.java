@@ -7,17 +7,19 @@ import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-import jnum.jnumops.ArithmeticOps;
-import jnum.jnumops.BooleanOps;
-import jnum.jnumops.CompareOps;
-import jnum.jnumops.ExpOps;
-import jnum.jnumops.MatMulOps;
-import jnum.jnumops.NDIter;
-import jnum.jnumops.ReduceOps;
-import jnum.jnumops.TrigOps;
-import jnum.jnumutils.ShapeUtil;
-import jnum.jnumutils.TypeUtil;
-import jnum.jnumutils.ValidUtil;
+import jnum.internal.ops.ArithmeticOps;
+import jnum.internal.ops.BooleanOps;
+import jnum.internal.ops.CompareOps;
+import jnum.internal.ops.UnaryOps;
+import jnum.internal.ops.LinalgOps;
+import jnum.internal.ops.GetOps;
+import jnum.internal.ops.SetOps;
+import jnum.internal.layout.NDIter;
+import jnum.internal.ops.ReduceOps;
+import jnum.internal.ops.TrigOps;
+import jnum.internal.layout.ShapeUtil;
+import jnum.internal.layout.TypeUtil;
+import jnum.internal.layout.ValidUtil;
 
 
 public class NDArray{
@@ -277,57 +279,16 @@ public class NDArray{
     }
 
     private static long getPhysicalOffset(long logicalIndex, long[] shape, long[] strides) {
-        long remaining = logicalIndex;
-        long offset = 0;
-        for (int i = shape.length - 1; i >= 0; i--) {
-            long coord = (remaining % shape[i]);
-            remaining /= shape[i];
-            offset += coord * strides[i];
-        }
-        return offset;
+        return GetOps.getPhysicalOffset(logicalIndex, shape, strides);
     }
 
-    private void validateFlatIndex(long index) {
-        if (index < 0 || index >= this.getSize()) {
-            throw new IndexOutOfBoundsException("Flat index " + index + " is out of bounds for size " + this.getSize());
-        }
-    }
+    // --- Flat Getters ---
 
-    public double getFlat(long index){
-        validateFlatIndex(index);
-        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.internalShapeUnsafe(), this.internalStridesUnsafe());
-        return switch(this.getDType()){
-            case f32 -> getData().getAtIndex(ValueLayout.JAVA_FLOAT, physicalOffset);
-            case i32 -> getData().getAtIndex(ValueLayout.JAVA_INT, physicalOffset);
-            case f64 -> getData().getAtIndex(ValueLayout.JAVA_DOUBLE, physicalOffset);
-            case bool -> getData().getAtIndex(ValueLayout.JAVA_BYTE, physicalOffset) != 0 ? 1.0 : 0.0;
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
-    }
-
-    public float getFlatFloat(long index) {
-        validateFlatIndex(index);
-        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.internalShapeUnsafe(), this.internalStridesUnsafe());
-        return getData().getAtIndex(ValueLayout.JAVA_FLOAT, physicalOffset);
-    }
-
-    public int getFlatInt(long index){
-        validateFlatIndex(index);
-        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.internalShapeUnsafe(), this.internalStridesUnsafe());
-        return getData().getAtIndex(ValueLayout.JAVA_INT, physicalOffset);
-    }
-
-    public double getFlatDouble(long index){
-        validateFlatIndex(index);
-        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.internalShapeUnsafe(), this.internalStridesUnsafe());
-        return getData().getAtIndex(ValueLayout.JAVA_DOUBLE, physicalOffset);
-    }
-
-    public boolean getFlatBoolean(long index) {
-        validateFlatIndex(index);
-        long physicalOffset = this.isContiguous() ? index : getPhysicalOffset(index, this.internalShapeUnsafe(), this.internalStridesUnsafe());
-        return getData().getAtIndex(ValueLayout.JAVA_BYTE, physicalOffset) != 0;
-    }
+    public double getFlat(long index){ return GetOps.getFlat(this, index); }
+    public float getFlatFloat(long index) { return GetOps.getFlatFloat(this, index); }
+    public int getFlatInt(long index){ return GetOps.getFlatInt(this, index); }
+    public double getFlatDouble(long index){ return GetOps.getFlatDouble(this, index); }
+    public boolean getFlatBoolean(long index) { return GetOps.getFlatBoolean(this, index); }
 
     /*
         getters and setters
@@ -335,279 +296,51 @@ public class NDArray{
 
     //TODO : getters/setters are get/setType() which is verbose. need to make it less verbose if possible.
 
-    public double get(long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        return switch(this.getDType()){
-            case f32 -> getData().getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
-            case i32 -> getData().getAtIndex(ValueLayout.JAVA_INT, flatIndex);
-            case f64 -> getData().getAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex);
-            case bool -> getData().getAtIndex(ValueLayout.JAVA_BYTE, flatIndex) != 0 ? 1.0 : 0.0;
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
-    }
+    public double get(long... indices){ return GetOps.get(this, indices); }
 
-    public void set(double val,long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        switch(this.getDType()){
-            case f32 -> getData().setAtIndex(ValueLayout.JAVA_FLOAT, flatIndex, (float) val);
-            case i32 -> getData().setAtIndex(ValueLayout.JAVA_INT, flatIndex, (int) val);
-            case f64 -> getData().setAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex,val);
-            case bool -> getData().setAtIndex(ValueLayout.JAVA_BYTE, flatIndex, (byte) (val!=0?1:0));
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        }
-    }
+    public void set(double val,long... indices){ SetOps.set(this, val, indices); }
 
     // --- FLOAT ---
-    public float getFloat(long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_FLOAT, x * strides[0] * Float.BYTES);
-    }
-    public float getFloat(long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1]) * Float.BYTES);
-    }
-    public float getFloat(long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1] + z * strides[2]) * Float.BYTES);
-    }
-    public float getFloat(long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        return getData().getAtIndex(ValueLayout.JAVA_FLOAT, flatIndex);
-    }
+    public float getFloat(long x) { return GetOps.getFloat(this, x); }
+    public float getFloat(long x, long y) { return GetOps.getFloat(this, x, y); }
+    public float getFloat(long x, long y, long z) { return GetOps.getFloat(this, x, y, z); }
+    public float getFloat(long... indices){ return GetOps.getFloat(this, indices); }
 
-    public void setFloat(float val, long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_FLOAT, x * strides[0] * Float.BYTES, val);
-    }
-    public void setFloat(float val, long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1]) * Float.BYTES, val);
-    }
-    public void setFloat(float val, long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_FLOAT, (x * strides[0] + y * strides[1] + z * strides[2]) * Float.BYTES, val);
-    }
-    public void setFloat(float val,long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        getData().setAtIndex(ValueLayout.JAVA_FLOAT, flatIndex, val);
-    }
+    public void setFloat(float val, long x) { SetOps.setFloat(this, val, x); }
+    public void setFloat(float val, long x, long y) { SetOps.setFloat(this, val, x, y); }
+    public void setFloat(float val, long x, long y, long z) { SetOps.setFloat(this, val, x, y, z); }
+    public void setFloat(float val,long... indices){ SetOps.setFloat(this, val, indices); }
 
     // --- DOUBLE ---
-    public double getDouble(long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_DOUBLE, x * strides[0] * Double.BYTES);
-    }
-    public double getDouble(long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1]) * Double.BYTES);
-    }
-    public double getDouble(long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1] + z * strides[2]) * Double.BYTES);
-    }
-    public double getDouble(long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        return getData().getAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex);
-    }
+    public double getDouble(long x) { return GetOps.getDouble(this, x); }
+    public double getDouble(long x, long y) { return GetOps.getDouble(this, x, y); }
+    public double getDouble(long x, long y, long z) { return GetOps.getDouble(this, x, y, z); }
+    public double getDouble(long... indices){ return GetOps.getDouble(this, indices); }
 
-    public void setDouble(double val, long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_DOUBLE, x * strides[0] * Double.BYTES, val);
-    }
-    public void setDouble(double val, long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1]) * Double.BYTES, val);
-    }
-    public void setDouble(double val, long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_DOUBLE, (x * strides[0] + y * strides[1] + z * strides[2]) * Double.BYTES, val);
-    }
-    public void setFloat(double val,long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        getData().setAtIndex(ValueLayout.JAVA_DOUBLE, flatIndex, val);
-    }
+    public void setDouble(double val, long x) { SetOps.setDouble(this, val, x); }
+    public void setDouble(double val, long x, long y) { SetOps.setDouble(this, val, x, y); }
+    public void setDouble(double val, long x, long y, long z) { SetOps.setDouble(this, val, x, y, z); }
+    public void setFloat(double val,long... indices){ SetOps.setDouble(this, val, indices); }
 
     // --- INT ---
-    public int getInt(long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_INT, x * strides[0] * Integer.BYTES);
-    }
-    public int getInt(long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_INT, (x * strides[0] + y * strides[1]) * Integer.BYTES);
-    }
-    public int getInt(long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_INT, (x * strides[0] + y * strides[1] + z * strides[2]) * Integer.BYTES);
-    }
+    public int getInt(long x) { return GetOps.getInt(this, x); }
+    public int getInt(long x, long y) { return GetOps.getInt(this, x, y); }
+    public int getInt(long x, long y, long z) { return GetOps.getInt(this, x, y, z); }
 
-    public void setInt(int val, long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_INT, x * strides[0] * Integer.BYTES, val);
-    }
-    public void setInt(int val, long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_INT, (x * strides[0] + y * strides[1]) * Integer.BYTES, val);
-    }
-    public void setInt(int val, long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_INT, (x * strides[0] + y * strides[1] + z * strides[2]) * Integer.BYTES, val);
-    }
-    public void setInt(int val,long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        getData().setAtIndex(ValueLayout.JAVA_INT, flatIndex, val);
-    }
+    public void setInt(int val, long x) { SetOps.setInt(this, val, x); }
+    public void setInt(int val, long x, long y) { SetOps.setInt(this, val, x, y); }
+    public void setInt(int val, long x, long y, long z) { SetOps.setInt(this, val, x, y, z); }
+    public void setInt(int val,long... indices){ SetOps.setInt(this, val, indices); }
 
     // --- BOOLEAN ---
-    public boolean getBoolean(long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_BYTE, x * strides[0]) != 0;
-    }
-    public boolean getBoolean(long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_BYTE, x * strides[0] + y * strides[1]) != 0;
-    }
-    public boolean getBoolean(long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        return data.get(ValueLayout.JAVA_BYTE, x * strides[0] + y * strides[1] + z * strides[2]) != 0;
-    }
+    public boolean getBoolean(long x) { return GetOps.getBoolean(this, x); }
+    public boolean getBoolean(long x, long y) { return GetOps.getBoolean(this, x, y); }
+    public boolean getBoolean(long x, long y, long z) { return GetOps.getBoolean(this, x, y, z); }
 
-    public void setBoolean(boolean val, long x) {
-        long dim0 = shape[0];
-        if (x < 0) x += dim0;
-        if (x < 0 || x >= dim0) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_BYTE, x * strides[0], (byte) (val ? 1 : 0));
-    }
-    public void setBoolean(boolean val, long x, long y) {
-        long dim0 = shape[0], dim1 = shape[1];
-        if (x < 0) x += dim0; if (y < 0) y += dim1;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_BYTE, x * strides[0] + y * strides[1], (byte) (val ? 1 : 0));
-    }
-    public void setBoolean(boolean val, long x, long y, long z) {
-        long dim0 = shape[0], dim1 = shape[1], dim2 = shape[2];
-        if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
-        if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
-        data.set(ValueLayout.JAVA_BYTE, x * strides[0] + y * strides[1] + z * strides[2], (byte) (val ? 1 : 0));
-    }
-    public void setBoolean(boolean val,long... indices){
-        if(indices.length!= internalShapeUnsafe().length){
-            throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ internalShapeUnsafe().length);
-        }
-        long flatIndex=0;
-        for(int i=0;i<indices.length;i++){
-            if (indices[i] < 0 || indices[i] >= internalShapeUnsafe()[i]) {
-                throw new IndexOutOfBoundsException("Index " + indices[i] + " is out of bounds for dimension " + i + " with size " + internalShapeUnsafe()[i]);
-            }
-            flatIndex+=indices[i]* internalStridesUnsafe()[i];
-        }
-        getData().setAtIndex(ValueLayout.JAVA_BYTE, flatIndex, (byte) (val ? 1 : 0));
-    }
+    public void setBoolean(boolean val, long x) { SetOps.setBoolean(this, val, x); }
+    public void setBoolean(boolean val, long x, long y) { SetOps.setBoolean(this, val, x, y); }
+    public void setBoolean(boolean val, long x, long y, long z) { SetOps.setBoolean(this, val, x, y, z); }
+    public void setBoolean(boolean val,long... indices){ SetOps.setBoolean(this, val, indices); }
 
     /*
         view and slice
@@ -1491,14 +1224,14 @@ public class NDArray{
         return this.div(b,this);
     }
 
-    //ExpOps.java methods
+    //UnaryOps.java methods
 
     public NDArray sqrt(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()){
-            case f32 -> ExpOps.sqrtFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.sqrtDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.sqrtInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.sqrtFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.sqrtDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.sqrtInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1506,9 +1239,9 @@ public class NDArray{
     public NDArray abs(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()){
-            case f32 -> ExpOps.absFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.absDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.absInt(safeThis, JNum.zeros(DType.i32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.absFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.absDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.absInt(safeThis, JNum.zeros(DType.i32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1516,9 +1249,9 @@ public class NDArray{
     public NDArray exp(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()){
-            case f32 -> ExpOps.expFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.expDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.expInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.expFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.expDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.expInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1526,9 +1259,9 @@ public class NDArray{
     public NDArray log(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()){
-            case f32 -> ExpOps.logFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.logDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.logInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.logFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.logDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.logInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1536,9 +1269,9 @@ public class NDArray{
     public NDArray log10(){
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()){
-            case f32 -> ExpOps.log10Float(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.log10Double(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.log10Int(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.log10Float(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.log10Double(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.log10Int(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1546,10 +1279,10 @@ public class NDArray{
     public NDArray sigmoid() {
         NDArray safeThis = this.isContiguous() ? this : this.contiguous();
         return switch(this.getDType()) {
-            case f32 -> ExpOps.sigmoidFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> ExpOps.sigmoidDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> ExpOps.sigmoidInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case bool -> ExpOps.sigmoidFloat(safeThis.cast(DType.f32), JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f32 -> UnaryOps.sigmoidFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case f64 -> UnaryOps.sigmoidDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
+            case i32 -> UnaryOps.sigmoidInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
+            case bool -> UnaryOps.sigmoidFloat(safeThis.cast(DType.f32), JNum.zeros(DType.f32, this.internalShapeUnsafe()));
             default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
         };
     }
@@ -1619,7 +1352,7 @@ public class NDArray{
         };
     }
 
-    //MatMulOps.java methods
+    //LinalgOps.java methods
 
     public NDArray matmul(NDArray b){
         ValidUtil.validateMatmulInputs(this, b);
@@ -1629,9 +1362,9 @@ public class NDArray{
         long[] targetShape = new long[]{this.internalShapeUnsafe()[0], b.internalShapeUnsafe()[1]};
         NDArray resArray = JNum.zeros(targetType, targetShape);
         return switch(targetType){
-            case f32 -> MatMulOps.matmulFloat(A, B, resArray);
-            case f64 -> MatMulOps.matmulDouble(A, B, resArray);
-            case i32 -> MatMulOps.matmulInt(A, B, resArray);
+            case f32 -> LinalgOps.matmulFloat(A, B, resArray);
+            case f64 -> LinalgOps.matmulDouble(A, B, resArray);
+            case i32 -> LinalgOps.matmulInt(A, B, resArray);
             default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
         };
     }
@@ -1645,9 +1378,9 @@ public class NDArray{
         NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
         ValidUtil.validateOutputBuffer(targetRes);
         return switch(targetType){
-            case f32 -> MatMulOps.matmulFloat(A, B, targetRes);
-            case f64 -> MatMulOps.matmulDouble(A, B, targetRes);
-            case i32 -> MatMulOps.matmulInt(A, B, targetRes);
+            case f32 -> LinalgOps.matmulFloat(A, B, targetRes);
+            case f64 -> LinalgOps.matmulDouble(A, B, targetRes);
+            case i32 -> LinalgOps.matmulInt(A, B, targetRes);
             default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
         };
     }
@@ -1725,5 +1458,11 @@ public class NDArray{
         NDArray A = this.getDType() == DType.bool ? this : this.cast(DType.bool);
         return BooleanOps.all(A);
     }
+
+    /*
+    * JNumExpr
+    */
+
+
 
 }

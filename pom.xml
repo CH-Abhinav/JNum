@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.ch-abhinav</groupId>
+    <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum</artifactId>
-    <version>0.1</version>
+    <version>0.2.0</version>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source> 
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
+            <version>26.0.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -63,26 +63,6 @@
                         <arg>jdk.incubator.vector</arg>
                     </compilerArgs>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>add-generated-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
@@ -118,68 +98,6 @@
                     <jvmArgsPrepend>--add-modules jdk.incubator.vector</jvmArgsPrepend>
                 </configuration>
             </plugin>
-            <plugin>
-    <groupId>org.codehaus.mojo</groupId>
-    <artifactId>exec-maven-plugin</artifactId>
-    <version>3.1.0</version>
-    <executions>
-        <execution>
-            <id>generate-arithmetic-ops</id>
-            <phase>generate-sources</phase>
-            <goals>
-                <goal>exec</goal>
-            </goals>
-            <configuration>
-                <executable>python</executable>
-                <arguments>
-                    <argument>${project.basedir}/generators/generate_arithmetic.py</argument>
-                </arguments>
-            </configuration>
-        </execution>
-        
-        <execution>
-            <id>generate-exp-ops</id>
-            <phase>generate-sources</phase>
-            <goals>
-                <goal>exec</goal>
-            </goals>
-            <configuration>
-                <executable>python</executable>
-                <arguments>
-                    <argument>${project.basedir}/generators/generate_exp.py</argument>
-                </arguments>
-            </configuration>
-        </execution>
-        
-        <execution>
-            <id>generate-matmul-ops</id>
-            <phase>generate-sources</phase>
-            <goals>
-                <goal>exec</goal>
-            </goals>
-            <configuration>
-                <executable>python</executable>
-                <arguments>
-                    <argument>${project.basedir}/generators/generate_matmul.py</argument>
-                </arguments>
-            </configuration>
-        </execution>
-
-        <execution>
-            <id>generate-boolean-ops</id>
-            <phase>generate-sources</phase>
-            <goals>
-                <goal>exec</goal>
-            </goals>
-            <configuration>
-                <executable>python</executable>
-                <arguments>
-                    <argument>${project.basedir}/generators/generate_boolean.py</argument>
-                </arguments>
-            </configuration>
-        </execution>
-    </executions>
-</plugin>
         </plugins>
     </build>
     

@@ -1,6 +1,6 @@
 package jnum;
 
-import jnum.jnumutils.ShapeUtil;
+import jnum.internal.layout.ShapeUtil;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -379,5 +379,15 @@ public class JNum {
         }
 
         return NDArray.ofRaw(segment, new long[]{size}, new long[]{1}, dType);
+    }
+
+    public static NDArray eval(String expression, NDArray... variables) {
+        if (variables.length == 0) throw new IllegalArgumentException("No variables provided.");
+        return EvalEngine.evaluatePositional(expression, variables);
+    }
+
+    public static NDArray eval(String expression, Map<String, NDArray> variables) {
+        if (variables.isEmpty()) throw new IllegalArgumentException("No variables provided.");
+        return EvalEngine.evaluateNamed(expression, variables);
     }
 }
