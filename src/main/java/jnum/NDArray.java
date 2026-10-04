@@ -18,8 +18,11 @@ import jnum.internal.layout.NDIter;
 import jnum.internal.ops.ReduceOps;
 import jnum.internal.ops.TrigOps;
 import jnum.internal.layout.ShapeUtil;
-import jnum.internal.layout.TypeUtil;
-import jnum.internal.layout.ValidUtil;
+import jnum.internal.kernel.linalg.Det.SlogdetResult;
+import jnum.internal.kernel.linalg.QR.QRResult;
+import jnum.internal.kernel.linalg.Eigh.EighResult;
+import jnum.internal.kernel.linalg.SVD.SVDResult;
+import jnum.internal.kernel.linalg.Eig.EigResult;
 
 
 public class NDArray{
@@ -544,610 +547,272 @@ public class NDArray{
         return sb.append("]").toString();
     }
 
+    //squeeze and unsqueeze
+
+    public NDArray unsqueeze(int axis) {
+        int currentDim = this.dim();
+        if (axis < 0) axis += (currentDim + 1);
+        if (axis < 0 || axis > currentDim) {
+            throw new IllegalArgumentException("Axis " + axis + " is out of bounds for array of dimension " + currentDim);
+        }
+
+        long[] newShape = new long[currentDim + 1];
+        for (int i = 0, j = 0; i < newShape.length; i++) {
+            if (i == axis) {
+                newShape[i] = 1;
+            } else {
+                newShape[i] = this.internalShapeUnsafe()[j++];
+            }
+        }
+        return this.reshape(newShape);
+    }
+
+    public NDArray squeeze(int axis) {
+        int currentDim = this.dim();
+        if (axis < 0) axis += currentDim;
+        if (axis < 0 || axis >= currentDim) {
+            throw new IllegalArgumentException("Axis " + axis + " is out of bounds for array of dimension " + currentDim);
+        }
+        if (this.internalShapeUnsafe()[axis] != 1) {
+            throw new IllegalArgumentException("Cannot squeeze axis " + axis + " because its size is not 1. Shape is: " + this.shapeString());
+        }
+
+        long[] newShape = new long[currentDim - 1];
+        for (int i = 0, j = 0; i < currentDim; i++) {
+            if (i != axis) {
+                newShape[j++] = this.internalShapeUnsafe()[i];
+            }
+        }
+        return this.reshape(newShape);
+    }
+
     public double max() {
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.maxFloat(this);
-            case f64 -> ReduceOps.maxDouble(this);
-            case i32 -> ReduceOps.maxInt(this);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+        return ReduceOps.max(this);
     }
 
     public double min() {
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.minFloat(this);
-            case f64 -> ReduceOps.minDouble(this);
-            case i32 -> ReduceOps.minInt(this);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+        return ReduceOps.min(this);
     }
 
     public double sum() {
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.sumFloat(this);
-            case f64 -> ReduceOps.sumDouble(this);
-            case i32 -> ReduceOps.sumInt(this);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+        return ReduceOps.sum(this);
     }
 
-    public NDArray sum(int axis){
-        long[] reducedShape = ShapeUtil.calculateReductionShape(this.internalShapeUnsafe(), axis);
-        NDArray resArray = JNum.zeros(this.getDType(), reducedShape);
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.sumFloatAxis(this,axis,resArray);
-            case f64 -> ReduceOps.sumDoubleAxis(this,axis,resArray);
-            case i32 -> ReduceOps.sumIntAxis(this,axis,resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+    public NDArray sum(int axis) {
+        return ReduceOps.sum(this, axis);
     }
 
     public NDArray max(int axis) {
-        long[] reducedShape = ShapeUtil.calculateReductionShape(this.internalShapeUnsafe(), axis);
-        NDArray resArray = JNum.zeros(this.getDType(), reducedShape);
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.maxFloatAxis(this, axis, resArray);
-            case f64 -> ReduceOps.maxDoubleAxis(this, axis, resArray);
-            case i32 -> ReduceOps.maxIntAxis(this, axis, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+        return ReduceOps.max(this, axis);
     }
 
     public NDArray min(int axis) {
-        long[] reducedShape = ShapeUtil.calculateReductionShape(this.internalShapeUnsafe(), axis);
-        NDArray resArray = JNum.zeros(this.getDType(), reducedShape);
-        return switch(this.getDType()) {
-            case f32 -> ReduceOps.minFloatAxis(this, axis, resArray);
-            case f64 -> ReduceOps.minDoubleAxis(this, axis, resArray);
-            case i32 -> ReduceOps.minIntAxis(this, axis, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+this.getDType()+" doesn't support this method");
-        };
+        return ReduceOps.min(this, axis);
     }
 
-    public double dot(NDArray b){
-        if (this.dim() != 1 || b.dim() != 1) {
-            throw new IllegalArgumentException("Dot product requires 1D vectors. Shapes: " + this.shapeString() + ", " + b.shapeString());
+    public NDArray sum(int axis, boolean keepDims) {
+        NDArray res = this.sum(axis);
+        if (keepDims) {
+            int targetAxis = axis < 0 ? axis + this.dim() : axis;
+            return res.unsqueeze(targetAxis);
         }
-        if (this.getSize() != b.getSize()) {
-            throw new IllegalArgumentException("Vector sizes must match for dot product.");
+        return res;
+    }
+
+    public NDArray max(int axis, boolean keepDims) {
+        NDArray res = this.max(axis);
+        if (keepDims) {
+            int targetAxis = axis < 0 ? axis + this.dim() : axis;
+            return res.unsqueeze(targetAxis);
         }
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        NDArray A = this.cast(targetType);
-        NDArray B = b.cast(targetType);
-        if (!A.isContiguous()) {
-            A = A.contiguous();
+        return res;
+    }
+
+    public NDArray min(int axis, boolean keepDims) {
+        NDArray res = this.min(axis);
+        if (keepDims) {
+            int targetAxis = axis < 0 ? axis + this.dim() : axis;
+            return res.unsqueeze(targetAxis);
         }
-        if (!B.isContiguous()) {
-            B = B.contiguous();
-        }
-        return switch(targetType){
-            case f32 ->ReduceOps.dotFloat(A, B);
-            case i32 ->ReduceOps.dotInt(A, B);
-            case f64 ->ReduceOps.dotDouble(A, B);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return res;
+    }
+
+    public double dot(NDArray b) {
+        return ReduceOps.dot(this, b);
     }
 
     public double avg() {
         return this.sum() / (double) this.getSize();
     }
 
-    public NDArray maximum(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-
-        return switch(targetType){
-            case f32 ->CompareOps.maximumFloat(A, B, resArray);
-            case i32 ->CompareOps.maximumInt(A, B, resArray);
-            case f64 ->CompareOps.maximumDouble(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray maximum(NDArray b) {
+        return CompareOps.maximum(this, b);
     }
 
     public NDArray maximum(float b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> CompareOps.maximumFloat(A, b, resArray);
-            case i32 ->throw new UnsupportedOperationException();
-            case f64 ->CompareOps.maximumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.maximum(this, b);
     }
 
     public NDArray maximum(int b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> CompareOps.maximumFloat(A, b, resArray);
-            case i32 ->CompareOps.maximumInt(A, b, resArray);
-            case f64 ->CompareOps.maximumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.maximum(this, b);
     }
 
     public NDArray maximum(double b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> throw new UnsupportedOperationException();
-            case i32 -> throw new UnsupportedOperationException();
-            case f64 -> CompareOps.maximumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.maximum(this, b);
     }
 
-    public NDArray minimum(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-
-        return switch(targetType){
-            case f32 ->CompareOps.minimumFloat(A, B, resArray);
-            case i32 ->CompareOps.minimumInt(A, B, resArray);
-            case f64 ->CompareOps.minimumDouble(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray minimum(NDArray b) {
+        return CompareOps.minimum(this, b);
     }
 
     public NDArray minimum(float b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> CompareOps.minimumFloat(A, b, resArray);
-            case i32 ->throw new UnsupportedOperationException();
-            case f64 ->CompareOps.minimumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.minimum(this, b);
     }
 
     public NDArray minimum(int b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> CompareOps.minimumFloat(A, b, resArray);
-            case i32 ->CompareOps.minimumInt(A, b, resArray);
-            case f64 ->CompareOps.minimumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.minimum(this, b);
     }
 
     public NDArray minimum(double b) {
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        
-        return switch (targetType) {
-            case f32 -> throw new UnsupportedOperationException();
-            case i32 -> throw new UnsupportedOperationException();
-            case f64 -> CompareOps.minimumDouble(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+        return CompareOps.minimum(this, b);
     }
 
     //ArithmaticOps.java 
 
     //addition operation
 
-    public NDArray add(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, B, resArray);
-            case f64 -> ArithmeticOps.addDouble(A, B, resArray);
-            case i32 -> ArithmeticOps.addInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(NDArray b) {
+        return ArithmeticOps.add(this, b);
     }
     
-    public NDArray add(NDArray b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, B, targetRes);
-            case f64 -> ArithmeticOps.addDouble(A, B, targetRes);
-            case i32 -> ArithmeticOps.addInt(A, B, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(NDArray b, NDArray resArray) {
+        return ArithmeticOps.add(this, b, resArray);
     }
 
-    public NDArray add(float b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.addDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.addInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(float b) {
+        return ArithmeticOps.add(this, b);
     }
 
-    public NDArray add(int b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.addDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.addInt(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(int b) {
+        return ArithmeticOps.add(this, b);
     }
 
-    public NDArray add(double b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, (float) b, resArray);
-            case f64 -> ArithmeticOps.addDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.addInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(double b) {
+        return ArithmeticOps.add(this, b);
     }
 
-    public NDArray add(float b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.addDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.addInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(float b, NDArray resArray) {
+        return ArithmeticOps.add(this, b, resArray);
     }
 
-    public NDArray add(int b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.addDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.addInt(A, b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(int b, NDArray resArray) {
+        return ArithmeticOps.add(this, b, resArray);
     }
 
-    public NDArray add(double b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.addFloat(A, (float) b, targetRes);
-            case f64 -> ArithmeticOps.addDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.addInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray add(double b, NDArray resArray) {
+        return ArithmeticOps.add(this, b, resArray);
     }
 
     //subtract operations
 
-    public NDArray sub(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, B, resArray);
-            case f64 -> ArithmeticOps.subDouble(A, B, resArray);
-            case i32 -> ArithmeticOps.subInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(NDArray b) {
+        return ArithmeticOps.sub(this, b);
     }
 
-    public NDArray sub(NDArray b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, B, targetRes);
-            case f64 -> ArithmeticOps.subDouble(A, B, targetRes);
-            case i32 -> ArithmeticOps.subInt(A, B, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(NDArray b, NDArray resArray) {
+        return ArithmeticOps.sub(this, b, resArray);
     }
 
-    public NDArray sub(float b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.subDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.subInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(float b) {
+        return ArithmeticOps.sub(this, b);
     }
 
-    public NDArray sub(int b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.subDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.subInt(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(int b) {
+        return ArithmeticOps.sub(this, b);
     }
 
-    public NDArray sub(double b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, (float) b, resArray);
-            case f64 -> ArithmeticOps.subDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.subInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(double b) {
+        return ArithmeticOps.sub(this, b);
     }
 
-    public NDArray sub(float b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.subDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.subInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(float b, NDArray resArray) {
+        return ArithmeticOps.sub(this, b, resArray);
     }
 
-    public NDArray sub(int b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.subDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.subInt(A, b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(int b, NDArray resArray) {
+        return ArithmeticOps.sub(this, b, resArray);
     }
 
-    public NDArray sub(double b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.subFloat(A, (float) b, targetRes);
-            case f64 -> ArithmeticOps.subDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.subInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray sub(double b, NDArray resArray) {
+        return ArithmeticOps.sub(this, b, resArray);
     }
 
     //multiplication operations 
 
-    public NDArray mul(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, B, resArray);
-            case f64 -> ArithmeticOps.mulDouble(A, B, resArray);
-            case i32 -> ArithmeticOps.mulInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(NDArray b) {
+        return ArithmeticOps.mul(this, b);
     }
 
-    public NDArray mul(NDArray b, NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, B, targetRes);
-            case f64 -> ArithmeticOps.mulDouble(A, B, targetRes);
-            case i32 -> ArithmeticOps.mulInt(A, B, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(NDArray b, NDArray resArray) {
+        return ArithmeticOps.mul(this, b, resArray);
     }
 
-    public NDArray mul(float b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.mulDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.mulInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(float b) {
+        return ArithmeticOps.mul(this, b);
     }
 
-    public NDArray mul(int b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.mulDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.mulInt(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(int b) {
+        return ArithmeticOps.mul(this, b);
     }
 
-    public NDArray mul(double b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, (float) b, resArray);
-            case f64 -> ArithmeticOps.mulDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.mulInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(double b) {
+        return ArithmeticOps.mul(this, b);
     }
 
-    public NDArray mul(float b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.mulDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.mulInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(float b, NDArray resArray) {
+        return ArithmeticOps.mul(this, b, resArray);
     }
 
-    public NDArray mul(int b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.mulDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.mulInt(A, b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(int b, NDArray resArray) {
+        return ArithmeticOps.mul(this, b, resArray);
     }
 
-    public NDArray mul(double b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.mulFloat(A, (float) b, targetRes);
-            case f64 -> ArithmeticOps.mulDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.mulInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray mul(double b, NDArray resArray) {
+        return ArithmeticOps.mul(this, b, resArray);
     }
 
     //division operations
 
-    public NDArray div(NDArray b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, B, resArray);
-            case f64 -> ArithmeticOps.divDouble(A, B, resArray);
-            case i32 -> ArithmeticOps.divInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(NDArray b) {
+        return ArithmeticOps.div(this, b);
     }
 
-    public NDArray div(NDArray b, NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, targetType);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        return switch(targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, B, targetRes);
-            case f64 -> ArithmeticOps.divDouble(A, B, targetRes);
-            case i32 -> ArithmeticOps.divInt(A, B, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(NDArray b, NDArray resArray) {
+        return ArithmeticOps.div(this, b, resArray);
     }
 
-    public NDArray div(float b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.divDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.divInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(float b) {
+        return ArithmeticOps.div(this, b);
     }
 
-    public NDArray div(int b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, b, resArray);
-            case f64 -> ArithmeticOps.divDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.divInt(A, b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(int b) {
+        return ArithmeticOps.div(this, b);
     }
 
-    public NDArray div(double b){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray resArray = JNum.zeros(targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, (float) b, resArray);
-            case f64 -> ArithmeticOps.divDouble(A, b, resArray);
-            case i32 -> ArithmeticOps.divInt(A, (int) b, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(double b) {
+        return ArithmeticOps.div(this, b);
     }
 
-    public NDArray div(float b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.divDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.divInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(float b, NDArray resArray) {
+        return ArithmeticOps.div(this, b, resArray);
     }
 
-    public NDArray div(int b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, b, targetRes);
-            case f64 -> ArithmeticOps.divDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.divInt(A, b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(int b, NDArray resArray) {
+        return ArithmeticOps.div(this, b, resArray);
     }
 
-    public NDArray div(double b,NDArray resArray){
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), TypeUtil.scalarType(b));
-        NDArray A = this.cast(targetType);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, this.internalShapeUnsafe());
-        return switch (targetType) {
-            case f32 -> ArithmeticOps.divFloat(A, (float) b, targetRes);
-            case f64 -> ArithmeticOps.divDouble(A, b, targetRes);
-            case i32 -> ArithmeticOps.divInt(A, (int) b, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray div(double b, NDArray resArray) {
+        return ArithmeticOps.div(this, b, resArray);
     }
 
     //IN PLACE operations of VectorOps
@@ -1226,243 +891,222 @@ public class NDArray{
 
     //UnaryOps.java methods
 
-    public NDArray sqrt(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> UnaryOps.sqrtFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.sqrtDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.sqrtInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray sqrt() {
+        return UnaryOps.sqrt(this);
     }
 
-    public NDArray abs(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> UnaryOps.absFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.absDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.absInt(safeThis, JNum.zeros(DType.i32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray abs() {
+        return UnaryOps.abs(this);
     }
 
-    public NDArray exp(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> UnaryOps.expFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.expDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.expInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray exp() {
+        return UnaryOps.exp(this);
     }
 
-    public NDArray log(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> UnaryOps.logFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.logDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.logInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray log() {
+        return UnaryOps.log(this);
     }
 
-    public NDArray log10(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> UnaryOps.log10Float(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.log10Double(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.log10Int(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray log10() {
+        return UnaryOps.log10(this);
     }
 
     public NDArray sigmoid() {
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()) {
-            case f32 -> UnaryOps.sigmoidFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> UnaryOps.sigmoidDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> UnaryOps.sigmoidInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case bool -> UnaryOps.sigmoidFloat(safeThis.cast(DType.f32), JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+        return UnaryOps.sigmoid(this);
     }
 
     //TrigOps.java methods
 
-    public NDArray sin(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        
-        return switch(this.getDType()){
-            case f32 -> TrigOps.sinFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.sinDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.sinInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray sin() {
+        return TrigOps.sin(this);
     }
 
-    public NDArray cos(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> TrigOps.cosFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.cosDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.cosInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray cos() {
+        return TrigOps.cos(this);
     }
 
-    public NDArray tan(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        
-        return switch(this.getDType()){
-            case f32 -> TrigOps.tanFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.tanDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.tanInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray tan() {
+        return TrigOps.tan(this);
     }
 
-    public NDArray sinh(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> TrigOps.sinhFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.sinhDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.sinhInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray sinh() {
+        return TrigOps.sinh(this);
     }
 
-    public NDArray cosh(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        return switch(this.getDType()){
-            case f32 -> TrigOps.coshFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.coshDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.coshInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray cosh() {
+        return TrigOps.cosh(this);
     }
 
-    public NDArray tanh(){
-        NDArray safeThis = this.isContiguous() ? this : this.contiguous();
-        
-        return switch(this.getDType()){
-            case f32 -> TrigOps.tanhFloat(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            case f64 -> TrigOps.tanhDouble(safeThis, JNum.zeros(DType.f64, this.internalShapeUnsafe()));
-            case i32 -> TrigOps.tanhInt(safeThis, JNum.zeros(DType.f32, this.internalShapeUnsafe()));
-            default -> throw new UnsupportedOperationException("This dtype "+safeThis.getDType()+" doesn't support this method");
-        };
+    public NDArray tanh() {
+        return TrigOps.tanh(this);
     }
 
     //LinalgOps.java methods
 
-    public NDArray matmul(NDArray b){
-        ValidUtil.validateMatmulInputs(this, b);
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        NDArray A = this.cast(targetType);
-        NDArray B = b.cast(targetType);
-        long[] targetShape = new long[]{this.internalShapeUnsafe()[0], b.internalShapeUnsafe()[1]};
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch(targetType){
-            case f32 -> LinalgOps.matmulFloat(A, B, resArray);
-            case f64 -> LinalgOps.matmulDouble(A, B, resArray);
-            case i32 -> LinalgOps.matmulInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray matmul(NDArray b) {
+        return LinalgOps.matmul(this, b);
     }
 
-    public NDArray matmul(NDArray b, NDArray resArray){
-        ValidUtil.validateMatmulInputs(this, b);
-        DType targetType = TypeUtil.promoteTypes(this.getDType(), b.getDType());
-        NDArray A = this.cast(targetType);
-        NDArray B = b.cast(targetType);
-        long[] targetShape = new long[]{this.internalShapeUnsafe()[0], b.internalShapeUnsafe()[1]};
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        ValidUtil.validateOutputBuffer(targetRes);
-        return switch(targetType){
-            case f32 -> LinalgOps.matmulFloat(A, B, targetRes);
-            case f64 -> LinalgOps.matmulDouble(A, B, targetRes);
-            case i32 -> LinalgOps.matmulInt(A, B, targetRes);
-            default -> throw new UnsupportedOperationException("This dtype "+targetType+" doesn't support this method");
-        };
+    public NDArray matmul(NDArray b, NDArray resArray) {
+        return LinalgOps.matmul(this, b, resArray);
+    }
+
+    public double trace() {
+        return LinalgOps.trace(this);
+    }
+
+    public double trace(int offset) {
+        return LinalgOps.trace(this, offset);
+    }
+
+    public double norm() {
+        return LinalgOps.norm(this);
+    }
+
+    public double norm(int ord) {
+        return LinalgOps.norm(this, ord);
+    }
+
+    public double det() {
+        return LinalgOps.det(this);
+    }
+
+    public SlogdetResult slogdet() {
+        return LinalgOps.slogdet(this);
+    }
+
+    public NDArray inv() {
+        return LinalgOps.inv(this);
+    }
+
+    public NDArray inv(Arena arena) {
+        return LinalgOps.inv(this, arena);
+    }
+
+    public NDArray solve(NDArray b) {
+        return LinalgOps.solve(this, b);
+    }
+
+    public NDArray solve(NDArray b, Arena arena) {
+        return LinalgOps.solve(this, b, arena);
+    }
+
+    public NDArray cholesky() {
+        return LinalgOps.cholesky(this);
+    }
+
+    public NDArray cholesky(Arena arena) {
+        return LinalgOps.cholesky(this, arena);
+    }
+
+    public QRResult qr() {
+        return LinalgOps.qr(this);
+    }
+
+    public QRResult qr(Arena arena) {
+        return LinalgOps.qr(this, arena);
+    }
+
+    public EighResult eigh() {
+        return LinalgOps.eigh(this);
+    }
+
+    public EighResult eigh(Arena arena) {
+        return LinalgOps.eigh(this, arena);
+    }
+
+    public SVDResult svd() {
+        return LinalgOps.svd(this);
+    }
+
+    public SVDResult svd(Arena arena) {
+        return LinalgOps.svd(this, arena);
+    }
+
+    public int matrixRank() {
+        return LinalgOps.matrixRank(this);
+    }
+
+    public int matrixRank(double tol) {
+        return LinalgOps.matrixRank(this, tol);
+    }
+
+    public int matrixRank(double tol, Arena arena) {
+        return LinalgOps.matrixRank(this, tol, arena);
+    }
+
+    public double cond() {
+        return LinalgOps.cond(this);
+    }
+
+    public double cond(Arena arena) {
+        return LinalgOps.cond(this, arena);
+    }
+
+    public NDArray pinv() {
+        return LinalgOps.pinv(this);
+    }
+
+    public NDArray pinv(double rcond) {
+        return LinalgOps.pinv(this, rcond);
+    }
+
+    public NDArray pinv(double rcond, Arena arena) {
+        return LinalgOps.pinv(this, rcond, arena);
+    }
+
+    public EigResult eig() {
+        return LinalgOps.eig(this);
+    }
+
+    public EigResult eig(Arena arena) {
+        return LinalgOps.eig(this, arena);
+    }
+
+    public double cosineSimilarity(NDArray b) {
+        return LinalgOps.cosineSimilarity(this, b);
     }
 
     // BooleanOps.java methods
 
     public NDArray and(NDArray b) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray resArray = JNum.zeros(DType.bool, targetShape);
-        return BooleanOps.and(A, B, resArray);
+        return BooleanOps.and(this, b);
     }
 
     public NDArray and(NDArray b, NDArray resArray) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, DType.bool, targetShape);
-        return BooleanOps.and(A, B, targetRes);
+        return BooleanOps.and(this, b, resArray);
     }
 
     public NDArray or(NDArray b) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray resArray = JNum.zeros(DType.bool, targetShape);
-        return BooleanOps.or(A, B, resArray);
+        return BooleanOps.or(this, b);
     }
 
     public NDArray or(NDArray b, NDArray resArray) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, DType.bool, targetShape);
-        return BooleanOps.or(A, B, targetRes);
+        return BooleanOps.or(this, b, resArray);
     }
 
     public NDArray xor(NDArray b) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray resArray = JNum.zeros(DType.bool, targetShape);
-        return BooleanOps.xor(A, B, resArray);
+        return BooleanOps.xor(this, b);
     }
 
     public NDArray xor(NDArray b, NDArray resArray) {
-        long[] targetShape = ShapeUtil.calculateBroadcastShape(this.internalShapeUnsafe(), b.internalShapeUnsafe());
-        NDArray A = ValidUtil.prepareBroadcastOperand(this, targetShape, DType.bool);
-        NDArray B = ValidUtil.prepareBroadcastOperand(b, targetShape, DType.bool);
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, DType.bool, targetShape);
-        return BooleanOps.xor(A, B, targetRes);
+        return BooleanOps.xor(this, b, resArray);
     }
 
     public NDArray not() {
-        NDArray A = this.getDType() == DType.bool ? this : this.cast(DType.bool);
-        NDArray safeThis = A.isContiguous() ? A : A.contiguous();
-        NDArray resArray = JNum.zeros(DType.bool, safeThis.internalShapeUnsafe());
-        return BooleanOps.not(safeThis, resArray);
+        return BooleanOps.not(this);
     }
 
     public NDArray not(NDArray resArray) {
-        NDArray A = this.getDType() == DType.bool ? this : this.cast(DType.bool);
-        NDArray safeThis = A.isContiguous() ? A : A.contiguous();
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, DType.bool, safeThis.internalShapeUnsafe());
-        return BooleanOps.not(safeThis, targetRes);
+        return BooleanOps.not(this, resArray);
     }
 
     public boolean any() {
-        NDArray A = this.getDType() == DType.bool ? this : this.cast(DType.bool);
-        return BooleanOps.any(A);
+        return BooleanOps.any(this);
     }
 
     public boolean all() {
-        NDArray A = this.getDType() == DType.bool ? this : this.cast(DType.bool);
-        return BooleanOps.all(A);
+        return BooleanOps.all(this);
     }
-
-    /*
-    * JNumExpr
-    */
-
-
 
 }

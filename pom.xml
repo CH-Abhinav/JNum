@@ -62,6 +62,9 @@
                         <arg>--add-modules</arg>
                         <arg>jdk.incubator.vector</arg>
                     </compilerArgs>
+                    <testIncludes>
+                        <testInclude>**/MatmulBenchmark.java</testInclude>
+                    </testIncludes>
                 </configuration>
             </plugin>
 

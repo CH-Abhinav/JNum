@@ -1,5 +1,7 @@
 package jnum.internal.kernel.reduce;
 
+import static jnum.internal.Constants.*;
+
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import jdk.incubator.vector.FloatVector;
@@ -12,16 +14,6 @@ import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
 public final class Dot {
-    private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Integer> SPECIESINT= IntVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Double> SPECIESDB= DoubleVector.SPECIES_PREFERRED;
-    private static final long FLOAT_BYTES = ValueLayout.JAVA_FLOAT.byteSize();
-    private static final long INT_BYTES = ValueLayout.JAVA_INT.byteSize();
-    private static final long DB_BYTES = ValueLayout.JAVA_DOUBLE.byteSize();
-    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
-    private static final int VL = SPECIES.length();
-    private static final int INT_VL = SPECIESINT.length();
-    private static final int DB_VL = SPECIESDB.length();
 
     private Dot(){
         throw new AssertionError();
@@ -42,24 +34,24 @@ public final class Dot {
             return total;
         }
         long i=0;
-        long loopbound= a.getSize() - (a.getSize() % (VL * 2));
-        var vSum1 = FloatVector.zero(SPECIES);
-        var vSum2 = FloatVector.zero(SPECIES);
+        long loopbound= a.getSize() - (a.getSize() % (VL_F32 * 2));
+        var vSum1 = FloatVector.zero(SPECIES_F32);
+        var vSum2 = FloatVector.zero(SPECIES_F32);
 
-        for(;i<loopbound;i+=VL*2){
-            var va1=FloatVector.fromMemorySegment(SPECIES, a.getData(), i*FLOAT_BYTES, ORDER);
-            var vb1=FloatVector.fromMemorySegment(SPECIES, b.getData(), i*FLOAT_BYTES, ORDER);
-            var va2=FloatVector.fromMemorySegment(SPECIES, a.getData(), (i+VL)*FLOAT_BYTES, ORDER);
-            var vb2=FloatVector.fromMemorySegment(SPECIES, b.getData(), (i+VL)*FLOAT_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_F32*2){
+            var va1=FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), i*BYTES_F32, NATIVE_ORDER);
+            var vb1=FloatVector.fromMemorySegment(SPECIES_F32, b.getData(), i*BYTES_F32, NATIVE_ORDER);
+            var va2=FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), (i+VL_F32)*BYTES_F32, NATIVE_ORDER);
+            var vb2=FloatVector.fromMemorySegment(SPECIES_F32, b.getData(), (i+VL_F32)*BYTES_F32, NATIVE_ORDER);
             vSum1=va1.fma(vb1,vSum1);
             vSum2=va2.fma(vb2, vSum2);
         }
 
-        loopbound=SPECIES.loopBound(a.getSize());
+        loopbound=SPECIES_F32.loopBound(a.getSize());
 
-        for(;i<loopbound;i+=VL){
-            var v1=FloatVector.fromMemorySegment(SPECIES, a.getData(), i*FLOAT_BYTES, ORDER);
-            var v2=FloatVector.fromMemorySegment(SPECIES, b.getData(), i*FLOAT_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_F32){
+            var v1=FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), i*BYTES_F32, NATIVE_ORDER);
+            var v2=FloatVector.fromMemorySegment(SPECIES_F32, b.getData(), i*BYTES_F32, NATIVE_ORDER);
             vSum1=v1.fma(v2,vSum1);
         }
 
@@ -88,24 +80,24 @@ public final class Dot {
             return total;
         }
         long i=0;
-        long loopbound= a.getSize() - (a.getSize() % (INT_VL * 2));
-        var vSum1 = IntVector.zero(SPECIESINT);
-        var vSum2 = IntVector.zero(SPECIESINT);
+        long loopbound= a.getSize() - (a.getSize() % (VL_I32 * 2));
+        var vSum1 = IntVector.zero(SPECIES_I32);
+        var vSum2 = IntVector.zero(SPECIES_I32);
 
-        for(;i<loopbound;i+=INT_VL*2){
-            var va1=IntVector.fromMemorySegment(SPECIESINT, a.getData(), i*INT_BYTES, ORDER);
-            var vb1=IntVector.fromMemorySegment(SPECIESINT, b.getData(), i*INT_BYTES, ORDER);
-            var va2=IntVector.fromMemorySegment(SPECIESINT, a.getData(), (i+INT_VL)*INT_BYTES, ORDER);
-            var vb2=IntVector.fromMemorySegment(SPECIESINT, b.getData(), (i+INT_VL)*INT_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_I32*2){
+            var va1=IntVector.fromMemorySegment(SPECIES_I32, a.getData(), i*BYTES_I32, NATIVE_ORDER);
+            var vb1=IntVector.fromMemorySegment(SPECIES_I32, b.getData(), i*BYTES_I32, NATIVE_ORDER);
+            var va2=IntVector.fromMemorySegment(SPECIES_I32, a.getData(), (i+VL_I32)*BYTES_I32, NATIVE_ORDER);
+            var vb2=IntVector.fromMemorySegment(SPECIES_I32, b.getData(), (i+VL_I32)*BYTES_I32, NATIVE_ORDER);
             vSum1 = va1.mul(vb1).add(vSum1);
             vSum2 = va2.mul(vb2).add(vSum2);
         }
 
-        loopbound=SPECIES.loopBound(a.getSize());
+        loopbound=SPECIES_F32.loopBound(a.getSize());
 
-        for(;i<loopbound;i+=INT_VL){
-            var v1=IntVector.fromMemorySegment(SPECIESINT, a.getData(), i*INT_BYTES, ORDER);
-            var v2=IntVector.fromMemorySegment(SPECIESINT, b.getData(), i*INT_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_I32){
+            var v1=IntVector.fromMemorySegment(SPECIES_I32, a.getData(), i*BYTES_I32, NATIVE_ORDER);
+            var v2=IntVector.fromMemorySegment(SPECIES_I32, b.getData(), i*BYTES_I32, NATIVE_ORDER);
             vSum1=v1.mul(v2).add(vSum1);
         }
 
@@ -134,24 +126,24 @@ public final class Dot {
             return total;
         }
         long i=0;
-        long loopbound= a.getSize() - (a.getSize() % (DB_VL * 2));
-        var vSum1 = DoubleVector.zero(SPECIESDB);
-        var vSum2 = DoubleVector.zero(SPECIESDB);
+        long loopbound= a.getSize() - (a.getSize() % (VL_F64 * 2));
+        var vSum1 = DoubleVector.zero(SPECIES_F64);
+        var vSum2 = DoubleVector.zero(SPECIES_F64);
 
-        for(;i<loopbound;i+=DB_VL*2){
-            var va1=DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i*DB_BYTES, ORDER);
-            var vb1=DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), i*DB_BYTES, ORDER);
-            var va2=DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (i+DB_VL)*DB_BYTES, ORDER);
-            var vb2=DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), (i+DB_VL)*DB_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_F64*2){
+            var va1=DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), i*BYTES_F64, NATIVE_ORDER);
+            var vb1=DoubleVector.fromMemorySegment(SPECIES_F64, b.getData(), i*BYTES_F64, NATIVE_ORDER);
+            var va2=DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), (i+VL_F64)*BYTES_F64, NATIVE_ORDER);
+            var vb2=DoubleVector.fromMemorySegment(SPECIES_F64, b.getData(), (i+VL_F64)*BYTES_F64, NATIVE_ORDER);
             vSum1=va1.fma(vb1, vSum1);
             vSum2=va2.fma(vb2, vSum2);
         }
 
-        loopbound=SPECIES.loopBound(a.getSize());
+        loopbound=SPECIES_F32.loopBound(a.getSize());
 
-        for(;i<loopbound;i+=DB_VL){
-            var v1=DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i*DB_BYTES, ORDER);
-            var v2=DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), i*DB_BYTES, ORDER);
+        for(;i<loopbound;i+=VL_F64){
+            var v1=DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), i*BYTES_F64, NATIVE_ORDER);
+            var v2=DoubleVector.fromMemorySegment(SPECIES_F64, b.getData(), i*BYTES_F64, NATIVE_ORDER);
             vSum1=v1.fma(v2,vSum1);
         }
 

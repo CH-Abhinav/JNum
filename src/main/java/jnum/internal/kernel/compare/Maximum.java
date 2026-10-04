@@ -1,5 +1,7 @@
 package jnum.internal.kernel.compare;
 
+import static jnum.internal.Constants.*;
+
 import jnum.NDArray;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
@@ -11,16 +13,6 @@ import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 
 public final class Maximum {
-    private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Integer> SPECIESINT= IntVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Double> SPECIESDB= DoubleVector.SPECIES_PREFERRED;
-    private static final long FLOAT_BYTES = ValueLayout.JAVA_FLOAT.byteSize();
-    private static final long INT_BYTES = ValueLayout.JAVA_INT.byteSize();
-    private static final long DB_BYTES = ValueLayout.JAVA_DOUBLE.byteSize();
-    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
-    private static final int VL = SPECIES.length();
-    private static final int INT_VL = SPECIESINT.length();
-    private static final int DB_VL = SPECIESDB.length();
 
     private Maximum() {
         throw new AssertionError();
@@ -29,13 +21,13 @@ public final class Maximum {
     public static NDArray maximumFloat(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.getSize());
+            long loopBound = SPECIES_F32.loopBound(a.getSize());
             
-            for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
-                var vB = FloatVector.fromMemorySegment(SPECIES, b.getData(), i * FLOAT_BYTES, ORDER);
+            for (; i < loopBound; i += VL_F32) {
+                var vA = FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), i * BYTES_F32, NATIVE_ORDER);
+                var vB = FloatVector.fromMemorySegment(SPECIES_F32, b.getData(), i * BYTES_F32, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_F32, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {
@@ -60,16 +52,16 @@ public final class Maximum {
     }
 
     public static NDArray maximumFloat(NDArray a,float b,NDArray resArray){
-        var vB=FloatVector.broadcast(SPECIES, b);
+        var vB=FloatVector.broadcast(SPECIES_F32, b);
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIES.loopBound(a.getSize());
+            long loopBound = SPECIES_F32.loopBound(a.getSize());
             
-            for (; i < loopBound; i += VL) {
-                var vA = FloatVector.fromMemorySegment(SPECIES, a.getData(), i * FLOAT_BYTES, ORDER);
+            for (; i < loopBound; i += VL_F32) {
+                var vA = FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), i * BYTES_F32, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * FLOAT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_F32, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {
@@ -93,13 +85,13 @@ public final class Maximum {
     public static NDArray maximumDouble(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.getSize());
+            long loopBound = SPECIES_F64.loopBound(a.getSize());
             
-            for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
-                var vB = DoubleVector.fromMemorySegment(SPECIESDB, b.getData(), i * DB_BYTES, ORDER);
+            for (; i < loopBound; i += VL_F64) {
+                var vA = DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), i * BYTES_F64, NATIVE_ORDER);
+                var vB = DoubleVector.fromMemorySegment(SPECIES_F64, b.getData(), i * BYTES_F64, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_F64, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {
@@ -124,16 +116,16 @@ public final class Maximum {
     }
 
     public static NDArray maximumDouble(NDArray a,double b,NDArray resArray){
-        var vB = DoubleVector.broadcast(SPECIESDB, b);
+        var vB = DoubleVector.broadcast(SPECIES_F64, b);
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESDB.loopBound(a.getSize());
+            long loopBound = SPECIES_F64.loopBound(a.getSize());
             
-            for (; i < loopBound; i += DB_VL) {
-                var vA = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+            for (; i < loopBound; i += VL_F64) {
+                var vA = DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), i * BYTES_F64, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * DB_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_F64, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {
@@ -157,13 +149,13 @@ public final class Maximum {
     public static NDArray maximumInt(NDArray a,NDArray b,NDArray resArray){
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.getSize());
+            long loopBound = SPECIES_I32.loopBound(a.getSize());
 
-            for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
-                var vB = IntVector.fromMemorySegment(SPECIESINT, b.getData(), i * INT_BYTES, ORDER);
+            for (; i < loopBound; i += VL_I32) {
+                var vA = IntVector.fromMemorySegment(SPECIES_I32, a.getData(), i * BYTES_I32, NATIVE_ORDER);
+                var vB = IntVector.fromMemorySegment(SPECIES_I32, b.getData(), i * BYTES_I32, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_I32, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {
@@ -188,16 +180,16 @@ public final class Maximum {
     }
 
     public static NDArray maximumInt(NDArray a,int b,NDArray resArray){
-        var vB = IntVector.broadcast(SPECIESINT, b);
+        var vB = IntVector.broadcast(SPECIES_I32, b);
 
         if(a.isContiguous() && resArray.isContiguous()){
             long i = 0;
-            long loopBound = SPECIESINT.loopBound(a.getSize());
+            long loopBound = SPECIES_I32.loopBound(a.getSize());
             
-            for (; i < loopBound; i += INT_VL) {
-                var vA = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+            for (; i < loopBound; i += VL_I32) {
+                var vA = IntVector.fromMemorySegment(SPECIES_I32, a.getData(), i * BYTES_I32, NATIVE_ORDER);
                 var vRes = vA.max(vB);
-                vRes.intoMemorySegment(resArray.getData(), i * INT_BYTES, ORDER);
+                vRes.intoMemorySegment(resArray.getData(), i * BYTES_I32, NATIVE_ORDER);
             }
 
             for (; i < a.getSize(); i++) {

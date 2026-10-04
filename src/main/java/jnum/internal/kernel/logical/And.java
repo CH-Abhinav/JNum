@@ -8,11 +8,10 @@ import jdk.incubator.vector.VectorSpecies;
 import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 
+import static jnum.internal.Constants.*;
+
 public final class And {
-    private static final VectorSpecies<Byte> SPECIES_BOOL = ByteVector.SPECIES_PREFERRED;
-    private static final long BOOL_BYTES = ValueLayout.JAVA_BYTE.byteSize();
-    private static final int BOOL_VL = SPECIES_BOOL.length();
-    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
+
 
     private And() {
         throw new AssertionError();
@@ -21,24 +20,24 @@ public final class And {
     public static NDArray and(NDArray a, NDArray b, NDArray resArray) {
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;
-            long loopbound = a.getSize() - (a.getSize() % (BOOL_VL * 2L));
+            long loopbound = a.getSize() - (a.getSize() % (VL_BOOL * 2L));
 
-            for (; i < loopbound; i += BOOL_VL * 2L) {
-                var va1 = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BOOL_BYTES, ORDER);
-                var va2 = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), (i + BOOL_VL) * BOOL_BYTES, ORDER);
-                var vb1 = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), i * BOOL_BYTES, ORDER);
-                var vb2 = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), (i + BOOL_VL) * BOOL_BYTES, ORDER);
+            for (; i < loopbound; i += VL_BOOL * 2L) {
+                var va1 = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BYTES_BOOL, NATIVE_ORDER);
+                var va2 = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), (i + VL_BOOL) * BYTES_BOOL, NATIVE_ORDER);
+                var vb1 = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), i * BYTES_BOOL, NATIVE_ORDER);
+                var vb2 = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), (i + VL_BOOL) * BYTES_BOOL, NATIVE_ORDER);
                 var VRes1 = va1.lanewise(VectorOperators.AND, vb1);
                 var VRes2 = va2.lanewise(VectorOperators.AND, vb2);
-                VRes1.intoMemorySegment(resArray.getData(), i * BOOL_BYTES, ORDER);
-                VRes2.intoMemorySegment(resArray.getData(), (i + BOOL_VL) * BOOL_BYTES, ORDER);
+                VRes1.intoMemorySegment(resArray.getData(), i * BYTES_BOOL, NATIVE_ORDER);
+                VRes2.intoMemorySegment(resArray.getData(), (i + VL_BOOL) * BYTES_BOOL, NATIVE_ORDER);
             }
             loopbound = SPECIES_BOOL.loopBound(a.getSize());
-            for (; i < loopbound; i += BOOL_VL) {
-                var va = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BOOL_BYTES, ORDER);
-                var vb = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), i * BOOL_BYTES, ORDER);
+            for (; i < loopbound; i += VL_BOOL) {
+                var va = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BYTES_BOOL, NATIVE_ORDER);
+                var vb = ByteVector.fromMemorySegment(SPECIES_BOOL, b.getData(), i * BYTES_BOOL, NATIVE_ORDER);
                 var VRes = va.lanewise(VectorOperators.AND, vb);
-                VRes.intoMemorySegment(resArray.getData(), i * BOOL_BYTES, ORDER);
+                VRes.intoMemorySegment(resArray.getData(), i * BYTES_BOOL, NATIVE_ORDER);
             }
             for (; i < a.getSize(); i++) {
                 byte valA = a.getData().getAtIndex(ValueLayout.JAVA_BYTE, i);

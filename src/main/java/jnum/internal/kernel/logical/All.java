@@ -8,11 +8,10 @@ import jdk.incubator.vector.VectorSpecies;
 import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 
+import static jnum.internal.Constants.*;
+
 public final class All {
-    private static final VectorSpecies<Byte> SPECIES_BOOL = ByteVector.SPECIES_PREFERRED;
-    private static final long BOOL_BYTES = ValueLayout.JAVA_BYTE.byteSize();
-    private static final int BOOL_VL = SPECIES_BOOL.length();
-    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
+
 
     private All() {
         throw new AssertionError();
@@ -21,10 +20,10 @@ public final class All {
     public static boolean all(NDArray a) {
         if (a.isContiguous()) {
             long i = 0;
-            long loopbound = a.getSize() - (a.getSize() % BOOL_VL);
+            long loopbound = a.getSize() - (a.getSize() % VL_BOOL);
 
-            for (; i < loopbound; i += BOOL_VL) {
-                var va = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BOOL_BYTES, ORDER);
+            for (; i < loopbound; i += VL_BOOL) {
+                var va = ByteVector.fromMemorySegment(SPECIES_BOOL, a.getData(), i * BYTES_BOOL, NATIVE_ORDER);
                 if (va.compare(VectorOperators.EQ, 0).anyTrue()) return false;
             }
             for (; i < a.getSize(); i++) {

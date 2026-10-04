@@ -1,5 +1,7 @@
 package jnum.internal.kernel.reduce;
 
+import static jnum.internal.Constants.*;
+
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import jdk.incubator.vector.FloatVector;
@@ -12,16 +14,6 @@ import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
 public final class Min {
-    private static final VectorSpecies<Float> SPECIES= FloatVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Integer> SPECIESINT= IntVector.SPECIES_PREFERRED;
-    private static final VectorSpecies<Double> SPECIESDB= DoubleVector.SPECIES_PREFERRED;
-    private static final long FLOAT_BYTES = ValueLayout.JAVA_FLOAT.byteSize();
-    private static final long INT_BYTES = ValueLayout.JAVA_INT.byteSize();
-    private static final long DB_BYTES = ValueLayout.JAVA_DOUBLE.byteSize();
-    private static final ByteOrder ORDER = ByteOrder.nativeOrder();
-    private static final int VL = SPECIES.length();
-    private static final int INT_VL = SPECIESINT.length();
-    private static final int DB_VL = SPECIESDB.length();
 
     private Min(){
         throw new AssertionError();
@@ -39,10 +31,10 @@ public final class Min {
             return (double) finalMin;
         }
         long i=0;
-        long loopbound=SPECIES.loopBound(a.getSize());
-        var vMin=FloatVector.broadcast(SPECIES,Float.POSITIVE_INFINITY);
-        for(;i<loopbound;i+=VL){
-            var v1=FloatVector.fromMemorySegment(SPECIES, a.getData(),i*FLOAT_BYTES,ORDER);
+        long loopbound=SPECIES_F32.loopBound(a.getSize());
+        var vMin=FloatVector.broadcast(SPECIES_F32,Float.POSITIVE_INFINITY);
+        for(;i<loopbound;i+=VL_F32){
+            var v1=FloatVector.fromMemorySegment(SPECIES_F32, a.getData(),i*BYTES_F32,NATIVE_ORDER);
             vMin=vMin.min(v1);
         }
         float finalMin=vMin.reduceLanes(VectorOperators.MIN);
@@ -73,11 +65,11 @@ public final class Min {
             }
 
             if(strideA==1){
-                var vAcc = FloatVector.broadcast(SPECIES, Float.POSITIVE_INFINITY);
+                var vAcc = FloatVector.broadcast(SPECIES_F32, Float.POSITIVE_INFINITY);
                 long k = 0;
-                long loopbound = SPECIES.loopBound(size);
-                for(; k<loopbound ;k += VL){
-                    var vVal = FloatVector.fromMemorySegment(SPECIES, a.getData(), (baseOffset + k) * 4L, ORDER);
+                long loopbound = SPECIES_F32.loopBound(size);
+                for(; k<loopbound ;k += VL_F32){
+                    var vVal = FloatVector.fromMemorySegment(SPECIES_F32, a.getData(), (baseOffset + k) * 4L, NATIVE_ORDER);
                     vAcc = vAcc.min(vVal);
                 }
                 float acc = vAcc.reduceLanes(VectorOperators.MIN);
@@ -108,10 +100,10 @@ public final class Min {
             return (double) finalMin;
         }
         long i = 0;
-        long loopbound = SPECIESINT.loopBound(a.getSize());
-        var vMin = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
-        for (; i < loopbound; i += INT_VL) {
-            var v1 = IntVector.fromMemorySegment(SPECIESINT, a.getData(), i * INT_BYTES, ORDER);
+        long loopbound = SPECIES_I32.loopBound(a.getSize());
+        var vMin = IntVector.broadcast(SPECIES_I32, Integer.MAX_VALUE);
+        for (; i < loopbound; i += VL_I32) {
+            var v1 = IntVector.fromMemorySegment(SPECIES_I32, a.getData(), i * BYTES_I32, NATIVE_ORDER);
             vMin = vMin.min(v1);
         }
         int finalMin = vMin.reduceLanes(VectorOperators.MIN);
@@ -140,11 +132,11 @@ public final class Min {
             }
 
             if(strideA==1){
-                var vAcc = IntVector.broadcast(SPECIESINT, Integer.MAX_VALUE);
+                var vAcc = IntVector.broadcast(SPECIES_I32, Integer.MAX_VALUE);
                 long k = 0;
-                long loopbound = SPECIESINT.loopBound(size);
-                for(; k<loopbound ;k += INT_VL){
-                    var vVal = IntVector.fromMemorySegment(SPECIESINT, a.getData(), (baseOffset + k) * 4L, ORDER);
+                long loopbound = SPECIES_I32.loopBound(size);
+                for(; k<loopbound ;k += VL_I32){
+                    var vVal = IntVector.fromMemorySegment(SPECIES_I32, a.getData(), (baseOffset + k) * 4L, NATIVE_ORDER);
                     vAcc = vAcc.min(vVal);
                 }
                 int acc = vAcc.reduceLanes(VectorOperators.MIN);
@@ -175,10 +167,10 @@ public final class Min {
             return finalMin;
         }
         long i = 0;
-        long loopbound = SPECIESDB.loopBound(a.getSize());
-        var vMin = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
-        for (; i < loopbound; i += DB_VL) {
-            var v1 = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), i * DB_BYTES, ORDER);
+        long loopbound = SPECIES_F64.loopBound(a.getSize());
+        var vMin = DoubleVector.broadcast(SPECIES_F64, Double.POSITIVE_INFINITY);
+        for (; i < loopbound; i += VL_F64) {
+            var v1 = DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), i * BYTES_F64, NATIVE_ORDER);
             vMin = vMin.min(v1);
         }
         double finalMin = vMin.reduceLanes(VectorOperators.MIN);
@@ -207,11 +199,11 @@ public final class Min {
             }
 
             if(strideA==1){
-                var vAcc = DoubleVector.broadcast(SPECIESDB, Double.POSITIVE_INFINITY);
+                var vAcc = DoubleVector.broadcast(SPECIES_F64, Double.POSITIVE_INFINITY);
                 long k = 0;
-                long loopbound = SPECIESDB.loopBound(size);
-                for(; k<loopbound ;k += DB_VL){
-                    var vVal = DoubleVector.fromMemorySegment(SPECIESDB, a.getData(), (baseOffset + k) * 8L, ORDER);
+                long loopbound = SPECIES_F64.loopBound(size);
+                for(; k<loopbound ;k += VL_F64){
+                    var vVal = DoubleVector.fromMemorySegment(SPECIES_F64, a.getData(), (baseOffset + k) * 8L, NATIVE_ORDER);
                     vAcc = vAcc.min(vVal);
                 }
                 double acc = vAcc.reduceLanes(VectorOperators.MIN);

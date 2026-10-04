@@ -1,11 +1,13 @@
 package jnum;
 
+import jnum.internal.eval.EvalEngine;
 import jnum.internal.layout.ShapeUtil;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class JNum {

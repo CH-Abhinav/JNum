@@ -17,6 +17,7 @@ import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
 import jnum.DType;
+import jnum.JNum;
 import jnum.NDArray;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -36,13 +37,17 @@ public class MatmulBenchmark {
 
     @Setup(Level.Trial)
     public void setup() {
-        A = NDArray.rand(DType.f32, N, N);
-        B = NDArray.rand(DType.f32, N, N);
-        resArray = NDArray.zeros(DType.f32, N, N);
+        A = JNum.rand(DType.f32, N, N);
+        B = JNum.rand(DType.f32, N, N);
+        resArray = JNum.zeros(DType.f32, N, N);
     }
 
     @Benchmark
     public NDArray testHardwareMatmul() {
         return A.matmul(B, resArray);
+    }
+
+    public static void main(String[] args) throws Exception {
+        org.openjdk.jmh.Main.main(args);
     }
 }
