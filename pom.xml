@@ -64,6 +64,7 @@
                     </compilerArgs>
                     <testIncludes>
                         <testInclude>**/MatmulBenchmark.java</testInclude>
+                        <testInclude>**/NpyIOTest.java</testInclude>
                     </testIncludes>
                 </configuration>
             </plugin>
