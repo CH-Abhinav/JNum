@@ -815,6 +815,22 @@ public class NDArray{
         return ArithmeticOps.div(this, b, resArray);
     }
 
+    // Kotlin Operator Aliases
+    public NDArray plus(NDArray b) { return this.add(b); }
+    public NDArray plus(double b)  { return this.add(b); }
+    public NDArray plus(float b)   { return this.add(b); }
+    public NDArray plus(int b)     { return this.add(b); }
+
+    public NDArray minus(NDArray b) { return this.sub(b); }
+    public NDArray minus(double b)  { return this.sub(b); }
+    public NDArray minus(float b)   { return this.sub(b); }
+    public NDArray minus(int b)     { return this.sub(b); }
+
+    public NDArray times(NDArray b) { return this.mul(b); }
+    public NDArray times(double b)  { return this.mul(b); }
+    public NDArray times(float b)   { return this.mul(b); }
+    public NDArray times(int b)     { return this.mul(b); }
+
     //IN PLACE operations of VectorOps
 
     // addinplace() methods
