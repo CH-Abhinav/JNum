@@ -31,9 +31,11 @@ public final class Pinv {
         MemorySegment resSeg = res.getData();
 
         SVD.SVDResult svd = SVD.svd(a, arena);
-        MemorySegment uSeg = svd.u().getData();
+        NDArray uContig = svd.u().isContiguous() ? svd.u() : svd.u().contiguous();
+        NDArray vtContig = svd.vt().isContiguous() ? svd.vt() : svd.vt().contiguous();
+        MemorySegment uSeg = uContig.getData();
         MemorySegment sSeg = svd.s().getData();
-        MemorySegment vtSeg = svd.vt().getData();
+        MemorySegment vtSeg = vtContig.getData();
 
         if (dtype == DType.f32) {
             float maxSigma = sSeg.getAtIndex(ValueLayout.JAVA_FLOAT, 0);

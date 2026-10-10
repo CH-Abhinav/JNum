@@ -71,7 +71,8 @@ public final class Eigh {
                         float aqq = aSeg.getAtIndex(ValueLayout.JAVA_FLOAT, (long) q * n + q);
 
                         float theta = (aqq - app) / (2.0f * apq);
-                        float t = (float) (Math.signum(theta) / (Math.abs(theta) + Math.sqrt(theta * theta + 1.0f)));
+                        float sign = theta < 0.0f ? -1.0f : 1.0f;
+                        float t = (float) (sign / (Math.abs(theta) + Math.sqrt(theta * theta + 1.0f)));
                         if (Float.isNaN(t)) t = 0.0f;
 
                         float c = (float) (1.0 / Math.sqrt(t * t + 1.0f));
@@ -183,7 +184,8 @@ public final class Eigh {
                         double aqq = aSeg.getAtIndex(ValueLayout.JAVA_DOUBLE, (long) q * n + q);
 
                         double theta = (aqq - app) / (2.0 * apq);
-                        double t = Math.signum(theta) / (Math.abs(theta) + Math.sqrt(theta * theta + 1.0));
+                        double sign = theta < 0.0 ? -1.0 : 1.0;
+                        double t = sign / (Math.abs(theta) + Math.sqrt(theta * theta + 1.0));
                         if (Double.isNaN(t)) t = 0.0;
 
                         double c = 1.0 / Math.sqrt(t * t + 1.0);

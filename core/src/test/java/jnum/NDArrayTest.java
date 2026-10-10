@@ -1,21 +1,20 @@
 package jnum;
 
 import static jnum.DType.*;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.Arena;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import org.junit.jupiter.api.Test;
 
 class NDArrayTest {
 
     @Test
     void viewSemanticsAndCopyPreserveLogicalElements() {
-        NDArray dense = NDArray.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
+        NDArray dense = JNum.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
         NDArray transposed = dense.transpose();
-        NDArray broadcast = NDArray.from(new float[]{5f, 6f}, 1, 2).broadcastTo(3, 2);
+        NDArray broadcast = JNum.from(new float[]{5f, 6f}, 1, 2).broadcastTo(3, 2);
 
         assertTrue(dense.isContiguous());
         assertFalse(transposed.isContiguous());
@@ -33,8 +32,8 @@ class NDArrayTest {
 
     @Test
     void dotPromotesMixedDtypesCorrectly() {
-        NDArray left = NDArray.from(new float[]{1f, 2f, 3f}, 3);
-        NDArray right = NDArray.from(new double[]{0.5, 1.5, 2.0}, 3);
+        NDArray left = JNum.from(new float[]{1f, 2f, 3f}, 3);
+        NDArray right = JNum.from(new double[]{0.5, 1.5, 2.0}, 3);
 
         double result = left.dot(right);
 
@@ -43,8 +42,8 @@ class NDArrayTest {
 
     @Test
     void matmulPromotesMixedDtypesCorrectly() {
-        NDArray left = NDArray.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
-        NDArray right = NDArray.from(new double[]{5.0, 6.0, 7.0, 8.0}, 2, 2);
+        NDArray left = JNum.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
+        NDArray right = JNum.from(new double[]{5.0, 6.0, 7.0, 8.0}, 2, 2);
 
         NDArray result = left.matmul(right);
 
@@ -58,9 +57,9 @@ class NDArrayTest {
 
     @Test
     void matmulRejectsNonContiguousOutputBuffer() {
-        NDArray left = NDArray.ones(f32, 2, 2);
-        NDArray right = NDArray.ones(f32, 2, 2);
-        NDArray nonContiguousOutput = NDArray.zeros(f32, 2, 2).transpose();
+        NDArray left = JNum.ones(f32, 2, 2);
+        NDArray right = JNum.ones(f32, 2, 2);
+        NDArray nonContiguousOutput = JNum.zeros(f32, 2, 2).transpose();
 
         IllegalArgumentException ex = assertThrows(
             IllegalArgumentException.class,
@@ -72,8 +71,8 @@ class NDArrayTest {
 
     @Test
     void addBroadcastsSmallerArrayAcrossLargerArray() {
-        NDArray left = NDArray.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
-        NDArray right = NDArray.from(new float[]{10f, 20f}, 2);
+        NDArray left = JNum.from(new float[]{1f, 2f, 3f, 4f}, 2, 2);
+        NDArray right = JNum.from(new float[]{10f, 20f}, 2);
 
         NDArray result = left.add(right);
 
@@ -86,7 +85,7 @@ class NDArrayTest {
 
     @Test
     void axisReductionsWorkForContiguousAndTransposedViews() {
-        NDArray dense = NDArray.from(new float[]{1f, 2f, 3f, 4f, 5f, 6f}, 2, 3);
+        NDArray dense = JNum.from(new float[]{1f, 2f, 3f, 4f, 5f, 6f}, 2, 3);
         NDArray transposed = dense.transpose();
 
         NDArray denseSumAxisOne = dense.sum(1);
@@ -109,9 +108,9 @@ class NDArrayTest {
 
     @Test
     void vectorizedExpTrigAndSqrtOpsProduceCorrectResults() {
-        NDArray sqrtInput = NDArray.from(new float[]{1f, 4f, 9f, 16f}, 4);
-        NDArray sinInput = NDArray.from(new double[]{0.0, Math.PI / 2.0}, 2);
-        NDArray expInput = NDArray.from(new double[]{0.0, 1.0}, 2);
+        NDArray sqrtInput = JNum.from(new float[]{1f, 4f, 9f, 16f}, 4);
+        NDArray sinInput = JNum.from(new double[]{0.0, Math.PI / 2.0}, 2);
+        NDArray expInput = JNum.from(new double[]{0.0, 1.0}, 2);
 
         NDArray sqrtResult = sqrtInput.sqrt();
         NDArray sinResult = sinInput.sin();
@@ -131,7 +130,7 @@ class NDArrayTest {
 
     @Test
     void booleanLifecycleAndOperationsWorkCorrectly() {
-        NDArray boolArr = NDArray.from(new boolean[]{true, false, true, false}, 2, 2);
+        NDArray boolArr = JNum.from(new boolean[]{true, false, true, false}, 2, 2);
 
         assertEquals(DType.bool, boolArr.getDType());
         assertTrue(boolArr.getBoolean(0, 0));
@@ -161,7 +160,7 @@ class NDArrayTest {
         assertEquals(0, castInt.getInt(0, 1));
 
         // Boolean operations check (and, or, xor)
-        NDArray b2 = NDArray.from(new boolean[]{true, true, false, false}, 2, 2);
+        NDArray b2 = JNum.from(new boolean[]{true, true, false, false}, 2, 2);
         NDArray andRes = boolArr.and(b2);
         assertTrue(andRes.getBoolean(0, 0));
         assertFalse(andRes.getBoolean(0, 1));
@@ -173,5 +172,105 @@ class NDArrayTest {
         NDArray xorRes = boolArr.xor(b2);
         assertFalse(xorRes.getBoolean(0, 0));
         assertTrue(xorRes.getBoolean(0, 1));
+    }
+
+    @Test
+    void privateConstructorThrowsAssertionError() throws Exception {
+        Constructor<NDArray> constructor = NDArray.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        InvocationTargetException ex = assertThrows(InvocationTargetException.class, constructor::newInstance);
+        assertInstanceOf(AssertionError.class, ex.getCause());
+    }
+
+    @Test
+    void subviewSlicingAndBoundsChecks() {
+        NDArray arr = JNum.from(new float[]{
+            1f, 2f, 3f,
+            4f, 5f, 6f
+        }, 2, 3);
+
+        NDArray row0 = arr.subview(0);
+        assertArrayEquals(new long[]{3}, row0.getShape());
+        assertEquals(1f, row0.getFloat(0));
+        assertEquals(2f, row0.getFloat(1));
+        assertEquals(3f, row0.getFloat(2));
+
+        NDArray row1 = arr.subview(-1); // negative index
+        assertArrayEquals(new long[]{3}, row1.getShape());
+        assertEquals(4f, row1.getFloat(0));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> arr.subview(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> arr.subview(-3));
+    }
+
+    @Test
+    void multiAxisSliceWorksCorrectly() {
+        NDArray arr = JNum.from(new float[]{
+            10f, 20f, 30f, 40f,
+            50f, 60f, 70f, 80f,
+            90f, 100f, 110f, 120f
+        }, 3, 4);
+
+        NDArray sliced = arr.slice(Slice.range(0, 2), Slice.range(1, 3));
+        assertArrayEquals(new long[]{2, 2}, sliced.getShape());
+        assertEquals(20f, sliced.getFloat(0, 0));
+        assertEquals(30f, sliced.getFloat(0, 1));
+        assertEquals(60f, sliced.getFloat(1, 0));
+        assertEquals(70f, sliced.getFloat(1, 1));
+
+        // Too many slices throws
+        assertThrows(IllegalArgumentException.class,
+            () -> arr.slice(Slice.all(), Slice.all(), Slice.all()));
+    }
+
+    @Test
+    void reshapeValidatesTotalElementCount() {
+        NDArray arr = JNum.zeros(2, 3);
+        NDArray reshaped = arr.reshape(3, 2);
+        assertArrayEquals(new long[]{3, 2}, reshaped.getShape());
+
+        NDArray flat = arr.reshape(6);
+        assertArrayEquals(new long[]{6}, flat.getShape());
+
+        assertThrows(IllegalArgumentException.class, () -> arr.reshape(5));
+        assertThrows(IllegalArgumentException.class, () -> arr.reshape(2, 4));
+    }
+
+    @Test
+    void inPlaceArithmeticMutatesUnderlyingBuffer() {
+        NDArray a = JNum.from(new float[]{1f, 2f, 3f}, 3);
+        NDArray b = JNum.from(new float[]{10f, 20f, 30f}, 3);
+
+        a.addi(b);
+        assertEquals(11f, a.getFloat(0));
+        assertEquals(22f, a.getFloat(1));
+        assertEquals(33f, a.getFloat(2));
+
+        a.subi(1.0f);
+        assertEquals(10f, a.getFloat(0));
+        assertEquals(21f, a.getFloat(1));
+        assertEquals(32f, a.getFloat(2));
+
+        a.muli(2.0f);
+        assertEquals(20f, a.getFloat(0));
+        assertEquals(42f, a.getFloat(1));
+        assertEquals(64f, a.getFloat(2));
+
+        a.divi(2.0f);
+        assertEquals(10f, a.getFloat(0));
+        assertEquals(21f, a.getFloat(1));
+        assertEquals(32f, a.getFloat(2));
+    }
+
+    @Test
+    void closedArenaThrowsIllegalStateExceptionOnAccess() {
+        NDArray arr;
+        try (Arena confined = Arena.ofConfined()) {
+            arr = JNum.zeros(confined, DType.f32, 2, 2);
+            assertEquals(0.0f, arr.getFloat(0, 0));
+        }
+        // Scope is now closed -> segment access must throw IllegalStateException
+        assertThrows(IllegalStateException.class, () -> arr.getFloat(0, 0));
+        assertThrows(IllegalStateException.class, () -> arr.setFloat(5.0f, 0, 0));
     }
 }

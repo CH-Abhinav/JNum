@@ -323,7 +323,7 @@ public class NDArray{
     public void setDouble(double val, long x) { SetOps.setDouble(this, val, x); }
     public void setDouble(double val, long x, long y) { SetOps.setDouble(this, val, x, y); }
     public void setDouble(double val, long x, long y, long z) { SetOps.setDouble(this, val, x, y, z); }
-    public void setFloat(double val,long... indices){ SetOps.setDouble(this, val, indices); }
+    public void setDouble(double val,long... indices){ SetOps.setDouble(this, val, indices); }
 
     // --- INT ---
     public int getInt(long x) { return GetOps.getInt(this, x); }

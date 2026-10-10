@@ -2,7 +2,7 @@ package jnum.nn;
 
 import jnum.NDArray;
 
-public class Linear {
+public class Linear implements Module {
     private final NDArray weights;
     private final NDArray bias;
 

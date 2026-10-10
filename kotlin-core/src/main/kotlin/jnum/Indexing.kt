@@ -15,7 +15,11 @@ val `_`: Slice = Slice.all()
 internal fun progressionToSlice(prog: IntProgression): Slice {
     val step = prog.step.toLong()
     val start = prog.first.toLong()
-    val stop = if (step > 0) prog.last.toLong() + 1 else prog.last.toLong() - 1
+    val stop = if (step > 0) {
+        prog.last.toLong() + 1
+    } else {
+        if (prog.last <= 0) Slice.UNBOUNDED_STOP else prog.last.toLong() - 1
+    }
     return Slice.range(start, stop, step)
 }
 
