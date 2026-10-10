@@ -55,6 +55,7 @@
                     <testIncludes>
                         <testInclude>**/MatmulBenchmark.java</testInclude>
                         <testInclude>**/NpyIOTest.java</testInclude>
+                        <testInclude>**/SafetensorsIOTest.java</testInclude>
                     </testIncludes>
                 </configuration>
             </plugin>
