@@ -1,6 +1,7 @@
 package jnum.internal.ops;
 
 import java.lang.foreign.Arena;
+import java.util.Arrays;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
@@ -34,6 +35,24 @@ public final class LinalgOps {
     }
 
     public static NDArray matmul(NDArray a, NDArray b) {
+        if (a.dim() == 3 && b.dim() == 3) {
+            long bA = a.internalShapeUnsafe()[0];
+            long bB = b.internalShapeUnsafe()[0];
+            if (bA != bB) {
+                throw new IllegalArgumentException("Batch dimensions mismatch: " + bA + " vs " + bB);
+            }
+            if (a.internalShapeUnsafe()[2] != b.internalShapeUnsafe()[1]) {
+                throw new IllegalArgumentException(
+                    "Matmul shape mismatch: left shape " + Arrays.toString(a.internalShapeUnsafe()) +
+                    " and right shape " + Arrays.toString(b.internalShapeUnsafe()) +
+                    " are incompatible because " + a.internalShapeUnsafe()[2] + " != " + b.internalShapeUnsafe()[1]
+                );
+            }
+            DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+            long[] targetShape = new long[]{bA, a.internalShapeUnsafe()[1], b.internalShapeUnsafe()[2]};
+            NDArray res = JNum.zeros(targetType, targetShape);
+            return matmul(a, b, res);
+        }
         ValidUtil.validateMatmulInputs(a, b);
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         NDArray A = a.cast(targetType);
@@ -49,6 +68,28 @@ public final class LinalgOps {
     }
 
     public static NDArray matmul(NDArray a, NDArray b, NDArray resArray) {
+        if (a.dim() == 3 && b.dim() == 3) {
+            long bA = a.internalShapeUnsafe()[0];
+            long bB = b.internalShapeUnsafe()[0];
+            if (bA != bB) {
+                throw new IllegalArgumentException("Batch dimensions mismatch: " + bA + " vs " + bB);
+            }
+            if (a.internalShapeUnsafe()[2] != b.internalShapeUnsafe()[1]) {
+                throw new IllegalArgumentException(
+                    "Matmul shape mismatch: left shape " + Arrays.toString(a.internalShapeUnsafe()) +
+                    " and right shape " + Arrays.toString(b.internalShapeUnsafe()) +
+                    " are incompatible because " + a.internalShapeUnsafe()[2] + " != " + b.internalShapeUnsafe()[1]
+                );
+            }
+            DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+            long[] targetShape = new long[]{bA, a.internalShapeUnsafe()[1], b.internalShapeUnsafe()[2]};
+            NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
+            ValidUtil.validateOutputBuffer(targetRes);
+            for (long i = 0; i < bA; i++) {
+                matmul(a.subview(i), b.subview(i), targetRes.subview(i));
+            }
+            return targetRes;
+        }
         ValidUtil.validateMatmulInputs(a, b);
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         NDArray A = a.cast(targetType);

@@ -645,6 +645,10 @@ public class NDArray{
         return this.sum() / (double) this.getSize();
     }
 
+    public double mean() {
+        return avg();
+    }
+
     public NDArray maximum(NDArray b) {
         return CompareOps.maximum(this, b);
     }

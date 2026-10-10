@@ -23,10 +23,10 @@ import jnum.NDArray;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
-@Fork(1)
+@Fork(value = 1, jvmArgsAppend = {"--add-modules", "jdk.incubator.vector"})
 @Threads(1)
-@Warmup(iterations = 2, time = 2)
-@Measurement(iterations = 5, time = 2)
+@Warmup(iterations = 2, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 4, time = 1, timeUnit = TimeUnit.SECONDS)
 public class MatmulBenchmark {
     @Param({"128","256", "512", "1024","2048","4096","8192"})
     private int N;

@@ -389,7 +389,23 @@ public class JNum {
     }
 
     public static NDArray eval(String expression, Map<String, NDArray> variables) {
-        if (variables.isEmpty()) throw new IllegalArgumentException("No variables provided.");
+        if (variables == null || variables.isEmpty()) throw new IllegalArgumentException("No variables provided.");
         return EvalEngine.evaluateNamed(expression, variables);
+    }
+
+    public static NDArray eye(int n) {
+        return eye(n, DType.f64);
+    }
+
+    public static NDArray eye(int n, DType dtype) {
+        NDArray result = zeros(dtype, n, n);
+        for (int i = 0; i < n; i++) {
+            result.setDouble(1.0, i, i);
+        }
+        return result;
+    }
+
+    public static NDArray identity(int n, DType dtype) {
+        return eye(n, dtype);
     }
 }

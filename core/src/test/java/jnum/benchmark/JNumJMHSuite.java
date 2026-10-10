@@ -7,13 +7,14 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import jnum.DType;
+import jnum.JNum;
 import jnum.NDArray;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(value = 1, jvmArgsAppend = {"--add-modules", "jdk.incubator.vector", "-Xms8g", "-Xmx16g", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCompactObjectHeaders"})
-@Warmup(iterations = 2, time = 200, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 5, time = 200, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(value = 1, jvmArgsAppend = {"--add-modules", "jdk.incubator.vector"})
+@Warmup(iterations = 2, time = 1, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 4, time = 1, timeUnit = TimeUnit.SECONDS)
 public class JNumJMHSuite {
 
     // =========================================================================
@@ -30,29 +31,29 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 1000L);
-            b_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 1000L);
-            res_1K = NDArray.zeros(DType.f32, 1000L);
+            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 1000L);
+            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 1000L);
+            res_1K = JNum.zeros(DType.f32, 1000L);
 
-            a_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 10000L);
-            b_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 10000L);
-            res_10K = NDArray.zeros(DType.f32, 10000L);
+            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
+            res_10K = JNum.zeros(DType.f32, 10000L);
 
-            a_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 100000L);
-            b_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 100000L);
-            res_100K = NDArray.zeros(DType.f32, 100000L);
+            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 100000L);
+            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 100000L);
+            res_100K = JNum.zeros(DType.f32, 100000L);
 
-            a_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            b_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            res_1M = NDArray.zeros(DType.f32, 1_000_000L);
+            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
+            res_1M = JNum.zeros(DType.f32, 1_000_000L);
 
-            a_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
-            b_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
-            res_10M = NDArray.zeros(DType.f32, 10_000_000L);
+            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
+            res_10M = JNum.zeros(DType.f32, 10_000_000L);
 
-            a_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
-            b_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
-            res_100M = NDArray.zeros(DType.f32, 100_000_000L);
+            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
+            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
+            res_100M = JNum.zeros(DType.f32, 100_000_000L);
         }
     }
 
@@ -100,29 +101,29 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 100);
-            b_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 100);
-            res_1K = NDArray.zeros(DType.f32, 10, 100);
+            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 100);
+            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 100);
+            res_1K = JNum.zeros(DType.f32, 10, 100);
 
-            a_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 100);
-            b_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 100);
-            res_10K = NDArray.zeros(DType.f32, 100, 100);
+            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100);
+            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100);
+            res_10K = JNum.zeros(DType.f32, 100, 100);
 
-            a_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 1000, 100);
-            b_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 1000, 100);
-            res_100K = NDArray.zeros(DType.f32, 1000, 100);
+            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 100);
+            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 100);
+            res_100K = JNum.zeros(DType.f32, 1000, 100);
 
-            a_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
-            b_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
-            res_1M = NDArray.zeros(DType.f32, 1000, 1000);
+            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
+            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
+            res_1M = JNum.zeros(DType.f32, 1000, 1000);
 
-            a_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
-            b_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
-            res_10M = NDArray.zeros(DType.f32, 10000, 1000);
+            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
+            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
+            res_10M = JNum.zeros(DType.f32, 10000, 1000);
 
-            a_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
-            b_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
-            res_100M = NDArray.zeros(DType.f32, 10000, 10000);
+            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
+            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
+            res_100M = JNum.zeros(DType.f32, 10000, 10000);
         }
     }
 
@@ -153,29 +154,29 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
-            b_1K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
-            res_1K = NDArray.zeros(DType.f32, 10, 10, 10);
+            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
+            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
+            res_1K = JNum.zeros(DType.f32, 10, 10, 10);
 
-            a_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
-            b_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
-            res_10K = NDArray.zeros(DType.f32, 10, 20, 50);
+            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
+            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
+            res_10K = JNum.zeros(DType.f32, 10, 20, 50);
 
-            a_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
-            b_100K = NDArray.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
-            res_100K = NDArray.zeros(DType.f32, 20, 50, 100);
+            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
+            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
+            res_100K = JNum.zeros(DType.f32, 20, 50, 100);
 
-            a_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
-            b_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
-            res_1M = NDArray.zeros(DType.f32, 100, 100, 100);
+            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
+            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
+            res_1M = JNum.zeros(DType.f32, 100, 100, 100);
 
-            a_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
-            b_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
-            res_10M = NDArray.zeros(DType.f32, 100, 200, 500);
+            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
+            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
+            res_10M = JNum.zeros(DType.f32, 100, 200, 500);
 
-            a_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
-            b_100M = NDArray.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
-            res_100M = NDArray.zeros(DType.f32, 200, 500, 1000);
+            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
+            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
+            res_100M = JNum.zeros(DType.f32, 200, 500, 1000);
         }
     }
 
@@ -212,60 +213,70 @@ public class JNumJMHSuite {
         public NDArray a3D_8_128, b3D_8_128, res3D_8_128;
         public NDArray a3D_4_512, b3D_4_512, res3D_4_512;
         public NDArray a3D_2_1024, b3D_2_1024, res3D_2_1024;
+        public NDArray a3D_2_4096, b3D_2_4096, res3D_2_4096;
+        public NDArray a3D_1_8192, b3D_1_8192, res3D_1_8192;
 
         @Setup(Level.Trial)
         public void setup() {
-            a128 = NDArray.rand(1.0f, 5.0f, DType.f32, 128, 128);
-            b128 = NDArray.rand(1.0f, 5.0f, DType.f32, 128, 128);
-            res128 = NDArray.zeros(DType.f32, 128, 128);
+            a128 = JNum.rand(1.0f, 5.0f, DType.f32, 128, 128);
+            b128 = JNum.rand(1.0f, 5.0f, DType.f32, 128, 128);
+            res128 = JNum.zeros(DType.f32, 128, 128);
 
-            a512 = NDArray.rand(1.0f, 5.0f, DType.f32, 512, 512);
-            b512 = NDArray.rand(1.0f, 5.0f, DType.f32, 512, 512);
-            res512 = NDArray.zeros(DType.f32, 512, 512);
+            a512 = JNum.rand(1.0f, 5.0f, DType.f32, 512, 512);
+            b512 = JNum.rand(1.0f, 5.0f, DType.f32, 512, 512);
+            res512 = JNum.zeros(DType.f32, 512, 512);
 
-            a1024 = NDArray.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
-            b1024 = NDArray.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
-            res1024 = NDArray.zeros(DType.f32, 1024, 1024);
+            a1024 = JNum.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
+            b1024 = JNum.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
+            res1024 = JNum.zeros(DType.f32, 1024, 1024);
 
-            a2048 = NDArray.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
-            b2048 = NDArray.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
-            res2048 = NDArray.zeros(DType.f32, 2048, 2048);
+            a2048 = JNum.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
+            b2048 = JNum.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
+            res2048 = JNum.zeros(DType.f32, 2048, 2048);
 
-            a4096 = NDArray.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
-            b4096 = NDArray.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
-            res4096 = NDArray.zeros(DType.f32, 4096, 4096);
+            a4096 = JNum.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
+            b4096 = JNum.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
+            res4096 = JNum.zeros(DType.f32, 4096, 4096);
 
-            a8192 = NDArray.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
-            b8192 = NDArray.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
-            res8192 = NDArray.zeros(DType.f32, 8192, 8192);
+            a8192 = JNum.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
+            b8192 = JNum.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
+            res8192 = JNum.zeros(DType.f32, 8192, 8192);
 
-            a10k = NDArray.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
-            b10k = NDArray.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
-            res10k = NDArray.zeros(DType.f32, 10000, 10000);
+            a10k = JNum.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
+            b10k = JNum.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
+            res10k = JNum.zeros(DType.f32, 10000, 10000);
 
-            aOdd1 = NDArray.rand(1.0f, 5.0f, DType.f32, 127, 255);
-            bOdd1 = NDArray.rand(1.0f, 5.0f, DType.f32, 255, 511);
-            resOdd1 = NDArray.zeros(DType.f32, 127, 511);
+            aOdd1 = JNum.rand(1.0f, 5.0f, DType.f32, 127, 255);
+            bOdd1 = JNum.rand(1.0f, 5.0f, DType.f32, 255, 511);
+            resOdd1 = JNum.zeros(DType.f32, 127, 511);
 
-            aOdd2 = NDArray.rand(1.0f, 5.0f, DType.f32, 513, 1023);
-            bOdd2 = NDArray.rand(1.0f, 5.0f, DType.f32, 1023, 383);
-            resOdd2 = NDArray.zeros(DType.f32, 513, 383);
+            aOdd2 = JNum.rand(1.0f, 5.0f, DType.f32, 513, 1023);
+            bOdd2 = JNum.rand(1.0f, 5.0f, DType.f32, 1023, 383);
+            resOdd2 = JNum.zeros(DType.f32, 513, 383);
 
-            aOdd3 = NDArray.rand(1.0f, 5.0f, DType.f32, 769, 383);
-            bOdd3 = NDArray.rand(1.0f, 5.0f, DType.f32, 383, 513);
-            resOdd3 = NDArray.zeros(DType.f32, 769, 513);
+            aOdd3 = JNum.rand(1.0f, 5.0f, DType.f32, 769, 383);
+            bOdd3 = JNum.rand(1.0f, 5.0f, DType.f32, 383, 513);
+            resOdd3 = JNum.zeros(DType.f32, 769, 513);
 
-            a3D_8_128 = NDArray.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
-            b3D_8_128 = NDArray.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
-            res3D_8_128 = NDArray.zeros(DType.f32, 8, 128, 128);
+            a3D_8_128 = JNum.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
+            b3D_8_128 = JNum.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
+            res3D_8_128 = JNum.zeros(DType.f32, 8, 128, 128);
 
-            a3D_4_512 = NDArray.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
-            b3D_4_512 = NDArray.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
-            res3D_4_512 = NDArray.zeros(DType.f32, 4, 512, 512);
+            a3D_4_512 = JNum.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
+            b3D_4_512 = JNum.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
+            res3D_4_512 = JNum.zeros(DType.f32, 4, 512, 512);
 
-            a3D_2_1024 = NDArray.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
-            b3D_2_1024 = NDArray.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
-            res3D_2_1024 = NDArray.zeros(DType.f32, 2, 1024, 1024);
+            a3D_2_1024 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
+            b3D_2_1024 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
+            res3D_2_1024 = JNum.zeros(DType.f32, 2, 1024, 1024);
+
+            a3D_2_4096 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 4096, 4096);
+            b3D_2_4096 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 4096, 4096);
+            res3D_2_4096 = JNum.zeros(DType.f32, 2, 4096, 4096);
+
+            a3D_1_8192 = JNum.rand(1.0f, 5.0f, DType.f32, 1, 8192, 8192);
+            b3D_1_8192 = JNum.rand(1.0f, 5.0f, DType.f32, 1, 8192, 8192);
+            res3D_1_8192 = JNum.zeros(DType.f32, 1, 8192, 8192);
         }
     }
 
@@ -284,6 +295,8 @@ public class JNumJMHSuite {
     @Benchmark public void matmul_3D_8_128(MatmulState s, Blackhole bh) { s.a3D_8_128.matmul(s.b3D_8_128, s.res3D_8_128); bh.consume(s.res3D_8_128); }
     @Benchmark public void matmul_3D_4_512(MatmulState s, Blackhole bh) { s.a3D_4_512.matmul(s.b3D_4_512, s.res3D_4_512); bh.consume(s.res3D_4_512); }
     @Benchmark public void matmul_3D_2_1024(MatmulState s, Blackhole bh) { s.a3D_2_1024.matmul(s.b3D_2_1024, s.res3D_2_1024); bh.consume(s.res3D_2_1024); }
+    @Benchmark public void matmul_3D_2_4096(MatmulState s, Blackhole bh) { s.a3D_2_4096.matmul(s.b3D_2_4096, s.res3D_2_4096); bh.consume(s.res3D_2_4096); }
+    @Benchmark public void matmul_3D_1_8192(MatmulState s, Blackhole bh) { s.a3D_1_8192.matmul(s.b3D_1_8192, s.res3D_1_8192); bh.consume(s.res3D_1_8192); }
 
     // =========================================================================
     // 5. DOT PRODUCT STATE & BENCHMARKS
@@ -299,23 +312,23 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = NDArray.rand(1.0f, 5.0f, DType.f32, 1000L);
-            b_1K = NDArray.rand(1.0f, 5.0f, DType.f32, 1000L);
+            a_1K = JNum.rand(1.0f, 5.0f, DType.f32, 1000L);
+            b_1K = JNum.rand(1.0f, 5.0f, DType.f32, 1000L);
 
-            a_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
-            b_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
+            a_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
 
-            a_100K = NDArray.rand(1.0f, 5.0f, DType.f32, 100000L);
-            b_100K = NDArray.rand(1.0f, 5.0f, DType.f32, 100000L);
+            a_100K = JNum.rand(1.0f, 5.0f, DType.f32, 100000L);
+            b_100K = JNum.rand(1.0f, 5.0f, DType.f32, 100000L);
 
-            a_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            b_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            a_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
 
-            a_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            b_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            a_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
 
-            a_100M = NDArray.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
-            b_100M = NDArray.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
+            a_100M = JNum.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
+            b_100M = JNum.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
         }
     }
 
@@ -335,9 +348,9 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = NDArray.rand(0.1f, 2.0f, DType.f32, 10000L);
-            a_1M = NDArray.rand(0.1f, 2.0f, DType.f32, 1_000_000L);
-            a_10M = NDArray.rand(0.1f, 2.0f, DType.f32, 10_000_000L);
+            a_10K = JNum.rand(0.1f, 2.0f, DType.f32, 10000L);
+            a_1M = JNum.rand(0.1f, 2.0f, DType.f32, 1_000_000L);
+            a_10M = JNum.rand(0.1f, 2.0f, DType.f32, 10_000_000L);
         }
     }
 
@@ -377,32 +390,26 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = NDArray.rand(1.0f, 10.0f, DType.f32, 10000L);
-            a_1M = NDArray.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            a_10M = NDArray.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
+            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
+            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
+            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
         }
     }
 
     @Benchmark public void sum_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.sum()); }
     @Benchmark public void max_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.max()); }
+    @Benchmark public void min_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.min()); }
     @Benchmark public void mean_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.mean()); }
-    @Benchmark public void var_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.var()); }
-    @Benchmark public void std_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.std()); }
-    @Benchmark public void cumsum_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.cumsum(0)); }
 
     @Benchmark public void sum_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.sum()); }
     @Benchmark public void max_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.max()); }
+    @Benchmark public void min_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.min()); }
     @Benchmark public void mean_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.mean()); }
-    @Benchmark public void var_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.var()); }
-    @Benchmark public void std_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.std()); }
-    @Benchmark public void cumsum_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.cumsum(0)); }
 
     @Benchmark public void sum_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.sum()); }
     @Benchmark public void max_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.max()); }
+    @Benchmark public void min_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.min()); }
     @Benchmark public void mean_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.mean()); }
-    @Benchmark public void var_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.var()); }
-    @Benchmark public void std_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.std()); }
-    @Benchmark public void cumsum_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.cumsum(0)); }
 
     // =========================================================================
     // 8. LINEAR ALGEBRA STATE & BENCHMARKS
@@ -415,17 +422,17 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            mat32 = NDArray.rand(1.0, 5.0, DType.f64, 32, 32).add(NDArray.identity(32, DType.f64).mul(10.0));
-            vec32 = NDArray.rand(1.0, 5.0, DType.f64, 32, 1);
-            spd32 = mat32.matmul(mat32.transpose()).add(NDArray.identity(32, DType.f64).mul(5.0));
+            mat32 = JNum.rand(1.0, 5.0, DType.f64, 32, 32).add(JNum.identity(32, DType.f64).mul(10.0));
+            vec32 = JNum.rand(1.0, 5.0, DType.f64, 32, 1);
+            spd32 = mat32.matmul(mat32.transpose()).add(JNum.identity(32, DType.f64).mul(5.0));
 
-            mat128 = NDArray.rand(1.0, 5.0, DType.f64, 128, 128).add(NDArray.identity(128, DType.f64).mul(20.0));
-            vec128 = NDArray.rand(1.0, 5.0, DType.f64, 128, 1);
-            spd128 = mat128.matmul(mat128.transpose()).add(NDArray.identity(128, DType.f64).mul(10.0));
+            mat128 = JNum.rand(1.0, 5.0, DType.f64, 128, 128).add(JNum.identity(128, DType.f64).mul(20.0));
+            vec128 = JNum.rand(1.0, 5.0, DType.f64, 128, 1);
+            spd128 = mat128.matmul(mat128.transpose()).add(JNum.identity(128, DType.f64).mul(10.0));
 
-            mat256 = NDArray.rand(1.0, 5.0, DType.f64, 256, 256).add(NDArray.identity(256, DType.f64).mul(30.0));
-            vec256 = NDArray.rand(1.0, 5.0, DType.f64, 256, 1);
-            spd256 = mat256.matmul(mat256.transpose()).add(NDArray.identity(256, DType.f64).mul(15.0));
+            mat256 = JNum.rand(1.0, 5.0, DType.f64, 256, 256).add(JNum.identity(256, DType.f64).mul(30.0));
+            vec256 = JNum.rand(1.0, 5.0, DType.f64, 256, 1);
+            spd256 = mat256.matmul(mat256.transpose()).add(JNum.identity(256, DType.f64).mul(15.0));
         }
     }
 
@@ -465,25 +472,25 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
-            b_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
-            c_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
-            d_10K = NDArray.rand(1.0f, 5.0f, DType.f32, 10000L);
-            res_10K = NDArray.zeros(DType.f32, 10000L);
+            a_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            c_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            d_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            res_10K = JNum.zeros(DType.f32, 10000L);
             vars_10K = Map.of("a", a_10K, "b", b_10K, "c", c_10K, "d", d_10K);
 
-            a_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            b_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            c_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            d_1M = NDArray.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            res_1M = NDArray.zeros(DType.f32, 1_000_000L);
+            a_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            c_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            d_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            res_1M = JNum.zeros(DType.f32, 1_000_000L);
             vars_1M = Map.of("a", a_1M, "b", b_1M, "c", c_1M, "d", d_1M);
 
-            a_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            b_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            c_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            d_10M = NDArray.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            res_10M = NDArray.zeros(DType.f32, 10_000_000L);
+            a_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            c_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            d_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            res_10M = JNum.zeros(DType.f32, 10_000_000L);
             vars_10M = Map.of("a", a_10M, "b", b_10M, "c", c_10M, "d", d_10M);
         }
     }
@@ -519,14 +526,14 @@ public class JNumJMHSuite {
         bh.consume(s.a_10M.add(s.b_10M).mul(s.c_10M).sub(s.d_10M));
     }
 
-    // Postfix Expression Engine: NDArray.eval("(a + b) * c - d", vars)
+    // Postfix Expression Engine: JNum.eval("(a + b) * c - d", vars)
     @Benchmark public void expr_engine_10K(ExprState s, Blackhole bh) {
-        bh.consume(NDArray.eval("(a + b) * c - d", s.vars_10K));
+        bh.consume(JNum.eval("(a + b) * c - d", s.vars_10K));
     }
     @Benchmark public void expr_engine_1M(ExprState s, Blackhole bh) {
-        bh.consume(NDArray.eval("(a + b) * c - d", s.vars_1M));
+        bh.consume(JNum.eval("(a + b) * c - d", s.vars_1M));
     }
     @Benchmark public void expr_engine_10M(ExprState s, Blackhole bh) {
-        bh.consume(NDArray.eval("(a + b) * c - d", s.vars_10M));
+        bh.consume(JNum.eval("(a + b) * c - d", s.vars_10M));
     }
 }

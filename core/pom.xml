@@ -52,10 +52,6 @@
                         <arg>--add-modules</arg>
                         <arg>jdk.incubator.vector</arg>
                     </compilerArgs>
-                    <testExcludes>
-                        <testExclude>**/benchmark/**</testExclude>
-                        <testExclude>**/*Benchmark.java</testExclude>
-                    </testExcludes>
                 </configuration>
             </plugin>
             <plugin>

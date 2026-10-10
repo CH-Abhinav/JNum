@@ -1,7 +1,6 @@
 package jnum.benchmark;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.*;
 import org.openjdk.jmh.results.RunResult;
@@ -56,6 +55,8 @@ public class JNumJMHRunner {
         NAME_MAP.put("matmul_3D_8_128", "Batched [8, 128, 128]");
         NAME_MAP.put("matmul_3D_4_512", "Batched [4, 512, 512]");
         NAME_MAP.put("matmul_3D_2_1024", "Batched [2, 1024, 1024]");
+        NAME_MAP.put("matmul_3D_2_4096", "Batched [2, 4096, 4096]");
+        NAME_MAP.put("matmul_3D_1_8192", "Batched [1, 8192, 8192]");
 
         for (String sz : sizes) {
             NAME_MAP.put("dot_1D_" + sz, "Dot 1D " + sz);
@@ -70,8 +71,8 @@ public class JNumJMHRunner {
             }
         }
 
-        String[] reds = {"sum", "max", "mean", "var", "std", "cumsum"};
-        String[] redCaps = {"Sum", "Max", "Mean", "Var", "Std", "Cumsum"};
+        String[] reds = {"sum", "max", "min", "mean"};
+        String[] redCaps = {"Sum", "Max", "Min", "Mean"};
         for (int i = 0; i < reds.length; i++) {
             for (String sz : tSizes) {
                 NAME_MAP.put(reds[i] + "_" + sz, redCaps[i] + " " + sz);
@@ -96,31 +97,68 @@ public class JNumJMHRunner {
     }
 
     public static void main(String[] args) throws Exception {
-        String category = args.length > 0 ? args[0].toLowerCase() : "all";
+        String filterArg = args.length > 0 ? args[0].trim() : "all";
+        String sizeFilter = args.length > 1 ? args[1].trim() : null;
+
+        String regex;
+        String lower = filterArg.toLowerCase();
+        if (lower.equals("matmul")) {
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*matmul.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*matmul.*";
+            }
+        } else if (lower.equals("arithmetic")) {
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*(add|sub|mul|div)_.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*(add|sub|mul|div)_.*";
+            }
+        } else if (lower.equals("trigno")) {
+            regex = ".*(sin|cos|tan|exp|log|sqrt|tanh|sigmoid)_.*";
+        } else if (lower.equals("reductions")) {
+            regex = ".*(sum|max|min|mean)_.*";
+        } else if (lower.equals("linalg")) {
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*(inv|det|trace|cholesky|solve|qr)_" + sizeFilter + ".*";
+            } else {
+                regex = ".*(inv|det|trace|cholesky|solve|qr)_.*";
+            }
+        } else if (lower.equals("expr")) {
+            regex = ".*expr_.*";
+        } else if (lower.equals("dot")) {
+            regex = ".*dot_.*";
+        } else if (lower.equals("all")) {
+            regex = "jnum\\.benchmark\\.JNumJMHSuite\\..*";
+        } else {
+            regex = filterArg.contains(".*") ? filterArg : ".*" + filterArg + ".*";
+        }
+
+        List<String> jvmArgsList = new ArrayList<>();
+        jvmArgsList.add("--add-modules");
+        jvmArgsList.add("jdk.incubator.vector");
+
+        // Dynamically accept user JVM flags from system property -Djmh.jvmArgs="..."
+        String customJvmArgs = System.getProperty("jmh.jvmArgs");
+        if (customJvmArgs != null && !customJvmArgs.isBlank()) {
+            for (String flag : customJvmArgs.split("\\s+")) {
+                if (!flag.isBlank()) jvmArgsList.add(flag);
+            }
+        }
+
         System.out.println("============================================================");
         System.out.println("LAUNCHING JNUM JMH BENCHMARK SUITE (Java 25 Panama SIMD)");
-        System.out.println("Category Filter: " + category.toUpperCase());
-        System.out.println("Warmup: 2 iterations | Measurement: 5 runs | Pre-allocated NDArrays");
-        System.out.println("Compact Object Headers: ENABLED (-XX:+UseCompactObjectHeaders)");
+        System.out.println("Pattern Filter: " + regex);
+        System.out.println("Warmup: 2 iterations | Measurement: 4 runs | Pre-allocated NDArrays");
+        System.out.println("JVM Args: " + String.join(" ", jvmArgsList));
         System.out.println("============================================================");
-
-        String regex = switch (category) {
-            case "matmul" -> ".*matmul.*";
-            case "arithmetic" -> ".*(add|sub|mul|div)_.*";
-            case "trigno" -> ".*(sin|cos|tan|exp|log|sqrt|tanh|sigmoid)_.*";
-            case "reductions" -> ".*(sum|max|mean|var|std|cumsum)_.*";
-            case "linalg" -> ".*(inv|det|trace|cholesky|solve|qr)_.*";
-            case "expr" -> ".*expr_.*";
-            case "dot" -> ".*dot_.*";
-            default -> "jnum\\.benchmark\\.JNumJMHSuite\\..*";
-        };
 
         Options opt = new OptionsBuilder()
             .include(regex)
             .forks(1)
             .warmupIterations(2)
-            .measurementIterations(5)
-            .jvmArgsAppend("--add-modules", "jdk.incubator.vector", "-Xms8g", "-Xmx16g", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCompactObjectHeaders")
+            .measurementIterations(4)
+            .jvmArgsAppend(jvmArgsList.toArray(new String[0]))
             .build();
 
         Collection<RunResult> results = new Runner(opt).run();

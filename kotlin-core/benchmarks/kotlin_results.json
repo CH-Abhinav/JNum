@@ -1,0 +1,8 @@
+{
+  "javaIndexGet": 0.004323,
+  "javaIndexSet": 0.004353,
+  "javaSlice": 0.059301,
+  "kotlinIndexGet": 0.004471,
+  "kotlinIndexSet": 0.004088,
+  "kotlinSliceRange": 0.062131
+}
