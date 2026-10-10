@@ -7,8 +7,11 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import jnum.DType;
 import jnum.NDArray;
 import jnum.io.internal.async.AsyncIO;
+import jnum.io.internal.csv.CsvReader;
+import jnum.io.internal.csv.CsvWriter;
 import jnum.io.internal.npy.NpyReader;
 import jnum.io.internal.npy.NpyWriter;
 import jnum.io.internal.npy.NpzArchive;
@@ -193,6 +196,62 @@ public final class JNumIO {
         return AsyncIO.runAsync(() -> {
             try {
                 writeSafetensors(tensors, path);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    // =========================================================================
+    // Delimited Text (.csv, .tsv) Operations
+    // =========================================================================
+
+    public static NDArray readCsv(Path path) throws IOException {
+        return readCsv(path, CsvOptions.DEFAULT, Arena.ofAuto());
+    }
+
+    public static NDArray readCsv(Path path, DType dtype) throws IOException {
+        return readCsv(path, CsvOptions.builder().dtype(dtype).build(), Arena.ofAuto());
+    }
+
+    public static NDArray readCsv(Path path, CsvOptions options) throws IOException {
+        return readCsv(path, options, Arena.ofAuto());
+    }
+
+    public static NDArray readCsv(Path path, CsvOptions options, Arena arena) throws IOException {
+        return CsvReader.read(path, options, arena);
+    }
+
+    public static void writeCsv(NDArray array, Path path) throws IOException {
+        writeCsv(array, CsvOptions.DEFAULT, path);
+    }
+
+    public static void writeCsv(NDArray array, CsvOptions options, Path path) throws IOException {
+        CsvWriter.write(array, options, path);
+    }
+
+    public static CompletableFuture<NDArray> readCsvAsync(Path path) {
+        return readCsvAsync(path, CsvOptions.DEFAULT);
+    }
+
+    public static CompletableFuture<NDArray> readCsvAsync(Path path, CsvOptions options) {
+        return AsyncIO.supplyAsync(() -> {
+            try {
+                return readCsv(path, options);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    public static CompletableFuture<Void> writeCsvAsync(NDArray array, Path path) {
+        return writeCsvAsync(array, CsvOptions.DEFAULT, path);
+    }
+
+    public static CompletableFuture<Void> writeCsvAsync(NDArray array, CsvOptions options, Path path) {
+        return AsyncIO.runAsync(() -> {
+            try {
+                writeCsv(array, options, path);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
