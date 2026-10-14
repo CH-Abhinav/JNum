@@ -97,6 +97,7 @@ public class JNumJMHRunner {
     }
 
     public static void main(String[] args) throws Exception {
+        System.setProperty("jmh.ignoreLock", "true");
         String filterArg = args.length > 0 ? args[0].trim() : "all";
         String sizeFilter = args.length > 1 ? args[1].trim() : null;
 
@@ -104,30 +105,46 @@ public class JNumJMHRunner {
         String lower = filterArg.toLowerCase();
         if (lower.equals("matmul")) {
             if (sizeFilter != null && !sizeFilter.isBlank()) {
-                regex = ".*matmul.*" + sizeFilter + ".*";
+                regex = ".*\\.matmul.*" + sizeFilter + ".*";
             } else {
-                regex = ".*matmul.*";
+                regex = ".*\\.matmul.*";
             }
-        } else if (lower.equals("arithmetic")) {
+        } else if (lower.equals("arithmetic") || lower.equals("arith")) {
             if (sizeFilter != null && !sizeFilter.isBlank()) {
-                regex = ".*(add|sub|mul|div)_.*" + sizeFilter + ".*";
+                regex = ".*\\.(add|sub|mul|div)_.*" + sizeFilter + ".*";
             } else {
-                regex = ".*(add|sub|mul|div)_.*";
+                regex = ".*\\.(add|sub|mul|div)_.*";
             }
-        } else if (lower.equals("trigno")) {
-            regex = ".*(sin|cos|tan|exp|log|sqrt|tanh|sigmoid)_.*";
-        } else if (lower.equals("reductions")) {
-            regex = ".*(sum|max|min|mean)_.*";
+        } else if (lower.equals("trigno") || lower.equals("trig")) {
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*\\.(sin|cos|tan|exp|log|sqrt|tanh|sigmoid)_.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*\\.(sin|cos|tan|exp|log|sqrt|tanh|sigmoid)_.*";
+            }
+        } else if (lower.equals("reductions") || lower.equals("red")) {
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*\\.(sum|max|min|mean)_.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*\\.(sum|max|min|mean)_.*";
+            }
         } else if (lower.equals("linalg")) {
             if (sizeFilter != null && !sizeFilter.isBlank()) {
-                regex = ".*(inv|det|trace|cholesky|solve|qr)_" + sizeFilter + ".*";
+                regex = ".*\\.(inv|det|trace|cholesky|solve|qr)_" + sizeFilter + ".*";
             } else {
-                regex = ".*(inv|det|trace|cholesky|solve|qr)_.*";
+                regex = ".*\\.(inv|det|trace|cholesky|solve|qr)_.*";
             }
         } else if (lower.equals("expr")) {
-            regex = ".*expr_.*";
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*\\.expr_.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*\\.expr_.*";
+            }
         } else if (lower.equals("dot")) {
-            regex = ".*dot_.*";
+            if (sizeFilter != null && !sizeFilter.isBlank()) {
+                regex = ".*\\.dot_.*" + sizeFilter + ".*";
+            } else {
+                regex = ".*\\.dot_.*";
+            }
         } else if (lower.equals("all")) {
             regex = "jnum\\.benchmark\\.JNumJMHSuite\\..*";
         } else {

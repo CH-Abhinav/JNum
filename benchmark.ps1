@@ -23,13 +23,13 @@ $extraStr = if ($ExtraArgs) { ($ExtraArgs -join " ") } else { "" }
 if ($Target -ieq "kotlin") {
     Write-Host "[JNum] Running Kotlin Benchmark Suite: $extraStr" -ForegroundColor Cyan
     $execArgs = "--add-modules jdk.incubator.vector -classpath %classpath jnum.benchmark.KotlinJMHRunnerKt $extraStr".Trim()
-    mvn exec:exec -pl kotlin-core -Dexec.classpathScope=test -Dexec.executable=java "-Dexec.args=$execArgs"
+    mvn exec:exec -pl kotlin-core "-Dexec.classpathScope=test" "-Dexec.executable=java" "-Dexec.args=$execArgs"
 } elseif ($Target -like "*Benchmark*" -or $Target.StartsWith("-")) {
     Write-Host "[JNum] Running JMH Main: $Target $extraStr" -ForegroundColor Cyan
     $execArgs = "--add-modules jdk.incubator.vector -classpath %classpath org.openjdk.jmh.Main $Target $extraStr".Trim()
-    mvn exec:exec -pl core -Dexec.classpathScope=test -Dexec.executable=java "-Dexec.args=$execArgs"
+    mvn exec:exec -pl core "-Dexec.classpathScope=test" "-Dexec.executable=java" "-Dexec.args=$execArgs"
 } else {
     Write-Host "[JNum] Running Java Benchmark Suite Category: $Target $extraStr" -ForegroundColor Cyan
     $execArgs = "--add-modules jdk.incubator.vector -classpath %classpath jnum.benchmark.JNumJMHRunner $Target $extraStr".Trim()
-    mvn exec:exec -pl core -Dexec.classpathScope=test -Dexec.executable=java "-Dexec.args=$execArgs"
+    mvn exec:exec -pl core "-Dexec.classpathScope=test" "-Dexec.executable=java" "-Dexec.args=$execArgs"
 }

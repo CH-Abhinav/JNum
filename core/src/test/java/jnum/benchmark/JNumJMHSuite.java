@@ -9,6 +9,7 @@ import org.openjdk.jmh.infra.Blackhole;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.stat.Stats;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -399,17 +400,17 @@ public class JNumJMHSuite {
     @Benchmark public void sum_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.sum()); }
     @Benchmark public void max_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.max()); }
     @Benchmark public void min_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.min()); }
-    @Benchmark public void mean_10K(RedState s, Blackhole bh) { bh.consume(s.a_10K.mean()); }
+    @Benchmark public void mean_10K(RedState s, Blackhole bh) { bh.consume(Stats.mean(s.a_10K)); }
 
     @Benchmark public void sum_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.sum()); }
     @Benchmark public void max_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.max()); }
     @Benchmark public void min_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.min()); }
-    @Benchmark public void mean_1M(RedState s, Blackhole bh) { bh.consume(s.a_1M.mean()); }
+    @Benchmark public void mean_1M(RedState s, Blackhole bh) { bh.consume(Stats.mean(s.a_1M)); }
 
     @Benchmark public void sum_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.sum()); }
     @Benchmark public void max_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.max()); }
     @Benchmark public void min_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.min()); }
-    @Benchmark public void mean_10M(RedState s, Blackhole bh) { bh.consume(s.a_10M.mean()); }
+    @Benchmark public void mean_10M(RedState s, Blackhole bh) { bh.consume(Stats.mean(s.a_10M)); }
 
     // =========================================================================
     // 8. LINEAR ALGEBRA STATE & BENCHMARKS

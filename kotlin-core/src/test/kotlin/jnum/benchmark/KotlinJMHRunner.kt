@@ -8,6 +8,7 @@ import java.io.FileWriter
 import java.util.Scanner
 
 fun main(args: Array<String>) {
+    System.setProperty("jmh.ignoreLock", "true")
     val filterArg = if (args.isNotEmpty()) args[0].trim() else "all"
     val sizeFilter = if (args.size > 1) args[1].trim() else null
 

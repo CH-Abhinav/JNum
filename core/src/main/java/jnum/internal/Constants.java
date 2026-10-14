@@ -10,8 +10,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Global hardware, CPU cache hierarchy, Panama Vector, and runtime constants.
@@ -69,12 +73,45 @@ public final class Constants {
     public static final ValueLayout.OfLong VL_LAYOUT = ValueLayout.JAVA_LONG;
 
     // =========================================================================
-    // AVX2 HARDWARE REGISTER / KERNEL CONSTANTS
+    // HARDWARE-ADAPTIVE VECTOR & MATMUL KERNEL CONSTANTS
     // =========================================================================
 
-    public static final int NR_AVX2_F32 = 16;
-    public static final int NR_AVX2_F64 = 8;
-    public static final int NR_AVX2_I32 = 16;
+    public static final long VEC_BYTES_F32 = (long) VL_F32 * BYTES_F32;
+    public static final long VEC_BYTES_F64 = (long) VL_F64 * BYTES_F64;
+    public static final long VEC_BYTES_I32 = (long) VL_I32 * BYTES_I32;
+
+    public static final int MR = 6;
+    public static final int NR_F32 = 2 * VL_F32;
+    public static final int NR_F64 = 2 * VL_F64;
+    public static final int NR_I32 = 2 * VL_I32;
+
+    // Backward-compatibility aliases
+    public static final int NR_AVX2_F32 = NR_F32;
+    public static final int NR_AVX2_F64 = NR_F64;
+    public static final int NR_AVX2_I32 = NR_I32;
+
+    public static final int NR = NR_F32;
+    public static final int NR_DB = NR_F64;
+    public static final int NR_INT = NR_I32;
+
+    public static final long STRIDE_VEC_BYTES_F32 = VEC_BYTES_F32;
+    public static final long STRIDE_VEC_BYTES_F64 = VEC_BYTES_F64;
+    public static final long STRIDE_VEC_BYTES_I32 = VEC_BYTES_I32;
+
+    public static final long STEP_A_ROW_BYTES_F32 = (long) MR * BYTES_F32;
+    public static final long STEP_B_ROW_BYTES_F32 = (long) NR_F32 * BYTES_F32;
+    public static final long STEP_A_K4_BYTES_F32  = 4 * STEP_A_ROW_BYTES_F32;
+    public static final long STEP_B_K4_BYTES_F32  = 4 * STEP_B_ROW_BYTES_F32;
+
+    public static final long STEP_A_ROW_BYTES_F64 = (long) MR * BYTES_F64;
+    public static final long STEP_B_ROW_BYTES_F64 = (long) NR_F64 * BYTES_F64;
+    public static final long STEP_A_K4_BYTES_F64  = 4 * STEP_A_ROW_BYTES_F64;
+    public static final long STEP_B_K4_BYTES_F64  = 4 * STEP_B_ROW_BYTES_F64;
+
+    public static final long STEP_A_ROW_BYTES_I32 = (long) MR * BYTES_I32;
+    public static final long STEP_B_ROW_BYTES_I32 = (long) NR_I32 * BYTES_I32;
+    public static final long STEP_A_K4_BYTES_I32  = 4 * STEP_A_ROW_BYTES_I32;
+    public static final long STEP_B_K4_BYTES_I32  = 4 * STEP_B_ROW_BYTES_I32;
 
     // =========================================================================
     // DYNAMIC CACHE SIZES & BLIS MATMUL TILING PARAMETERS
@@ -108,8 +145,8 @@ public final class Constants {
         L2_CACHE_BYTES = l2;
         L3_CACHE_BYTES = l3;
 
-        int mr = 6;
-        int nr = 16;
+        int mr = MR;
+        int nr = NR_F32;
 
         int kcProp = (int) getLongProp("jnum.cache.kc", -1L);
         if (kcProp > 0) {
@@ -134,7 +171,69 @@ public final class Constants {
             int ncRaw = (int) ((L3_CACHE_BYTES / 2L) / (4L * MATMUL_KC));
             MATMUL_NC = Math.max(nr * 2, roundDown(Math.min(ncRaw, 8192), nr));
         }
+
+        MC = MATMUL_MC;
+        KC = MATMUL_KC;
+        NC_ARM = MATMUL_NC;
+        NC_AARCH = MATMUL_NC;
     }
+
+    public static final int MC;
+    public static final int KC;
+    public static final int NC_ARM;
+    public static final int NC_AARCH;
+
+    // =========================================================================
+    // MATMUL SHARED FORKJOIN POOL & THREAD-LOCAL BUFFERS
+    // =========================================================================
+
+    public static final ForkJoinPool MATMUL_POOL = new ForkJoinPool(AVAILABLE_CORES);
+    public static final ForkJoinPool POOL = MATMUL_POOL;
+
+    public static final VectorSpecies<Float> SPECIES = SPECIES_F32;
+    public static final VectorSpecies<Double> SPECIESDB = SPECIES_F64;
+    public static final VectorSpecies<Integer> SPECIESINT = SPECIES_I32;
+    public static final ByteOrder NATIVE = NATIVE_ORDER;
+
+    private static MemorySegment allocateAlignedFloat(Arena arena, long count) {
+        return arena.allocate(MemoryLayout.sequenceLayout(count, VF).withByteAlignment(64));
+    }
+    private static MemorySegment allocateAlignedDouble(Arena arena, long count) {
+        return arena.allocate(MemoryLayout.sequenceLayout(count, VD).withByteAlignment(64));
+    }
+    private static MemorySegment allocateAlignedInt(Arena arena, long count) {
+        return arena.allocate(MemoryLayout.sequenceLayout(count, VI).withByteAlignment(64));
+    }
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Float =
+        ThreadLocal.withInitial(() -> allocateAlignedFloat(Arena.ofAuto(), (long) MATMUL_MC * MATMUL_KC));
+    public static final ThreadLocal<MemorySegment> tlPackedB_Float =
+        ThreadLocal.withInitial(() -> allocateAlignedFloat(Arena.ofAuto(), (long) MATMUL_KC * MATMUL_NC));
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Double =
+        ThreadLocal.withInitial(() -> allocateAlignedDouble(Arena.ofAuto(), (long) MATMUL_MC * MATMUL_KC));
+    public static final ThreadLocal<MemorySegment> tlPackedB_Double =
+        ThreadLocal.withInitial(() -> allocateAlignedDouble(Arena.ofAuto(), (long) MATMUL_KC * MATMUL_NC));
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Int =
+        ThreadLocal.withInitial(() -> allocateAlignedInt(Arena.ofAuto(), (long) MATMUL_MC * MATMUL_KC));
+    public static final ThreadLocal<MemorySegment> tlPackedB_Int =
+        ThreadLocal.withInitial(() -> allocateAlignedInt(Arena.ofAuto(), (long) MATMUL_KC * MATMUL_NC));
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Arm_Float = tlPackedA_Float;
+    public static final ThreadLocal<MemorySegment> tlPackedA_Aarch_Float = tlPackedA_Float;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Arm_Float = tlPackedB_Float;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Aarch_Float = tlPackedB_Float;
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Arm_Double = tlPackedA_Double;
+    public static final ThreadLocal<MemorySegment> tlPackedA_Aarch_Double = tlPackedA_Double;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Arm_Double = tlPackedB_Double;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Aarch_Double = tlPackedB_Double;
+
+    public static final ThreadLocal<MemorySegment> tlPackedA_Arm_Int = tlPackedA_Int;
+    public static final ThreadLocal<MemorySegment> tlPackedA_Aarch_Int = tlPackedA_Int;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Arm_Int = tlPackedB_Int;
+    public static final ThreadLocal<MemorySegment> tlPackedB_Aarch_Int = tlPackedB_Int;
 
     // =========================================================================
     // PARALLELISM THRESHOLDS

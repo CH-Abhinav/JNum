@@ -111,6 +111,15 @@
                         </excludes>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.6.4</version>
+                    <configuration>
+                        <executable>java</executable>
+                        <classpathScope>test</classpathScope>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

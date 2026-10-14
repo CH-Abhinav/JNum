@@ -1,8 +1,22 @@
 {
-  "javaIndexGet": 0.004323,
-  "javaIndexSet": 0.004353,
-  "javaSlice": 0.059301,
-  "kotlinIndexGet": 0.004471,
-  "kotlinIndexSet": 0.004088,
-  "kotlinSliceRange": 0.062131
+  "javaIndexGet": 0.003404,
+  "javaIndexSet": 0.003361,
+  "javaSlice": 0.050746,
+  "kotlinIndexGet": 0.003983,
+  "kotlinIndexSet": 0.003641,
+  "kotlinSliceRange": 0.051934,
+  "javaAddi": 0.239704,
+  "javaMuli": 0.268932,
+  "kotlinPlusAssign": 0.235317,
+  "kotlinTimesAssign": 0.245988,
+  "javaDiv": 1.546898,
+  "javaMinus": 1.611604,
+  "javaPlus": 1.633415,
+  "javaScalarRight": 5.366217,
+  "javaTimes": 1.663077,
+  "kotlinDiv": 1.579783,
+  "kotlinMinus": 1.627084,
+  "kotlinPlus": 1.618328,
+  "kotlinScalarRight": 5.316244,
+  "kotlinTimes": 1.630001
 }
