@@ -34,75 +34,94 @@ public final class LinalgOps {
         throw new AssertionError("No jnum.internal.ops.LinalgOps instances for you!");
     }
 
-    public static NDArray matmul(NDArray a, NDArray b) {
-        if (a.dim() == 3 && b.dim() == 3) {
-            long bA = a.internalShapeUnsafe()[0];
-            long bB = b.internalShapeUnsafe()[0];
-            if (bA != bB) {
-                throw new IllegalArgumentException("Batch dimensions mismatch: " + bA + " vs " + bB);
-            }
-            if (a.internalShapeUnsafe()[2] != b.internalShapeUnsafe()[1]) {
-                throw new IllegalArgumentException(
-                    "Matmul shape mismatch: left shape " + Arrays.toString(a.internalShapeUnsafe()) +
-                    " and right shape " + Arrays.toString(b.internalShapeUnsafe()) +
-                    " are incompatible because " + a.internalShapeUnsafe()[2] + " != " + b.internalShapeUnsafe()[1]
-                );
-            }
-            DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
-            long[] targetShape = new long[]{bA, a.internalShapeUnsafe()[1], b.internalShapeUnsafe()[2]};
-            NDArray res = JNum.zeros(targetType, targetShape);
-            return matmul(a, b, res);
-        }
-        ValidUtil.validateMatmulInputs(a, b);
-        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
-        NDArray A = a.cast(targetType);
-        NDArray B = b.cast(targetType);
-        long[] targetShape = new long[]{a.internalShapeUnsafe()[0], b.internalShapeUnsafe()[1]};
-        NDArray resArray = JNum.zeros(targetType, targetShape);
-        return switch (targetType) {
-            case f32 -> MatMul.matmulFloat(A, B, resArray);
-            case f64 -> MatMul.matmulDouble(A, B, resArray);
-            case i32 -> MatMul.matmulInt(A, B, resArray);
-            default -> throw new UnsupportedOperationException("This dtype " + targetType + " doesn't support this method");
-        };
-    }
-
-    public static NDArray matmul(NDArray a, NDArray b, NDArray resArray) {
-        if (a.dim() == 3 && b.dim() == 3) {
-            long bA = a.internalShapeUnsafe()[0];
-            long bB = b.internalShapeUnsafe()[0];
-            if (bA != bB) {
-                throw new IllegalArgumentException("Batch dimensions mismatch: " + bA + " vs " + bB);
-            }
-            if (a.internalShapeUnsafe()[2] != b.internalShapeUnsafe()[1]) {
-                throw new IllegalArgumentException(
-                    "Matmul shape mismatch: left shape " + Arrays.toString(a.internalShapeUnsafe()) +
-                    " and right shape " + Arrays.toString(b.internalShapeUnsafe()) +
-                    " are incompatible because " + a.internalShapeUnsafe()[2] + " != " + b.internalShapeUnsafe()[1]
-                );
-            }
-            DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
-            long[] targetShape = new long[]{bA, a.internalShapeUnsafe()[1], b.internalShapeUnsafe()[2]};
-            NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-            ValidUtil.validateOutputBuffer(targetRes);
-            for (long i = 0; i < bA; i++) {
-                matmul(a.subview(i), b.subview(i), targetRes.subview(i));
-            }
-            return targetRes;
-        }
-        ValidUtil.validateMatmulInputs(a, b);
-        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
-        NDArray A = a.cast(targetType);
-        NDArray B = b.cast(targetType);
-        long[] targetShape = new long[]{a.internalShapeUnsafe()[0], b.internalShapeUnsafe()[1]};
-        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
-        ValidUtil.validateOutputBuffer(targetRes);
+    private static NDArray dispatchMatMul2D(NDArray A, NDArray B, NDArray targetRes, DType targetType) {
         return switch (targetType) {
             case f32 -> MatMul.matmulFloat(A, B, targetRes);
             case f64 -> MatMul.matmulDouble(A, B, targetRes);
             case i32 -> MatMul.matmulInt(A, B, targetRes);
             default -> throw new UnsupportedOperationException("This dtype " + targetType + " doesn't support this method");
         };
+    }
+
+    private static void validate3DMatMulShapes(long[] aShape, long[] bShape) {
+        long bA = aShape[0];
+        long bB = bShape[0];
+        if (bA != bB) {
+            throw new IllegalArgumentException("Batch dimensions mismatch: " + bA + " vs " + bB);
+        }
+        if (aShape[2] != bShape[1]) {
+            throw new IllegalArgumentException(
+                    "Matmul shape mismatch: left shape " + Arrays.toString(aShape) +
+                            " and right shape " + Arrays.toString(bShape) +
+                            " are incompatible because " + aShape[2] + " != " + bShape[1]
+            );
+        }
+    }
+
+    public static NDArray matmul(NDArray a, NDArray b) {
+        DType aType = a.getDType();
+        DType bType = b.getDType();
+        DType targetType = (aType == bType) ? aType : TypeUtil.promoteTypes(aType, bType);
+
+        if (a.dim() == 3 && b.dim() == 3) {
+            long[] aShape = a.internalShapeUnsafe();
+            long[] bShape = b.internalShapeUnsafe();
+            validate3DMatMulShapes(aShape, bShape);
+
+            long bA = aShape[0];
+            long[] targetShape = new long[]{bA, aShape[1], bShape[2]};
+            NDArray A = (aType == targetType) ? a : a.cast(targetType);
+            NDArray B = (bType == targetType) ? b : b.cast(targetType);
+            NDArray res = JNum.zeros(targetType, targetShape);
+
+            for (long i = 0; i < bA; i++) {
+                dispatchMatMul2D(A.subview(i), B.subview(i), res.subview(i), targetType);
+            }
+            return res;
+        }
+
+        ValidUtil.validateMatmulInputs(a, b);
+        NDArray A = (aType == targetType) ? a : a.cast(targetType);
+        NDArray B = (bType == targetType) ? b : b.cast(targetType);
+        long[] aShape = a.internalShapeUnsafe();
+        long[] bShape = b.internalShapeUnsafe();
+        long[] targetShape = new long[]{aShape[0], bShape[1]};
+        NDArray resArray = JNum.zeros(targetType, targetShape);
+        return dispatchMatMul2D(A, B, resArray, targetType);
+    }
+
+    public static NDArray matmul(NDArray a, NDArray b, NDArray resArray) {
+        DType aType = a.getDType();
+        DType bType = b.getDType();
+        DType targetType = (aType == bType) ? aType : TypeUtil.promoteTypes(aType, bType);
+
+        if (a.dim() == 3 && b.dim() == 3) {
+            long[] aShape = a.internalShapeUnsafe();
+            long[] bShape = b.internalShapeUnsafe();
+            validate3DMatMulShapes(aShape, bShape);
+
+            long bA = aShape[0];
+            long[] targetShape = new long[]{bA, aShape[1], bShape[2]};
+            NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
+            ValidUtil.validateOutputBuffer(targetRes);
+
+            NDArray A = (aType == targetType) ? a : a.cast(targetType);
+            NDArray B = (bType == targetType) ? b : b.cast(targetType);
+            for (long i = 0; i < bA; i++) {
+                dispatchMatMul2D(A.subview(i), B.subview(i), targetRes.subview(i), targetType);
+            }
+            return targetRes;
+        }
+
+        ValidUtil.validateMatmulInputs(a, b);
+        NDArray A = (aType == targetType) ? a : a.cast(targetType);
+        NDArray B = (bType == targetType) ? b : b.cast(targetType);
+        long[] aShape = a.internalShapeUnsafe();
+        long[] bShape = b.internalShapeUnsafe();
+        long[] targetShape = new long[]{aShape[0], bShape[1]};
+        NDArray targetRes = ValidUtil.validateResultArray(resArray, targetType, targetShape);
+        ValidUtil.validateOutputBuffer(targetRes);
+        return dispatchMatMul2D(A, B, targetRes, targetType);
     }
 
     // Trace
@@ -199,7 +218,7 @@ public final class LinalgOps {
     }
 
     public static int matrixRank(NDArray a, double tol, Arena arena) {
-        return MatrixRank.matrixRank(a, tol, arena);
+        return MatrixRank.matrixRank(a, tol, Arena.ofAuto());
     }
 
     // Condition Number
