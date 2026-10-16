@@ -8,16 +8,23 @@ import jnum.internal.layout.ShapeUtil;
 import jnum.internal.layout.TypeUtil;
 import jnum.internal.layout.ValidUtil;
 
-public class CompareOps {
+/**
+ * High-level orchestration facade for element-wise comparison operations (maximum, minimum).
+ *
+ * <p>Handles broadcasting between shapes, operand type promotion, and dispatches to
+ * type-specialized SIMD kernels in {@link jnum.internal.kernel.compare}.</p>
+ */
+public final class CompareOps {
 
     private CompareOps() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Maximum
+    // Element-Wise Maximum
     // =========================================================================
 
+    /** Element-wise maximum between two arrays with broadcasting. */
     public static NDArray maximum(NDArray a, NDArray b) {
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
@@ -61,8 +68,7 @@ public class CompareOps {
         NDArray A = a.cast(targetType);
         NDArray resArray = JNum.zeros(targetType, a.internalShapeUnsafe());
         return switch (targetType) {
-            case f32 -> throw new UnsupportedOperationException();
-            case i32 -> throw new UnsupportedOperationException();
+            case f32, i32 -> throw new UnsupportedOperationException();
             case f64 -> Maximum.maximumDouble(A, b, resArray);
             default -> throw new UnsupportedOperationException("This dtype " + targetType + " doesn't support this method");
         };

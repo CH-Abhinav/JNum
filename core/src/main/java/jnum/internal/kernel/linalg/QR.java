@@ -10,14 +10,24 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * QR decomposition kernel (A = Q * R) via Householder reflections.
+ *
+ * <p>Decomposes an m x n matrix into an m x m orthogonal matrix Q and an m x n upper-triangular
+ * matrix R using numerically stable Householder reflection vectors with SIMD inner products.</p>
+ */
 public final class QR {
 
     private QR() {
         throw new AssertionError("QR kernel cannot be instantiated.");
     }
 
+    /** Container record holding the orthogonal matrix Q and upper-triangular matrix R. */
     public record QRResult(NDArray q, NDArray r) {}
 
+    /**
+     * Top-level dispatcher: decomposes matrix A into orthogonal Q and upper-triangular R.
+     */
     public static QRResult qr(NDArray a, Arena arena) {
         if (a.dim() != 2) {
             throw new IllegalArgumentException("QR decomposition requires a 2D matrix, got shape: " + a.shapeString());

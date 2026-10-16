@@ -7,16 +7,23 @@ import jnum.internal.kernel.reduce.*;
 import jnum.internal.layout.ShapeUtil;
 import jnum.internal.layout.TypeUtil;
 
-public class ReduceOps {
+/**
+ * High-level orchestration facade for reduction operations (sum, min, max).
+ *
+ * <p>Supports both full-tensor reductions collapsing to scalar {@code double} values and
+ * axis-specific reductions producing collapsed multidimensional {@link NDArray} outputs.</p>
+ */
+public final class ReduceOps {
 
-    private ReduceOps(){
-        throw new AssertionError();
+    private ReduceOps() {
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Reductions
+    // Reductions (Full Tensor & Axis-Specific)
     // =========================================================================
 
+    /** Computes maximum element across the entire tensor. */
     public static double max(NDArray a) {
         return switch (a.getDType()) {
             case f32 -> Max.maxFloat(a);

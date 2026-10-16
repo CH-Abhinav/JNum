@@ -1,24 +1,40 @@
 package jnum.internal.layout;
 
 import java.util.Arrays;
-
 import jnum.DType;
 
+/**
+ * Low-level utility routines for tensor shape calculations, stride generation, broadcasting, and byte offsets.
+ */
 public class ShapeUtil {
 
-    public static long[] calculateDefaultStrides(long[] shape){
-        long[] strides=new long[shape.length];
-        long currentstride=1;
-        for(int i=shape.length-1;i>=0;i--){
-            strides[i]=currentstride;
-            currentstride*=shape[i];
+    private ShapeUtil() {
+        throw new AssertionError("Utility class cannot be instantiated.");
+    }
+
+    /**
+     * Calculates default row-major (C-contiguous) strides for a given shape.
+     * The last dimension has stride 1, and each preceding dimension's stride is the product
+     * of all succeeding dimension lengths (e.g. stride[i] = stride[i+1] * shape[i+1]).
+     */
+    public static long[] calculateDefaultStrides(long[] shape) {
+        long[] strides = new long[shape.length];
+        long currentstride = 1;
+        for (int i = shape.length - 1; i >= 0; i--) {
+            strides[i] = currentstride;
+            currentstride *= shape[i];
         }
         return strides;
     }
 
-    public static long[] calculateBroadcastShape(long[] shapeA, long[] shapeB){
-        int maxDims=Math.max(shapeA.length, shapeB.length);
-        long[] result=new long[maxDims];
+    /**
+     * Computes the common broadcasted output shape for two input shapes following NumPy rules.
+     * Dimensions are aligned from right to left (trailing axes first). Missing dimensions are treated as 1.
+     * Dimensions are compatible if they are equal or if one of them is 1.
+     */
+    public static long[] calculateBroadcastShape(long[] shapeA, long[] shapeB) {
+        int maxDims = Math.max(shapeA.length, shapeB.length);
+        long[] result = new long[maxDims];
         for (int i = 1; i <= maxDims; i++) {
             long dimA = (shapeA.length - i >= 0) ? shapeA[shapeA.length - i] : 1;
             long dimB = (shapeB.length - i >= 0) ? shapeB[shapeB.length - i] : 1;
@@ -36,6 +52,9 @@ public class ShapeUtil {
         return result;
     }
 
+    /**
+     * Calculates the shape resulting from collapsing a tensor along a specific reduction axis.
+     */
     public static long[] calculateReductionShape(long[] shape, int axis) {
         if (axis < 0 || axis >= shape.length) {
             throw new IllegalArgumentException("Axis " + axis + " is out of bounds for shape " + Arrays.toString(shape));
@@ -49,6 +68,10 @@ public class ShapeUtil {
         return reducedShape;
     }
 
+    /**
+     * Computes the physical byte offset into a memory segment for a given multidimensional coordinate,
+     * applying element strides and data type layout byte size.
+     */
     public static long getByteOffset(long[] coords, long[] strides, DType dtype) {
         long elementOffset = 0;
         for (int i = 0; i < coords.length; i++) {
@@ -56,6 +79,4 @@ public class ShapeUtil {
         }
         return elementOffset * dtype.layout.byteSize();
     }
-
-
 }

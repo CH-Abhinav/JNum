@@ -7,16 +7,23 @@ import jnum.internal.kernel.logical.*;
 import jnum.internal.layout.ShapeUtil;
 import jnum.internal.layout.ValidUtil;
 
-public class BooleanOps {
+/**
+ * High-level orchestration facade for boolean tensor operations (and, or, xor, not, all, any).
+ *
+ * <p>Enforces {@link DType#bool} operand casting, applies multidimensional broadcasting,
+ * and delegates to bitwise SIMD kernels in {@link jnum.internal.kernel.logical}.</p>
+ */
+public final class BooleanOps {
 
     private BooleanOps() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Boolean Operations
+    // Logical Binary Operations (and, or, xor)
     // =========================================================================
 
+    /** Element-wise logical AND between boolean tensors with broadcasting. */
     public static NDArray and(NDArray a, NDArray b) {
         long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
         NDArray A = ValidUtil.prepareBroadcastOperand(a, targetShape, DType.bool);

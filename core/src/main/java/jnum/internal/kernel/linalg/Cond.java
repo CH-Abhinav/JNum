@@ -6,12 +6,19 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.NDArray;
 
+/**
+ * Matrix condition number kernel (2-norm) via SVD.
+ *
+ * <p>Computes the ratio of the largest to smallest singular value: kappa = sigma_max / sigma_min.
+ * Returns {@link Double#POSITIVE_INFINITY} if the smallest singular value is 0.</p>
+ */
 public final class Cond {
 
     private Cond() {
         throw new AssertionError("Cond kernel cannot be instantiated.");
     }
 
+    /** Computes 2-norm condition number of matrix A. */
     public static double cond(NDArray a, Arena arena) {
         if (a.dim() != 2) {
             throw new IllegalArgumentException("cond requires a 2D matrix, got shape: " + a.shapeString());

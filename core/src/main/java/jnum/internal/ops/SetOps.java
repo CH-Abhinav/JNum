@@ -3,10 +3,23 @@ package jnum.internal.ops;
 import java.lang.foreign.ValueLayout;
 import jnum.NDArray;
 
+/**
+ * Low-level element setter operations and memory segment mutations.
+ *
+ * <p>Directly modifies the target {@link java.lang.foreign.MemorySegment} using layout-aligned
+ * byte offsets. Provides unrolled 1D, 2D, and 3D coordinate setters to avoid varargs allocation
+ * overhead when populating matrices.</p>
+ */
 public final class SetOps {
-    private SetOps() { throw new AssertionError(); }
 
-    public static void set(NDArray a, double val, long... indices){
+    private SetOps() {
+        throw new AssertionError("Utility class cannot be instantiated.");
+    }
+
+    /**
+     * Sets an element at the specified N-dimensional coordinate with type conversion.
+     */
+    public static void set(NDArray a, double val, long... indices) {
         if(indices.length!= a.internalShapeUnsafe().length){
             throw new IllegalArgumentException("illegal indices :"+indices.length+" does not match with shape "+ a.internalShapeUnsafe().length);
         }

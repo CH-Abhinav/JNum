@@ -12,13 +12,20 @@ import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
+/**
+ * SIMD maximum element reduction kernel for full-tensor and axis-specific reductions.
+ *
+ * <p>Employs {@code VectorOperators.MAX} to vectorize peak finding, followed by
+ * horizontal vector lane reduction.</p>
+ */
 public final class Max {
 
-    private Max(){
-        throw new AssertionError();
+    private Max() {
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
-    public static double maxFloat(NDArray a){
+    /** Finds maximum float value across the entire array. */
+    public static double maxFloat(NDArray a) {
         if(!a.isContiguous()){
             float finalMax = Float.NEGATIVE_INFINITY;
             NDIter iter = new NDIter(a.internalShapeUnsafe());

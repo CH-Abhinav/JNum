@@ -3,32 +3,54 @@ package jnum.nn;
 import jnum.NDArray;
 
 /**
- * Applies the Softmax function to an n-dimensional input Tensor.
- * Rescales elements so they lie in the range [0, 1] and sum to 1.
+ * Normalized exponential (Softmax) activation function:
+ * {@code Softmax(x_i) = exp(x_i - max(x)) / sum(exp(x_j - max(x)))}.
+ *
+ * <p>Rescales elements along a specified axis so that they lie in the range {@code [0, 1]}
+ * and sum to {@code 1.0}. Employs the standard numerical stability trick (subtracting the axis maximum)
+ * to prevent floating-point overflow during exponentiation.</p>
  */
 public class Softmax implements Module {
+
     private final int axis;
 
     /**
-     * @param axis The dimension softmax would be performed on.
+     * Constructs a Softmax module operating along the specified axis.
+     *
+     * @param axis the dimension along which softmax normalization is performed (supports negative indices)
      */
     public Softmax(int axis) {
         this.axis = axis;
     }
 
     /**
-     * Defaults to the last dimension (axis = -1).
+     * Constructs a Softmax module operating along the trailing dimension ({@code axis = -1}).
      */
     public Softmax() {
         this.axis = -1;
     }
 
+    /**
+     * Returns the axis along which softmax is applied.
+     *
+     * @return target normalization axis
+     */
+    public int axis() {
+        return axis;
+    }
+
+    /**
+     * Applies softmax probability normalization along the configured axis.
+     *
+     * @param input the unnormalized logits tensor
+     * @return a normalized probability distribution tensor with the same shape
+     */
     @Override
     public NDArray forward(NDArray input) {
         int targetAxis = axis < 0 ? axis + input.dim() : axis;
 
         // 1. Numerical Stability: Subtract the maximum value along the axis
-        // keepdims=true ensures maxVals is [Batch, 1], broadcasting safely against [Batch, Features]
+        // keepDims=true ensures maxVals is [Batch, 1], broadcasting safely against [Batch, Features]
         NDArray maxVals = input.max(targetAxis, true);
         NDArray shifted = input.sub(maxVals);
 

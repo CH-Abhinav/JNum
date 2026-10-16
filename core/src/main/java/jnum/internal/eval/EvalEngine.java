@@ -19,6 +19,7 @@ public class EvalEngine {
 
     public static NDArray evaluateNamed(String expr, Map<String, NDArray> variables) {
         String[] varNames = variables.keySet().toArray(new String[0]);
+        Arrays.sort(varNames);
         NDArray[] vars = new NDArray[varNames.length];
         for (int i = 0; i < varNames.length; i++) vars[i] = variables.get(varNames[i]);
 

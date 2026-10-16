@@ -7,12 +7,19 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Moore-Penrose pseudoinverse kernel (A^+) via SVD.
+ *
+ * <p>Decomposes A = U * S * V^T, inverts non-zero singular values above a relative cutoff
+ * threshold (rcond * max(S)), and reconstructs A^+ = V * S^+ * U^T.</p>
+ */
 public final class Pinv {
 
     private Pinv() {
         throw new AssertionError("Pinv kernel cannot be instantiated.");
     }
 
+    /** Computes Moore-Penrose pseudoinverse using default machine-precision tolerance. */
     public static NDArray pinv(NDArray a, Arena arena) {
         return pinv(a, -1.0, arena);
     }

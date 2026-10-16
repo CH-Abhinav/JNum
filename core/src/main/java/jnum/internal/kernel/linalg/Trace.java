@@ -4,12 +4,18 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import jnum.NDArray;
 
+/**
+ * Matrix trace kernel (sum of main or offset diagonal elements).
+ *
+ * <p>Computes sum(A[i, i + offset]) across the specified diagonal offset.</p>
+ */
 public final class Trace {
 
     private Trace() {
         throw new AssertionError("Trace kernel cannot be instantiated.");
     }
 
+    /** Computes trace along the diagonal defined by {@code offset}. */
     public static double compute(NDArray a, int offset) {
         if (a.dim() != 2) {
             throw new IllegalArgumentException("Trace requires a 2D matrix, got shape: " + a.shapeString());

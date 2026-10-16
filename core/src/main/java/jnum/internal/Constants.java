@@ -340,6 +340,11 @@ public final class Constants {
                 if (macCaches[0] > 0) l1 = macCaches[0];
                 if (macCaches[1] > 0) l2 = macCaches[1];
                 if (macCaches[2] > 0) l3 = macCaches[2];
+            } else if (IS_WINDOWS) {
+                long[] winCaches = detectWindowsCaches();
+                if (winCaches[0] > 0) l1 = winCaches[0];
+                if (winCaches[1] > 0) l2 = winCaches[1];
+                if (winCaches[2] > 0) l3 = winCaches[2];
             }
         } catch (Exception ignored) {}
 

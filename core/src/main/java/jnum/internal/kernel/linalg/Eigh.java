@@ -9,14 +9,25 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Eigenvalue decomposition kernel for symmetric / Hermitian real matrices.
+ *
+ * <p>Reduces symmetric matrix A to tridiagonal form using Householder transformations,
+ * followed by the symmetric implicit QL/QR iteration with Wilkinson shifts to compute real
+ * eigenvalues in ascending order and their corresponding orthogonal eigenvectors.</p>
+ */
 public final class Eigh {
 
     private Eigh() {
         throw new AssertionError("Eigh kernel cannot be instantiated.");
     }
 
+    /** Container record holding real eigenvalues and orthogonal eigenvector columns. */
     public record EighResult(NDArray eigenvalues, NDArray eigenvectors) {}
 
+    /**
+     * Top-level dispatcher: computes eigenvalues and eigenvectors of symmetric matrix A.
+     */
     public static EighResult eigh(NDArray a, Arena arena) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("eigh requires a square 2D symmetric matrix, got shape: " + a.shapeString());

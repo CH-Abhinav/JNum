@@ -9,14 +9,25 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Eigenvalue decomposition kernel for general (non-symmetric) square real matrices.
+ *
+ * <p>Reduces matrix A to upper Hessenberg form via Householder reflections, followed by
+ * the Francis implicitly shifted double-step QR algorithm to extract real and imaginary
+ * eigenvalue components.</p>
+ */
 public final class Eig {
 
     private Eig() {
         throw new AssertionError("Eig kernel cannot be instantiated.");
     }
 
+    /** Container record holding real and imaginary eigenvalue vectors. */
     public record EigResult(NDArray realEigenvalues, NDArray imagEigenvalues) {}
 
+    /**
+     * Top-level dispatcher: computes eigenvalues of general square matrix A.
+     */
     public static EigResult eig(NDArray a, Arena arena) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("eig requires a square 2D matrix, got shape: " + a.shapeString());

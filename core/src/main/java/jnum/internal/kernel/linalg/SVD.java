@@ -9,14 +9,25 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Singular Value Decomposition kernel (A = U * S * V^T).
+ *
+ * <p>Implements one-sided Jacobi orthogonalization with Givens rotations to iteratively
+ * diagonalize A^T * A. Extracts singular values into vector S in descending order, constructs
+ * left singular vectors U, and computes right singular vectors V^T.</p>
+ */
 public final class SVD {
 
     private SVD() {
         throw new AssertionError("SVD kernel cannot be instantiated.");
     }
 
+    /** Container record holding left singular vectors U, singular values S, and right singular vectors V^T. */
     public record SVDResult(NDArray u, NDArray s, NDArray vt) {}
 
+    /**
+     * Top-level dispatcher: decomposes matrix A into U, S, and V^T. Handles m &lt; n by transposition.
+     */
     public static SVDResult svd(NDArray a, Arena arena) {
         if (a.dim() != 2) {
             throw new IllegalArgumentException("SVD requires a 2D matrix, got shape: " + a.shapeString());

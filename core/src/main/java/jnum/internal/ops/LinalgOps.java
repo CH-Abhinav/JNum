@@ -28,10 +28,17 @@ import jnum.internal.kernel.linalg.SVD;
 import jnum.internal.kernel.linalg.SVD.SVDResult;
 import jnum.internal.kernel.linalg.Trace;
 
+/**
+ * High-level orchestration facade for linear algebra routines, GEMM, and matrix decompositions.
+ *
+ * <p>Handles shape compatibility checks (e.g. inner contraction dimension matching for GEMM,
+ * square matrix validation for solvers and decompositions), batch dimension dispatch for 3D tensors,
+ * type promotion, and routing to hardware-accelerated kernels in {@link jnum.internal.kernel.linalg}.</p>
+ */
 public final class LinalgOps {
 
     private LinalgOps() {
-        throw new AssertionError("No jnum.internal.ops.LinalgOps instances for you!");
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     private static NDArray dispatchMatMul2D(NDArray A, NDArray B, NDArray targetRes, DType targetType) {
@@ -218,7 +225,7 @@ public final class LinalgOps {
     }
 
     public static int matrixRank(NDArray a, double tol, Arena arena) {
-        return MatrixRank.matrixRank(a, tol, Arena.ofAuto());
+        return MatrixRank.matrixRank(a, tol, arena);
     }
 
     // Condition Number

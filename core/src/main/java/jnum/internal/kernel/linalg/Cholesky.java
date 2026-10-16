@@ -12,12 +12,22 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Cholesky factorization kernel (A = L * L^T) for symmetric positive-definite matrices.
+ *
+ * <p>Implements the Cholesky-Banachiewicz algorithm with SIMD-vectorized inner dot products
+ * for row updates. Throws {@link IllegalArgumentException} if the matrix is non-square or
+ * not positive-definite (encountered non-positive pivot).</p>
+ */
 public final class Cholesky {
 
     private Cholesky() {
         throw new AssertionError("Cholesky kernel cannot be instantiated.");
     }
 
+    /**
+     * Top-level dispatcher: validates square 2D rank and routes to float or double precision.
+     */
     public static NDArray cholesky(NDArray a, Arena arena) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("Cholesky requires a square 2D matrix, got shape: " + a.shapeString());

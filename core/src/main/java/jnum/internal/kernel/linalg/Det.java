@@ -10,14 +10,23 @@ import jdk.incubator.vector.FloatVector;
 import jnum.DType;
 import jnum.NDArray;
 
+/**
+ * Determinant and log-determinant kernels via LU decomposition with row partial pivoting.
+ *
+ * <p>Calculates det(A) in O(n^3) time by factoring P * A = L * U and taking the product of
+ * the diagonal elements of U adjusted by permutation sign (-1)^swaps. Computes slogdet
+ * in numerically stable log-space to prevent float underflow/overflow.</p>
+ */
 public final class Det {
 
     private Det() {
         throw new AssertionError("Det kernel cannot be instantiated.");
     }
 
+    /** Container record holding the sign (-1, 0, +1) and log-absolute determinant ln|det(A)|. */
     public record SlogdetResult(double sign, double logAbsDet) {}
 
+    /** Computes determinant in single-precision float. */
     public static float detFloat(NDArray a) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("det requires a square 2D matrix, got shape: " + a.shapeString());

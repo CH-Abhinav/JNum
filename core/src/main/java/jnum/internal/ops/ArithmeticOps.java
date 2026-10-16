@@ -8,15 +8,26 @@ import jnum.internal.layout.ShapeUtil;
 import jnum.internal.layout.TypeUtil;
 import jnum.internal.layout.ValidUtil;
 
-public class ArithmeticOps {
+/**
+ * High-level orchestration facade for binary arithmetic operations (add, sub, mul, div).
+ *
+ * <p>Handles NumPy-compatible broadcasting shape derivation, operand type promotion via
+ * {@link TypeUtil#promoteTypes}, optional destination buffer validation, and dispatch to
+ * type-specialized SIMD kernels in {@link jnum.internal.kernel.arithmetic}.</p>
+ */
+public final class ArithmeticOps {
+
     private ArithmeticOps() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Addition
+    // Addition (Array-Array & Array-Scalar)
     // =========================================================================
 
+    /**
+     * Element-wise addition with broadcasting and automatic type promotion. Allocates output.
+     */
     public static NDArray add(NDArray a, NDArray b) {
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());

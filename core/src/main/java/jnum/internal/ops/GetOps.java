@@ -1,11 +1,28 @@
 package jnum.internal.ops;
 
 import java.lang.foreign.ValueLayout;
+import java.util.NoSuchElementException;
 import jnum.NDArray;
+import jnum.internal.layout.NDIter;
+import jnum.internal.layout.ShapeUtil;
 
+/**
+ * Low-level element getter operations and physical coordinate offset calculations.
+ *
+ * <p>Provides fast-path element retrieval for contiguous layouts (direct flat indexing) and
+ * general strided offset resolution for views. Includes unrolled 1D, 2D, and 3D coordinate
+ * accessors to eliminate {@code long[]} varargs array allocations in tight loops.</p>
+ */
 public final class GetOps {
-    private GetOps() { throw new AssertionError(); }
 
+    private GetOps() {
+        throw new AssertionError("Utility class cannot be instantiated.");
+    }
+
+    /**
+     * Translates a 1D logical row-major index into a physical element offset using tensor strides.
+     * Decomposes the logical index into multidimensional coordinates from innermost to outermost dimension.
+     */
     public static long getPhysicalOffset(long logicalIndex, long[] shape, long[] strides) {
         long remaining = logicalIndex;
         long offset = 0;
@@ -183,5 +200,57 @@ public final class GetOps {
         if (x < 0) x += dim0; if (y < 0) y += dim1; if (z < 0) z += dim2;
         if (x < 0 || x >= dim0 || y < 0 || y >= dim1 || z < 0 || z >= dim2) throw new IndexOutOfBoundsException("Index out of bounds");
         return a.getData().get(ValueLayout.JAVA_BYTE, x * a.internalStridesUnsafe()[0] + y * a.internalStridesUnsafe()[1] + z * a.internalStridesUnsafe()[2]) != 0;
+    }
+
+    public static long[] indexOf(NDArray a, double b) {
+        NDIter iter = new NDIter(a.internalShapeUnsafe());
+        switch (a.getDType()) {
+            case f32 -> {
+                float c = (float) b;
+                float epsilon = 1e-6f;
+                while (iter.hasNext) {
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.internalStridesUnsafe(), a.getDType());
+                    float val = a.getData().get(ValueLayout.JAVA_FLOAT, byteOffset);
+                    if (Math.abs(c - val) < epsilon) {
+                        return iter.coords.clone();
+                    }
+                    iter.next();
+                }
+            }
+            case i32 -> {
+                int c = (int) b;
+                while (iter.hasNext) {
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.internalStridesUnsafe(), a.getDType());
+                    if (c == a.getData().get(ValueLayout.JAVA_INT, byteOffset)) {
+                        return iter.coords.clone();
+                    }
+                    iter.next();
+                }
+            }
+            case f64 -> {
+                double c = b;
+                double epsilon = 1e-12;
+                while (iter.hasNext) {
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.internalStridesUnsafe(), a.getDType());
+                    double val = a.getData().get(ValueLayout.JAVA_DOUBLE, byteOffset);
+                    if (Math.abs(c - val) < epsilon) {
+                        return iter.coords.clone();
+                    }
+                    iter.next();
+                }
+            }
+            case bool -> {
+                byte c = (byte) (b != 0 ? 1 : 0);
+                while (iter.hasNext) {
+                    long byteOffset = ShapeUtil.getByteOffset(iter.coords, a.internalStridesUnsafe(), a.getDType());
+                    if (c == a.getData().get(ValueLayout.JAVA_BYTE, byteOffset)) {
+                        return iter.coords.clone();
+                    }
+                    iter.next();
+                }
+            }
+            default -> throw new UnsupportedOperationException("This dtype " + a.getDType() + " doesn't support this method");
+        }
+        throw new NoSuchElementException();
     }
 }

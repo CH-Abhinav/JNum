@@ -12,13 +12,20 @@ import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
+/**
+ * SIMD minimum element reduction kernel for full-tensor and axis-specific reductions.
+ *
+ * <p>Employs {@code VectorOperators.MIN} to vectorize trough finding, followed by
+ * horizontal vector lane reduction.</p>
+ */
 public final class Min {
 
-    private Min(){
-        throw new AssertionError();
+    private Min() {
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
-    public static double minFloat(NDArray a){
+    /** Finds minimum float value across the entire array. */
+    public static double minFloat(NDArray a) {
         if(!a.isContiguous()){
             float finalMin = Float.POSITIVE_INFINITY;
             NDIter iter = new NDIter(a.internalShapeUnsafe());

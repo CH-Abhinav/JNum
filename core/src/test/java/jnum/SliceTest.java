@@ -208,4 +208,10 @@ class SliceTest {
         Slice.ResolvedSlice emptyRev = Slice.range(9, -1, -100).resolve(10);
         assertEquals(0, emptyRev.length());
     }
+
+    @Test
+    @DisplayName("Slice resolve rejects negative dimension size with IllegalArgumentException")
+    void resolveNegativeDimensionThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Slice.all().resolve(-1));
+    }
 }

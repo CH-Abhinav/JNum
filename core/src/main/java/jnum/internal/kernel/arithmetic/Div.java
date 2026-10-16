@@ -10,12 +10,24 @@ import jdk.incubator.vector.DoubleVector;
 import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 
+/**
+ * Hardware SIMD element-wise division kernel for float, double, and int data types.
+ *
+ * <p>Optimized for HotSpot C2 with:
+ * <ul>
+ *   <li>Contiguous 2-way unrolling ({@code VL * 2}) to maximize register utilization and hide memory latency.</li>
+ *   <li>Vector species main loop followed by a scalar cleanup loop for tail elements.</li>
+ *   <li>Strided fallback via {@link NDIter} coordinate traversal for non-contiguous views.</li>
+ * </ul>
+ * </p>
+ */
 public final class Div {
 
     private Div() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
+    /** Divides float arrays with SIMD acceleration. */
     public static NDArray divFloat(NDArray a, NDArray b, NDArray resArray) {
         if (a.isContiguous() && b.isContiguous() && resArray.isContiguous()) {
             long i = 0;

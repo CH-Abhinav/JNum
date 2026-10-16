@@ -10,12 +10,19 @@ import jdk.incubator.vector.VectorOperators;
 import jnum.DType;
 import jnum.NDArray;
 
+/**
+ * Vector cosine similarity kernel: {@code cos_sim(u, v) = (u . v) / (||u||_2 * ||v||_2)}.
+ *
+ * <p>Uses SIMD vector fused multiply-accumulate to simultaneously accumulate the dot product
+ * and squared norms across a single streaming memory pass.</p>
+ */
 public final class CosineSimilarity {
 
     private CosineSimilarity() {
         throw new AssertionError("CosineSimilarity kernel cannot be instantiated.");
     }
 
+    /** Computes cosine similarity between 1D vectors a and b. */
     public static double compute(NDArray a, NDArray b) {
         if (a.dim() != 1 || b.dim() != 1) {
             throw new IllegalArgumentException("Vector cosine similarity requires 1D arrays, got: " +

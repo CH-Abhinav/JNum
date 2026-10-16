@@ -6,12 +6,19 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.NDArray;
 
+/**
+ * Matrix rank computation kernel based on SVD singular value thresholding.
+ *
+ * <p>Counts singular values greater than the relative numerical tolerance:
+ * {@code tol = max(M, N) * eps * max(S)}.</p>
+ */
 public final class MatrixRank {
 
     private MatrixRank() {
         throw new AssertionError("MatrixRank kernel cannot be instantiated.");
     }
 
+    /** Computes numerical rank with automatic machine-precision cutoff tolerance. */
     public static int matrixRank(NDArray a, Arena arena) {
         return matrixRank(a, -1.0, arena);
     }

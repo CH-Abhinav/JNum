@@ -11,12 +11,21 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Linear system solver kernel (A * x = b) for square invertible matrices.
+ *
+ * <p>Employs Gaussian elimination with row partial pivoting (LU factorization) followed by
+ * forward elimination and back-substitution. Supports both 1D and 2D right-hand side matrices b.</p>
+ */
 public final class Solve {
 
     private Solve() {
         throw new AssertionError("Solve kernel cannot be instantiated.");
     }
 
+    /**
+     * Solves linear system A * x = b, validating square shape and compatible row counts.
+     */
     public static NDArray solve(NDArray a, NDArray b, Arena arena) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("Solve requires a square matrix A, got shape: " + a.shapeString());

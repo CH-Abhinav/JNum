@@ -5,16 +5,23 @@ import jnum.JNum;
 import jnum.NDArray;
 import jnum.internal.kernel.unary.*;
 
+/**
+ * High-level orchestration facade for unary mathematical operations (sqrt, abs, exp, log, log10, sigmoid).
+ *
+ * <p>Ensures input arrays are contiguous before delegating to vectorized unary kernels
+ * in {@link jnum.internal.kernel.unary}.</p>
+ */
 public final class UnaryOps {
-    
+
     private UnaryOps() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Unary Operations
+    // Unary Operations
     // =========================================================================
 
+    /** Computes element-wise square root. */
     public static NDArray sqrt(NDArray a) {
         NDArray safeThis = a.isContiguous() ? a : a.contiguous();
         return switch (a.getDType()) {

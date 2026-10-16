@@ -11,12 +11,19 @@ import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
+/**
+ * Matrix and vector norm computation kernel supporting Euclidean (L2), Frobenius, L1, and Linf orders.
+ *
+ * <p>Uses hardware SIMD vector lanes to accumulate sum-of-squares and absolute values with
+ * compensation for high dynamic range.</p>
+ */
 public final class Norm {
 
     private Norm() {
         throw new AssertionError("Norm kernel cannot be instantiated.");
     }
 
+    /** Computes norm of order {@code ord} across all tensor elements. */
     public static double norm(NDArray a, int ord) {
         long n = a.getSize();
         if (n == 0) return 0.0;

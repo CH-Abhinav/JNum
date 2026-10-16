@@ -11,12 +11,21 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 
+/**
+ * Matrix inversion kernel (A^-1) via Gauss-Jordan elimination with row partial pivoting.
+ *
+ * <p>Reduces an augmented matrix [A | I] to [I | A^-1] using SIMD vector row elimination.
+ * Throws {@link ArithmeticException} if a singular or near-singular pivot is encountered.</p>
+ */
 public final class Inv {
 
     private Inv() {
         throw new AssertionError("Inv kernel cannot be instantiated.");
     }
 
+    /**
+     * Inverts square matrix A using Gauss-Jordan elimination.
+     */
     public static NDArray inv(NDArray a, Arena arena) {
         if (a.dim() != 2 || a.internalShapeUnsafe()[0] != a.internalShapeUnsafe()[1]) {
             throw new IllegalArgumentException("Matrix inverse requires a square matrix, got shape: " + a.shapeString());

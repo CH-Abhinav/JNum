@@ -5,15 +5,23 @@ import jnum.JNum;
 import jnum.NDArray;
 import jnum.internal.kernel.trig.*;
 
-public class TrigOps {
+/**
+ * High-level orchestration facade for trigonometric and hyperbolic functions (sin, cos, tan, sinh, cosh, tanh).
+ *
+ * <p>Ensures contiguous buffer materialization if necessary before invoking vectorized
+ * math kernels in {@link jnum.internal.kernel.trig}.</p>
+ */
+public final class TrigOps {
+
     private TrigOps() {
-        throw new AssertionError();
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
     // =========================================================================
-    // High-Level Trigonometric Operations
+    // Trigonometric Operations
     // =========================================================================
 
+    /** Computes element-wise sine, converting integer inputs to float32. */
     public static NDArray sin(NDArray a) {
         NDArray safeThis = a.isContiguous() ? a : a.contiguous();
         return switch (a.getDType()) {

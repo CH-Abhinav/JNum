@@ -12,13 +12,21 @@ import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
+/**
+ * SIMD sum reduction kernel supporting full-tensor and axis-specific reductions.
+ *
+ * <p>Processes contiguous arrays in vectorized blocks, accumulating into SIMD registers
+ * before performing a final horizontal lane reduction ({@code reduceLanes(VectorOperators.ADD)}).
+ * Falls back to {@link NDIter} coordinate traversal for non-contiguous views.</p>
+ */
 public final class Sum {
 
-    private Sum(){
-        throw new AssertionError();
+    private Sum() {
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
-    public static double sumFloat(NDArray a){
+    /** Computes sum of float elements across the entire array. */
+    public static double sumFloat(NDArray a) {
         if(!a.isContiguous()){
             double total = 0.0;
             NDIter iter = new NDIter(a.internalShapeUnsafe());
@@ -206,7 +214,7 @@ public final class Sum {
                 }
                 resArray.getData().setAtIndex(ValueLayout.JAVA_DOUBLE, offsetRes, acc);
             }else{
-                double acc = 0f;
+                double acc = 0.0;
                 for (long k = 0; k < size; k++) {
                     acc += a.getData().getAtIndex(ValueLayout.JAVA_DOUBLE, baseOffset + k * strideA);
                 }

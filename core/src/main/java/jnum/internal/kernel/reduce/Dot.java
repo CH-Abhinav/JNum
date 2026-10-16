@@ -12,13 +12,20 @@ import jnum.NDArray;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
 
+/**
+ * 1D vector dot product kernel (u . v = sum(u_i * v_i)).
+ *
+ * <p>Uses SIMD vector fused multiply-add (FMA) across unrolled vector registers, followed by
+ * horizontal vector lane addition.</p>
+ */
 public final class Dot {
 
-    private Dot(){
-        throw new AssertionError();
+    private Dot() {
+        throw new AssertionError("Utility class cannot be instantiated.");
     }
 
-    public static double dotFloat(NDArray a,NDArray b){
+    /** Computes dot product between two float arrays. */
+    public static double dotFloat(NDArray a, NDArray b) {
         if(!a.isContiguous() || !b.isContiguous()){
             double total = 0.0;
             NDIter iterA = new NDIter(a.internalShapeUnsafe());
