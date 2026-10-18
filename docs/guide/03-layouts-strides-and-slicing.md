@@ -122,7 +122,7 @@ IO.println(contiguousMatrix.isContiguous()); // true
 
 ## 4. Extracting Subviews
 
-When you want to slice along leading dimensions by fixing coordinates, use [`subview()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L603).
+When you want to slice along leading dimensions by fixing coordinates, use [`subview()`](../../core/src/main/java/jnum/NDArray.java#L603).
 
 ```java
 // A 3D tensor representing [batch=4, channels=3, height=32]
@@ -141,7 +141,7 @@ NDArray channelSlice = tensor.subview(0, 1);
 
 ## 5. Python-Style Slicing with `Slice`
 
-For arbitrary multidimensional ranges, steps, and strided intervals, JNum provides the [`Slice`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/Slice.java) record.
+For arbitrary multidimensional ranges, steps, and strided intervals, JNum provides the [`Slice`](../../core/src/main/java/jnum/Slice.java) record.
 
 ### Slice Factory Methods
 

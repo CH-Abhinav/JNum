@@ -64,9 +64,9 @@ JNum provides element-wise circular trigonometric functions accepting angles in 
 
 | Function | Method | Formula |
 | :--- | :--- | :--- |
-| **Sine** | [`a.sin()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\sin(x)$ |
-| **Cosine** | [`a.cos()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\cos(x)$ |
-| **Tangent** | [`a.tan()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\tan(x)$ |
+| **Sine** | [`a.sin()`](../../core/src/main/java/jnum/NDArray.java) | $\sin(x)$ |
+| **Cosine** | [`a.cos()`](../../core/src/main/java/jnum/NDArray.java) | $\cos(x)$ |
+| **Tangent** | [`a.tan()`](../../core/src/main/java/jnum/NDArray.java) | $\tan(x)$ |
 
 ```java
 // Sequence of angles from 0 to 2*PI with step 0.1
@@ -86,9 +86,9 @@ Hyperbolic functions are widely used in physics simulations, relativistic mechan
 
 | Function | Method | Formula |
 | :--- | :--- | :--- |
-| **Hyperbolic Sine** | [`a.sinh()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\sinh(x) = \frac{e^x - e^{-x}}{2}$ |
-| **Hyperbolic Cosine** | [`a.cosh()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\cosh(x) = \frac{e^x + e^{-x}}{2}$ |
-| **Hyperbolic Tangent**| [`a.tanh()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java) | $\tanh(x) = \frac{\sinh(x)}{\cosh(x)}$ |
+| **Hyperbolic Sine** | [`a.sinh()`](../../core/src/main/java/jnum/NDArray.java) | $\sinh(x) = \frac{e^x - e^{-x}}{2}$ |
+| **Hyperbolic Cosine** | [`a.cosh()`](../../core/src/main/java/jnum/NDArray.java) | $\cosh(x) = \frac{e^x + e^{-x}}{2}$ |
+| **Hyperbolic Tangent**| [`a.tanh()`](../../core/src/main/java/jnum/NDArray.java) | $\tanh(x) = \frac{\sinh(x)}{\cosh(x)}$ |
 
 ```java
 NDArray x = JNum.from(new float[]{-2.0f, -1.0f, 0.0f, 1.0f, 2.0f}, 5);

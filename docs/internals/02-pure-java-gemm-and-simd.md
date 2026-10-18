@@ -2,7 +2,7 @@
 
 Matrix multiplication (GEMM) is the computational backbone of scientific and deep learning workloads. Achieving peak theoretical CPU floating-point operations per second (FLOPS) requires careful orchestration of CPU instruction pipelines, vector registers, and cache hierarchies.
 
-This document details the systems engineering of JNum's **pure-Java 4-Tier GEMM Engine** ([`MatMul.java`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/kernel/linalg/MatMul.java)): how work is classified, how the BLIS (Basic Linear Algebra Instruction Set) cache model is implemented, and how vector registers are scheduled to prevent spills.
+This document details the systems engineering of JNum's **pure-Java 4-Tier GEMM Engine** ([`MatMul.java`](../../core/src/main/java/jnum/internal/kernel/linalg/MatMul.java)): how work is classified, how the BLIS (Basic Linear Algebra Instruction Set) cache model is implemented, and how vector registers are scheduled to prevent spills.
 
 ---
 
@@ -12,7 +12,7 @@ A common flaw in numerical libraries is using a single "one-size-fits-all" matri
 * Tiny matrices (e.g. $3 \times 3$ affine transformations in graphics) suffer severe performance degradation if forced through thread pool synchronization and memory packing.
 * Massive matrices (e.g. $4096 \times 4096$) suffer catastrophic cache thrashing if computed with naive direct loops.
 
-JNum's top-level dispatcher ([`MatMul.java`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/kernel/linalg/MatMul.java)) evaluates both the dimensions $(N, M, P)$ and total arithmetic work volume ($\text{FLOPs} = 2 \cdot N \cdot M \cdot P$) to route calls through 4 specialized execution tiers:
+JNum's top-level dispatcher ([`MatMul.java`](../../core/src/main/java/jnum/internal/kernel/linalg/MatMul.java)) evaluates both the dimensions $(N, M, P)$ and total arithmetic work volume ($\text{FLOPs} = 2 \cdot N \cdot M \cdot P$) to route calls through 4 specialized execution tiers:
 
 ```
                             Matrix Dimensions (N, M, P) & Work Volume
@@ -91,7 +91,7 @@ The loops are structured to maximize cache residence at every tier:
 
 When matrices are stored in standard row-major layout, iterating along a column of $B$ steps across rows with stride $P$. For large $P$, each element load hits a different virtual memory page, causing massive **Translation Lookaside Buffer (TLB) misses** and cache thrashing.
 
-JNum's packing kernel ([`MatMulPacking.java`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/kernel/linalg/matmul/MatMulPacking.java)) re-organizes $A$ and $B$ into dense, sequential micro-panels:
+JNum's packing kernel ([`MatMulPacking.java`](../../core/src/main/java/jnum/internal/kernel/linalg/matmul/MatMulPacking.java)) re-organizes $A$ and $B$ into dense, sequential micro-panels:
 
 * **Packed Panel $A$**: Stored as continuous vertical strips of height $M_R$:
   $$\text{Panel } A = \text{Array of } [M_R \times K_C] \text{ contiguous blocks}$$

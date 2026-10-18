@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -110,18 +125,22 @@ class OperatorsTest {
         val a = JNum.from(doubleArrayOf(2.0, 5.0), 2)
 
         // Double
-        val dAdd = 10.0 + a; assertEquals(12.0, dAdd[0], 1e-9)
-        val dSub = 10.0 - a; assertEquals(8.0, dSub[0], 1e-9)
-        val dMul = 3.0 * a; assertEquals(6.0, dMul[0], 1e-9)
+        val dAdd = 10.0 + a; assertEquals(12.0, dAdd[0], 1e-9); assertEquals(15.0, dAdd[1], 1e-9)
+        val dSub = 10.0 - a; assertEquals(8.0, dSub[0], 1e-9); assertEquals(5.0, dSub[1], 1e-9)
+        val dMul = 3.0 * a; assertEquals(6.0, dMul[0], 1e-9); assertEquals(15.0, dMul[1], 1e-9)
 
         // Float
-        val fAdd = 10.0f + a; assertEquals(12.0, fAdd[0], 1e-5)
-        val fSub = 10.0f - a; assertEquals(8.0, fSub[0], 1e-5)
-        val fMul = 3.0f * a; assertEquals(6.0, fMul[0], 1e-5)
+        val fAdd = 10.0f + a; assertEquals(12.0, fAdd[0], 1e-5); assertEquals(15.0, fAdd[1], 1e-5)
+        val fSub = 10.0f - a; assertEquals(8.0, fSub[0], 1e-5); assertEquals(5.0, fSub[1], 1e-5)
+        val fMul = 3.0f * a; assertEquals(6.0, fMul[0], 1e-5); assertEquals(15.0, fMul[1], 1e-5)
 
         // Int
-        val iAdd = 10 + a; assertEquals(12.0, iAdd[0], 1e-9)
-        val iSub = 10 - a; assertEquals(8.0, iSub[0], 1e-9)
-        val iMul = 3 * a; assertEquals(6.0, iMul[0], 1e-9)
+        val iAdd = 10 + a; assertEquals(12.0, iAdd[0], 1e-9); assertEquals(15.0, iAdd[1], 1e-9)
+        val iSub = 10 - a; assertEquals(8.0, iSub[0], 1e-9); assertEquals(5.0, iSub[1], 1e-9)
+        val iMul = 3 * a; assertEquals(6.0, iMul[0], 1e-9); assertEquals(15.0, iMul[1], 1e-9)
+
+        // Ensure original array was not mutated by addi on intermediate
+        assertEquals(2.0, a[0], 1e-9)
+        assertEquals(5.0, a[1], 1e-9)
     }
 }

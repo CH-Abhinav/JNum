@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum.benchmark
 
 import jnum.*
@@ -8,21 +23,28 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-@Fork(value = 1, jvmArgsAppend = ["--add-modules", "jdk.incubator.vector"])
+@Fork(value = 1, jvmArgsAppend = ["--add-modules", "jdk.incubator.vector", "--enable-native-access=ALL-UNNAMED"])
 @Warmup(iterations = 2, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 4, time = 1, timeUnit = TimeUnit.SECONDS)
 open class KotlinOperatorsBenchmark {
 
-    @Param("10000", "1000000")
-    var size: Int = 10000
+    @Param("1000", "10000", "1000000")
+    var size: Int = 1000
 
+    private var arena: java.lang.foreign.Arena? = null
     lateinit var a: NDArray
     lateinit var b: NDArray
 
     @Setup(Level.Trial)
     fun setup() {
-        a = JNum.rand(1.0f, 10.0f, DType.f32, size.toLong())
-        b = JNum.rand(1.0f, 10.0f, DType.f32, size.toLong())
+        arena = java.lang.foreign.Arena.ofConfined()
+        a = JNum.rand(arena, 1.0f, 10.0f, DType.f32, size.toLong())
+        b = JNum.rand(arena, 1.0f, 10.0f, DType.f32, size.toLong())
+    }
+
+    @TearDown(Level.Trial)
+    fun tearDown() {
+        arena?.close()
     }
 
     @Benchmark
@@ -67,11 +89,11 @@ open class KotlinOperatorsBenchmark {
 
     @Benchmark
     fun kotlinScalarRight(bh: Blackhole) {
-        bh.consume(a + 2.5)
+        bh.consume(a + 2.5f)
     }
 
     @Benchmark
     fun javaScalarRight(bh: Blackhole) {
-        bh.consume(a.add(2.5))
+        bh.consume(a.add(2.5f))
     }
 }

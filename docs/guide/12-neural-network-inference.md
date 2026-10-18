@@ -8,7 +8,7 @@ JNum includes **`jnum.nn`**, a lightweight, pure-Java neural network inference f
 
 ## 1. The `Module` Abstraction
 
-All computational layers in `jnum.nn` implement the [`Module`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/nn/Module.java) contract:
+All computational layers in `jnum.nn` implement the [`Module`](../../core/src/main/java/jnum/nn/Module.java) contract:
 
 ```java
 package jnum.nn;
@@ -26,7 +26,7 @@ A `Module` maps an input tensor to an output tensor during forward inference. La
 
 ## 2. The Affine `Linear` Layer
 
-The [`Linear`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/nn/Linear.java) module implements a fully connected affine transformation:
+The [`Linear`](../../core/src/main/java/jnum/nn/Linear.java) module implements a fully connected affine transformation:
 
 $$y = x \cdot W^T + b$$
 
@@ -117,7 +117,7 @@ NDArray normalized = tanh.forward(x);
 
 ### D. Numerically Stabilized `Softmax`
 
-The [`Softmax`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/nn/Softmax.java) module normalizes unnormalized logits into a valid probability distribution that sums to `1.0`:
+The [`Softmax`](../../core/src/main/java/jnum/nn/Softmax.java) module normalizes unnormalized logits into a valid probability distribution that sums to `1.0`:
 
 $$\text{Softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_j e^{x_j - \max(x)}}$$
 
@@ -142,7 +142,7 @@ IO.println("Sum of probabilities: " + probabilities.sum()); // 1.0
 
 ## 4. The `Sequential` Pipeline Container
 
-Chain layers together using [`Sequential`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/nn/Sequential.java). The output of each layer is passed as the input to the next:
+Chain layers together using [`Sequential`](../../core/src/main/java/jnum/nn/Sequential.java). The output of each layer is passed as the input to the next:
 
 ```java
 import jnum.JNum;

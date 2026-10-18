@@ -2,17 +2,17 @@
 
 Numerical models rarely exist in isolation. They ingest data exported from Python pipelines (Pandas, NumPy, PyTorch) or database exports, and export processed tensors back for downstream serving.
 
-JNum provides high-speed I/O primitives housed in [`jnum.io.JNumIO`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/io/JNumIO.java), offering 100% binary interoperability with **CSV/TSV**, **NumPy `.npy` binaries**, and **NumPy `.npz` archives**.
+JNum provides high-speed I/O primitives housed in [`jnum.io.JNumIO`](../../core/src/main/java/jnum/io/JNumIO.java), offering 100% binary interoperability with **CSV/TSV**, **NumPy `.npy` binaries**, and **NumPy `.npz` archives**.
 
 ---
 
 ## 1. Delimited Text: CSV and TSV
 
-Reading CSV files in traditional Java is notorious for creating millions of intermediate `String` objects, triggering severe GC pauses. JNum uses a high-throughput, off-heap byte parser ([`FastNumberParser`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/io/internal/common/FastNumberParser.java)) that parses ASCII bytes directly into native memory.
+Reading CSV files in traditional Java is notorious for creating millions of intermediate `String` objects, triggering severe GC pauses. JNum uses a high-throughput, off-heap byte parser ([`FastNumberParser`](../../core/src/main/java/jnum/io/internal/common/FastNumberParser.java)) that parses ASCII bytes directly into native memory.
 
 ### Configuring with `CsvOptions`
 
-The [`CsvOptions`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/io/CsvOptions.java) builder provides granular control over parsing:
+The [`CsvOptions`](../../core/src/main/java/jnum/io/CsvOptions.java) builder provides granular control over parsing:
 
 ```java
 import java.nio.file.Path;
@@ -25,10 +25,9 @@ void main() throws Exception {
     CsvOptions options = CsvOptions.builder()
         .delimiter(',')          // Field separator (e.g. '\t' for TSV)
         .hasHeader(true)         // Skips the first header row
-        .commentMarker("#")      // Ignores comment lines starting with '#'
+        .commentPrefix('#')      // Ignores comment lines starting with '#'
         .dtype(DType.f32)        // Destination tensor type
         .skipRows(0)             // Extra rows to skip
-        .maxRows(100_000)        // Maximum rows to ingest (-1 for all)
         .build();
 
     // Read directly into an NDArray
@@ -44,7 +43,7 @@ Export tensors to delimited text using custom format strings:
 ```java
 CsvOptions writeOptions = CsvOptions.builder()
     .delimiter(',')
-    .formatString("%.4f") // Decimal precision format
+    .floatFormat("%.4f") // Decimal precision format
     .build();
 
 JNumIO.writeCsv(dataset, writeOptions, Path.of("output.csv"));

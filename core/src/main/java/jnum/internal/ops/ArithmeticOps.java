@@ -1,5 +1,21 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum.internal.ops;
 
+import java.lang.foreign.Arena;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
@@ -40,6 +56,12 @@ public final class ArithmeticOps {
             case i32 -> Add.addInt(A, B, resArray);
             default -> throw new UnsupportedOperationException("This dtype " + targetType + " doesn't support this method");
         };
+    }
+
+    public static NDArray add(NDArray a, NDArray b, Arena arena) {
+        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+        long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
+        return add(a, b, JNum.zeros(arena, targetType, targetShape));
     }
 
     public static NDArray add(NDArray a, NDArray b, NDArray resArray) {
@@ -146,6 +168,12 @@ public final class ArithmeticOps {
         };
     }
 
+    public static NDArray sub(NDArray a, NDArray b, Arena arena) {
+        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+        long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
+        return sub(a, b, JNum.zeros(arena, targetType, targetShape));
+    }
+
     public static NDArray sub(NDArray a, NDArray b, NDArray resArray) {
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
@@ -250,6 +278,12 @@ public final class ArithmeticOps {
         };
     }
 
+    public static NDArray mul(NDArray a, NDArray b, Arena arena) {
+        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+        long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
+        return mul(a, b, JNum.zeros(arena, targetType, targetShape));
+    }
+
     public static NDArray mul(NDArray a, NDArray b, NDArray resArray) {
         DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
         long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
@@ -352,6 +386,12 @@ public final class ArithmeticOps {
             case i32 -> Div.divInt(A, B, resArray);
             default -> throw new UnsupportedOperationException("This dtype " + targetType + " doesn't support this method");
         };
+    }
+
+    public static NDArray div(NDArray a, NDArray b, Arena arena) {
+        DType targetType = TypeUtil.promoteTypes(a.getDType(), b.getDType());
+        long[] targetShape = ShapeUtil.calculateBroadcastShape(a.internalShapeUnsafe(), b.internalShapeUnsafe());
+        return div(a, b, JNum.zeros(arena, targetType, targetShape));
     }
 
     public static NDArray div(NDArray a, NDArray b, NDArray resArray) {

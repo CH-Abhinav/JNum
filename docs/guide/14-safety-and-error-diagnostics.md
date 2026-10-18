@@ -41,7 +41,7 @@ Exception in thread "main" java.lang.IllegalStateException: Already closed
 
 ### The Fix
 
-Never allow scoped tensors to escape the `try-with-resources` block that created them. If a computed result must outlive the scope, copy it into an auto-managed arena (`Arena.ofAuto()`) using [`a.contiguous(Arena.ofAuto())`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L733):
+Never allow scoped tensors to escape the `try-with-resources` block that created them. If a computed result must outlive the scope, copy it into an auto-managed arena (`Arena.ofAuto()`) using [`a.contiguous(Arena.ofAuto())`](../../core/src/main/java/jnum/NDArray.java#L733):
 
 ```java
 NDArray persistentResult;
@@ -146,7 +146,7 @@ void main() {
 
 ### Preventing Softmax Overflow
 
-When computing exponentials $e^x$ of large logits (e.g. $x = 1000$), standard `exp()` overflows to `Infinity`. Always use JNum's built-in [`jnum.nn.Softmax`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/nn/Softmax.java), which automatically subtracts the maximum logit before exponentiation:
+When computing exponentials $e^x$ of large logits (e.g. $x = 1000$), standard `exp()` overflows to `Infinity`. Always use JNum's built-in [`jnum.nn.Softmax`](../../core/src/main/java/jnum/nn/Softmax.java), which automatically subtracts the maximum logit before exponentiation:
 
 ```java
 // DO NOT do this manually without shifting:

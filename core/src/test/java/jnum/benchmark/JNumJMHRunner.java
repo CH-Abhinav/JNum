@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum.benchmark;
 
 import java.io.File;
@@ -89,7 +104,8 @@ public class JNumJMHRunner {
             NAME_MAP.put("qr_" + sz, "QR [" + sz + "x" + sz + "]");
         }
 
-        for (String sz : tSizes) {
+        String[] exprSizes = {"1K", "10K", "1M", "10M"};
+        for (String sz : exprSizes) {
             NAME_MAP.put("expr_inplace_" + sz, "Compound (a+b)*c-d Inplace " + sz);
             NAME_MAP.put("expr_chained_" + sz, "Compound (a+b)*c-d Chained " + sz);
             NAME_MAP.put("expr_engine_" + sz, "Compound (a+b)*c-d Engine " + sz);

@@ -12,7 +12,7 @@ To compute the matrix product of two 2D matrices $A \in \mathbb{R}^{N \times M}$
 
 $$C = A \cdot B, \quad C_{i, j} = \sum_{k=0}^{M-1} A_{i, k} B_{k, j}$$
 
-Call [`a.matmul(b)`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1582):
+Call [`a.matmul(b)`](../../core/src/main/java/jnum/NDArray.java#L1582):
 
 ```java
 import jnum.JNum;
@@ -73,7 +73,7 @@ JNum inspects the matrix dimensions and total arithmetic work volume ($\mathcal{
 
 ### Dot Product (Inner Product)
 
-For 1D vectors, compute the scalar inner product with [`a.dot(b)`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1399):
+For 1D vectors, compute the scalar inner product with [`a.dot(b)`](../../core/src/main/java/jnum/NDArray.java#L1399):
 
 ```java
 NDArray u = JNum.from(new float[]{1.0f, 3.0f, -5.0f}, 3);

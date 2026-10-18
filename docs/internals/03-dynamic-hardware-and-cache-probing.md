@@ -19,7 +19,7 @@ If these parameters are statically hardcoded:
 * On an **Apple M-series CPU** ($128 \text{ KB}$ L1D cache, $4 \text{ MB}$ L2 cache), hardcoded x86 tiles ($32 \text{ KB}$ L1D, $256 \text{ KB}$ L2) severely under-utilize hardware bandwidth.
 * On an **AMD Zen or Intel Core CPU** ($32 \text{ KB}$ L1D), oversized tile parameters cause continuous cache thrashing, evicting active micro-panels to main RAM mid-calculation.
 
-JNum resolves this by dynamically probing physical cache sizes upon class loading ([`Constants.java`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/Constants.java)).
+JNum resolves this by dynamically probing physical cache sizes upon class loading ([`Constants.java`](../../core/src/main/java/jnum/internal/Constants.java)).
 
 ---
 
@@ -127,7 +127,7 @@ Thread 2: [ 240 rows ] (Heavy load)
 Thread 3: [  30 rows ] (Finishes early; sits idle waiting at barrier)
 ```
 
-JNum's parallel GEBP engine implements dynamic task sizing ([`computeDynamicLeafMc`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/Constants.java#L217)):
+JNum's parallel GEBP engine implements dynamic task sizing ([`computeDynamicLeafMc`](../../core/src/main/java/jnum/internal/Constants.java#L217)):
 
 ```java
 public static int computeDynamicLeafMc(int totalRows, int mrStep, int maxMc) {

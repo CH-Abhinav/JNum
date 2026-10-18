@@ -41,7 +41,7 @@ Data flows directly between native RAM and CPU SIMD registers without ever touch
 
 ## 2. Supported Data Types (`DType`)
 
-Every `NDArray` possesses a concrete data type specified by the [`DType`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/DType.java) enum:
+Every `NDArray` possesses a concrete data type specified by the [`DType`](../../core/src/main/java/jnum/DType.java) enum:
 
 | `DType` | Underlying FFM `ValueLayout` | Size | Description |
 | :--- | :--- | :--- | :--- |
@@ -103,7 +103,7 @@ void main() {
 
 ## 4. Tensor Factories
 
-The [`JNum`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/JNum.java) class provides static factory methods to construct tensors.
+The [`JNum`](../../core/src/main/java/jnum/JNum.java) class provides static factory methods to construct tensors.
 
 ### Uniform Initializers (`zeros`, `ones`, `eye`)
 

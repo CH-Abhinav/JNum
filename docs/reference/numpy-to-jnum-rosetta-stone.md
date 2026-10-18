@@ -41,7 +41,7 @@ This reference provides a side-by-side comparison of common numerical operations
 | **Set Element** | `a[1, 2] = 42.0` | `a.setDouble(42.0, 1, 2)` | `a[1, 2] = 42.0` |
 | **Leading Subview** | `row = a[0]` | `a.subview(0)` | `a.subview(0)` |
 | **Range Slice** | `a[1:4, :]` | `a.slice(Slice.range(1, 4), Slice.all())` | `a[1..3, all]` |
-| **Short-hand Slice** | `a[:, 0:5]` | `a.slice(":, 0:5")` | `a[_, 0 until 5]` |
+| **Short-hand Slice** | `a[:, 0:5]` | `a.slice(":, 0:5")` | `a[`_`, 0 until 5]` |
 | **Strided Stepping** | `a[::2, :]` | `a.slice(Slice.step(2), Slice.all())` | `a[0..9 step 2, all]` |
 | **Reverse Dimension**| `a[::-1, :]` | `a.slice(Slice.step(-1), Slice.all())` | `a.slice(Slice.step(-1), Slice.all())` |
 
@@ -128,4 +128,4 @@ This reference provides a side-by-side comparison of common numerical operations
 | **Load `.npz`** | `archive = np.load("archive.npz")` | `Map<String, NDArray> tensors = JNumIO.readNpz(Path.of("archive.npz"))` |
 | **Read Safetensors**| `from safetensors.numpy import load_file; load_file("model.safetensors")` | `Map<String, NDArray> weights = JNumIO.readSafetensors(Path.of("model.safetensors"))` |
 | **Mmap Safetensors**| `from safetensors import safe_open; safe_open("model.safetensors", framework="numpy")` | `try (MmapTensors m = JNumIO.readSafetensorsMmapScoped(p)) { ... }` |
-| **Read CSV** | `pd.read_csv("data.csv")` | `JNumIO.readCsv(Path.of("data.csv"), CsvOptions.defaultOptions())` |
+| **Read CSV** | `pd.read_csv("data.csv")` | `JNumIO.readCsv(Path.of("data.csv"), CsvOptions.DEFAULT)` |

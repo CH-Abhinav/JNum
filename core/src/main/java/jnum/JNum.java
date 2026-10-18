@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum;
 
 import jnum.internal.eval.EvalEngine;
@@ -268,6 +283,10 @@ public class JNum {
         return rand(Arena.ofAuto(), dType, shape);
     }
 
+    public static NDArray rand(Arena arena, long... shape){
+        return rand(arena, DType.f32, shape);
+    }
+
     /**
      * Creates an array with pseudo-random values using {@link ThreadLocalRandom} for the specified {@link DType}
      * in the given {@link Arena}.
@@ -278,8 +297,32 @@ public class JNum {
      * @return a randomly populated {@link NDArray}
      * @throws UnsupportedOperationException if {@code dType} is unsupported
      */
-    public static NDArray rand(Arena arena,DType dType,long... shape){
+    public static NDArray rand(Arena arena, DType dType, long... shape){
         return Allocator.rand(arena, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, int max, DType dType, long... shape){
+        return Allocator.rand(arena, max, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, float max, DType dType, long... shape){
+        return Allocator.rand(arena, max, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, double max, DType dType, long... shape){
+        return Allocator.rand(arena, max, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, int min, int max, DType dType, long... shape){
+        return Allocator.rand(arena, min, max, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, float min, float max, DType dType, long... shape){
+        return Allocator.rand(arena, min, max, dType, shape);
+    }
+
+    public static NDArray rand(Arena arena, double min, double max, DType dType, long... shape){
+        return Allocator.rand(arena, min, max, dType, shape);
     }
 
     /**
@@ -435,17 +478,19 @@ public class JNum {
         return EvalEngine.evaluatePositional(expression, variables);
     }
 
-    /**
-     * Evaluates a mathematical expression string using a map of named tensor variables.
-     *
-     * @param expression mathematical expression containing named variable references (e.g., {@code "a * b + c"})
-     * @param variables map of variable names to their corresponding {@link NDArray} tensors
-     * @return the resulting {@link NDArray} of the evaluation
-     * @throws IllegalArgumentException if the variables map is null or empty
-     */
+    public static NDArray eval(Arena arena, String expression, NDArray... variables) {
+        if (variables.length == 0) throw new IllegalArgumentException("No variables provided.");
+        return EvalEngine.evaluatePositional(arena, expression, variables);
+    }
+
     public static NDArray eval(String expression, Map<String, NDArray> variables) {
         if (variables == null || variables.isEmpty()) throw new IllegalArgumentException("No variables provided.");
         return EvalEngine.evaluateNamed(expression, variables);
+    }
+
+    public static NDArray eval(Arena arena, String expression, Map<String, NDArray> variables) {
+        if (variables == null || variables.isEmpty()) throw new IllegalArgumentException("No variables provided.");
+        return EvalEngine.evaluateNamed(arena, expression, variables);
     }
 
     /**
@@ -455,7 +500,11 @@ public class JNum {
      * @return an {@code n x n} identity matrix
      */
     public static NDArray eye(int n) {
-        return eye(n, DType.f64);
+        return eye(Arena.ofAuto(), n, DType.f64);
+    }
+
+    public static NDArray eye(Arena arena, int n) {
+        return eye(arena, n, DType.f64);
     }
 
     /**
@@ -469,6 +518,10 @@ public class JNum {
         return Allocator.eye(Arena.ofAuto(), dtype, n);
     }
 
+    public static NDArray eye(Arena arena, int n, DType dtype) {
+        return Allocator.eye(arena, dtype, n);
+    }
+
     /**
      * Alias for {@link #eye(int, DType)}. Creates an {@code n x n} 2D identity matrix.
      *
@@ -478,5 +531,9 @@ public class JNum {
      */
     public static NDArray identity(int n, DType dtype) {
         return eye(n, dtype);
+    }
+
+    public static NDArray identity(Arena arena, int n, DType dtype) {
+        return eye(arena, n, dtype);
     }
 }

@@ -13,6 +13,10 @@
     <artifactId>jnum</artifactId>
     <packaging>jar</packaging>
 
+    <name>JNum Core</name>
+    <description>High-performance pure Java numerical computing core (FFM and Vector API)</description>
+    <url>https://github.com/CH-Abhinav/JNum</url>
+
     <dependencies>
         <dependency>
             <groupId>org.jetbrains</groupId>

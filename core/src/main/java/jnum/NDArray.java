@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum;
 
 import java.lang.foreign.Arena;
@@ -28,7 +43,7 @@ import jnum.internal.ops.UnaryOps;
  * A multidimensional array (tensor) supporting hardware-accelerated SIMD numerical computations.
  *
  * <p>An {@code NDArray} encapsulates a contiguous or strided segment of native memory
- * managed via Java's Foreign Function & Memory (FFM) {@link MemorySegment}, coupled with
+ * managed via Java's Foreign Function &amp; Memory (FFM) {@link MemorySegment}, coupled with
  * dimensional {@code shape} and physical {@code strides} information.</p>
  *
  * <p>Instances are immutable in shape and layout, but their underlying memory segment
@@ -786,6 +801,8 @@ public class NDArray {
      */
     public NDArray add(NDArray b, NDArray resArray) { return ArithmeticOps.add(this, b, resArray); }
 
+    public NDArray add(NDArray b, Arena arena) { return ArithmeticOps.add(this, b, arena); }
+
     /**
      * Adds a scalar float to every element of this tensor, returning a new tensor.
      *
@@ -860,6 +877,8 @@ public class NDArray {
      * @throws IllegalArgumentException if shapes cannot be aligned or {@code resArray} shape is invalid
      */
     public NDArray sub(NDArray b, NDArray resArray) { return ArithmeticOps.sub(this, b, resArray); }
+
+    public NDArray sub(NDArray b, Arena arena) { return ArithmeticOps.sub(this, b, arena); }
 
     /**
      * Subtracts a scalar float from every element of this tensor, returning a new tensor.
@@ -936,6 +955,8 @@ public class NDArray {
      */
     public NDArray mul(NDArray b, NDArray resArray) { return ArithmeticOps.mul(this, b, resArray); }
 
+    public NDArray mul(NDArray b, Arena arena) { return ArithmeticOps.mul(this, b, arena); }
+
     /**
      * Multiplies every element of this tensor by a scalar float, returning a new tensor.
      *
@@ -1010,6 +1031,8 @@ public class NDArray {
      * @throws IllegalArgumentException if shapes cannot be aligned or {@code resArray} shape is invalid
      */
     public NDArray div(NDArray b, NDArray resArray) { return ArithmeticOps.div(this, b, resArray); }
+
+    public NDArray div(NDArray b, Arena arena) { return ArithmeticOps.div(this, b, arena); }
 
     /**
      * Divides every element of this tensor by a scalar float, returning a new tensor.
@@ -1487,6 +1510,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the square root of each element
      */
     public NDArray sqrt() { return UnaryOps.sqrt(this); }
+    public NDArray sqrt(NDArray res) { return UnaryOps.sqrt(this, res); }
+    public NDArray sqrt(Arena arena) { return UnaryOps.sqrt(this, arena); }
 
     /**
      * Computes the element-wise absolute value of this tensor.
@@ -1494,6 +1519,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the absolute values
      */
     public NDArray abs() { return UnaryOps.abs(this); }
+    public NDArray abs(NDArray res) { return UnaryOps.abs(this, res); }
+    public NDArray abs(Arena arena) { return UnaryOps.abs(this, arena); }
 
     /**
      * Computes the element-wise natural exponential ({@code e^x}) of this tensor.
@@ -1501,6 +1528,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the exponential values
      */
     public NDArray exp() { return UnaryOps.exp(this); }
+    public NDArray exp(NDArray res) { return UnaryOps.exp(this, res); }
+    public NDArray exp(Arena arena) { return UnaryOps.exp(this, arena); }
 
     /**
      * Computes the element-wise natural logarithm ({@code ln(x)}) of this tensor.
@@ -1508,6 +1537,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the natural logarithms
      */
     public NDArray log() { return UnaryOps.log(this); }
+    public NDArray log(NDArray res) { return UnaryOps.log(this, res); }
+    public NDArray log(Arena arena) { return UnaryOps.log(this, arena); }
 
     /**
      * Computes the element-wise base-10 logarithm ({@code log10(x)}) of this tensor.
@@ -1515,6 +1546,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the base-10 logarithms
      */
     public NDArray log10() { return UnaryOps.log10(this); }
+    public NDArray log10(NDArray res) { return UnaryOps.log10(this, res); }
+    public NDArray log10(Arena arena) { return UnaryOps.log10(this, arena); }
 
     /**
      * Applies the logistic sigmoid activation function {@code 1 / (1 + e^-x)} element-wise.
@@ -1522,6 +1555,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing the sigmoid activations
      */
     public NDArray sigmoid() { return UnaryOps.sigmoid(this); }
+    public NDArray sigmoid(NDArray res) { return UnaryOps.sigmoid(this, res); }
+    public NDArray sigmoid(Arena arena) { return UnaryOps.sigmoid(this, arena); }
 
     // --- TRIGONOMETRY ---
 
@@ -1531,6 +1566,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing sine values
      */
     public NDArray sin() { return TrigOps.sin(this); }
+    public NDArray sin(NDArray res) { return TrigOps.sin(this, res); }
+    public NDArray sin(Arena arena) { return TrigOps.sin(this, arena); }
 
     /**
      * Computes the element-wise trigonometric cosine of this tensor.
@@ -1538,6 +1575,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing cosine values
      */
     public NDArray cos() { return TrigOps.cos(this); }
+    public NDArray cos(NDArray res) { return TrigOps.cos(this, res); }
+    public NDArray cos(Arena arena) { return TrigOps.cos(this, arena); }
 
     /**
      * Computes the element-wise trigonometric tangent of this tensor.
@@ -1545,6 +1584,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing tangent values
      */
     public NDArray tan() { return TrigOps.tan(this); }
+    public NDArray tan(NDArray res) { return TrigOps.tan(this, res); }
+    public NDArray tan(Arena arena) { return TrigOps.tan(this, arena); }
 
     /**
      * Computes the element-wise hyperbolic sine of this tensor.
@@ -1552,6 +1593,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing hyperbolic sine values
      */
     public NDArray sinh() { return TrigOps.sinh(this); }
+    public NDArray sinh(NDArray res) { return TrigOps.sinh(this, res); }
+    public NDArray sinh(Arena arena) { return TrigOps.sinh(this, arena); }
 
     /**
      * Computes the element-wise hyperbolic cosine of this tensor.
@@ -1559,6 +1602,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing hyperbolic cosine values
      */
     public NDArray cosh() { return TrigOps.cosh(this); }
+    public NDArray cosh(NDArray res) { return TrigOps.cosh(this, res); }
+    public NDArray cosh(Arena arena) { return TrigOps.cosh(this, arena); }
 
     /**
      * Computes the element-wise hyperbolic tangent of this tensor.
@@ -1566,6 +1611,8 @@ public class NDArray {
      * @return a newly allocated {@link NDArray} containing hyperbolic tangent values
      */
     public NDArray tanh() { return TrigOps.tanh(this); }
+    public NDArray tanh(NDArray res) { return TrigOps.tanh(this, res); }
+    public NDArray tanh(Arena arena) { return TrigOps.tanh(this, arena); }
 
     // --- LINEAR ALGEBRA ---
 

@@ -8,7 +8,7 @@ JNum solves this by providing SIMD-accelerated **element-wise comparisons and bo
 
 ## 1. Element-Wise Clamping: `maximum` and `minimum`
 
-Rather than branching with `Math.max(x, y)` in scalar code, JNum provides SIMD-vectorized [`maximum()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1305) and [`minimum()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1337).
+Rather than branching with `Math.max(x, y)` in scalar code, JNum provides SIMD-vectorized [`maximum()`](../../core/src/main/java/jnum/NDArray.java#L1305) and [`minimum()`](../../core/src/main/java/jnum/NDArray.java#L1337).
 
 ### Tensor-Tensor Clamping with Broadcasting
 
@@ -97,8 +97,8 @@ To reduce an entire tensor to a single boolean summary flag:
 
 | Method | Behavior |
 | :--- | :--- |
-| [`a.all()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1939) | Returns `true` if **every** element in the tensor is non-zero (truthy). |
-| [`a.any()`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/NDArray.java#L1932) | Returns `true` if **at least one** element in the tensor is non-zero. |
+| [`a.all()`](../../core/src/main/java/jnum/NDArray.java#L1939) | Returns `true` if **every** element in the tensor is non-zero (truthy). |
+| [`a.any()`](../../core/src/main/java/jnum/NDArray.java#L1932) | Returns `true` if **at least one** element in the tensor is non-zero. |
 
 ```java
 NDArray flags1 = JNum.from(new boolean[]{true, true, true}, 3);

@@ -4,7 +4,7 @@ When writing high-level tensor mathematics, expressions such as $A \cdot B + C$ 
 1. Every operator allocates an intermediate tensor buffer, or
 2. The user is forced to write tedious, error-prone manual loops.
 
-This document details the systems engineering of JNum's **Symbolic Evaluation Engine** ([`EvalEngine.java`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/EvalEngine.java)): how mathematical strings are tokenized without regex allocations, how Shunting-Yard parses expressions into an Abstract Syntax Tree (AST), how algebraic trees are rewritten into hardware FMA (Fused Multiply-Add) instructions, and how buffers are recycled during topological traversal.
+This document details the systems engineering of JNum's **Symbolic Evaluation Engine** ([`EvalEngine.java`](../../core/src/main/java/jnum/internal/eval/EvalEngine.java)): how mathematical strings are tokenized without regex allocations, how Shunting-Yard parses expressions into an Abstract Syntax Tree (AST), how algebraic trees are rewritten into hardware FMA (Fused Multiply-Add) instructions, and how buffers are recycled during topological traversal.
 
 ---
 
@@ -37,7 +37,7 @@ Topological Evaluation with Buffer Recycling
 
 Many string parsers rely on `java.util.regex.Pattern` or `String.split()`. In high-throughput scoring services, compiling regex patterns or creating `Matcher` objects inside the hot path causes substantial allocation overhead.
 
-JNum's [`ExprParser`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/ExprParser.java) uses a **deterministic character-level state scanner**:
+JNum's [`ExprParser`](../../core/src/main/java/jnum/internal/eval/ExprParser.java) uses a **deterministic character-level state scanner**:
 * Scans characters with a single pass through `expr.charAt(i)`.
 * Recognizes bracket pairs `()`, `{}`, `[]` and normalizes them to parentheses.
 * Extracts numeric constants directly into IEEE 754 `double` values.
@@ -56,7 +56,7 @@ To respect algebraic precedence without recursion limits, JNum uses Dijkstra's *
 * Operators are pushed onto an operator stack (`Deque<Token>`), draining higher-precedence operators into the output list.
 * Mismatched parentheses are detected and rejected with informative `IllegalArgumentException` messages.
 
-From the RPN token list, an Abstract Syntax Tree ([`ASTNode`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/ASTNode.java)) is constructed using a stack of tree nodes.
+From the RPN token list, an Abstract Syntax Tree ([`ASTNode`](../../core/src/main/java/jnum/internal/eval/ASTNode.java)) is constructed using a stack of tree nodes.
 
 ---
 
@@ -99,7 +99,7 @@ When an expression matches $(A \times B) + C$:
 
 ## 5. Topological Execution & Buffer Recycling
 
-During evaluation in [`FloatEval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/FloatEval.java) and [`DoubleEval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/DoubleEval.java), the AST is evaluated in post-order (topological dependency order).
+During evaluation in [`FloatEval`](../../core/src/main/java/jnum/internal/eval/FloatEval.java) and [`DoubleEval`](../../core/src/main/java/jnum/internal/eval/DoubleEval.java), the AST is evaluated in post-order (topological dependency order).
 
 ### Buffer Recycling Strategy
 

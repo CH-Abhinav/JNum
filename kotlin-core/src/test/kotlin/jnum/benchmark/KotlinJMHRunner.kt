@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum.benchmark
 
 import org.openjdk.jmh.results.RunResult
@@ -20,7 +35,7 @@ fun main(args: Array<String>) {
         else -> if (filterArg.contains(".*")) filterArg else ".*$filterArg.*"
     }
 
-    val jvmArgsList = mutableListOf("--add-modules", "jdk.incubator.vector")
+    val jvmArgsList = mutableListOf("--add-modules", "jdk.incubator.vector", "--enable-native-access=ALL-UNNAMED")
 
     // Dynamically accept user JVM flags from system property -Djmh.jvmArgs="..."
     val customJvmArgs = System.getProperty("jmh.jvmArgs")
@@ -51,7 +66,8 @@ fun main(args: Array<String>) {
     val opt = optBuilder.build()
     val results: Collection<RunResult> = Runner(opt).run()
 
-    val outFile = File("benchmarks/kotlin_results.json")
+    val candidate = File("kotlin-core/benchmarks/kotlin_results.json")
+    val outFile = if (candidate.exists() || File("kotlin-core").isDirectory) candidate else File("benchmarks/kotlin_results.json")
     val existingResults = LinkedHashMap<String, Double>()
     if (outFile.exists()) {
         try {
@@ -74,9 +90,10 @@ fun main(args: Array<String>) {
     for (r in results) {
         val fullMethod = r.params.benchmark
         val simpleMethod = fullMethod.substring(fullMethod.lastIndexOf('.') + 1)
-        val scoreMs = r.primaryResult.score
-        existingResults[simpleMethod] = scoreMs
-        System.out.printf("%-40s : %10.4f ms%n", simpleMethod, scoreMs)
+        val score = r.primaryResult.score
+        val unit = r.primaryResult.scoreUnit
+        existingResults[simpleMethod] = score
+        System.out.printf("%-40s : %10.4f %s%n", simpleMethod, score, unit)
     }
 
     outFile.parentFile?.mkdirs()

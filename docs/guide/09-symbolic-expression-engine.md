@@ -11,7 +11,7 @@ NDArray step3 = step2.sub(d); // Final Result (Temp 1 & 2 are discarded)
 
 In long-running or high-throughput systems, discarding millions of temporary arrays causes memory fragmentation and severe garbage collection pressure.
 
-JNum solves this through its **Symbolic Evaluation Engine** ([`JNum.eval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/JNum.java#L433)). It compiles mathematical expression strings into an Abstract Syntax Tree (AST), optimizes execution order, and recycles intermediate memory buffers with zero temporary allocations.
+JNum solves this through its **Symbolic Evaluation Engine** ([`JNum.eval`](../../core/src/main/java/jnum/JNum.java#L433)). It compiles mathematical expression strings into an Abstract Syntax Tree (AST), optimizes execution order, and recycles intermediate memory buffers with zero temporary allocations.
 
 ---
 
@@ -89,10 +89,10 @@ NDArray res = JNum.eval("($0 + $1) * ($2 - $3) / 2.0", a, b, c, d);
 
 How does the symbolic engine achieve zero-allocation evaluation?
 
-1. **Zero-Regex Tokenization**: A custom character-by-character scanner ([`ExprParser`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/ExprParser.java)) tokenizes the expression string without allocating intermediate regular-expression pattern objects.
-2. **Shunting-Yard AST Generation**: Dijkstra's Shunting-Yard algorithm converts infix tokens into an Abstract Syntax Tree ([`ASTNode`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/ASTNode.java)).
+1. **Zero-Regex Tokenization**: A custom character-by-character scanner ([`ExprParser`](../../core/src/main/java/jnum/internal/eval/ExprParser.java)) tokenizes the expression string without allocating intermediate regular-expression pattern objects.
+2. **Shunting-Yard AST Generation**: Dijkstra's Shunting-Yard algorithm converts infix tokens into an Abstract Syntax Tree ([`ASTNode`](../../core/src/main/java/jnum/internal/eval/ASTNode.java)).
 3. **Topological Buffer Recycling**: During tree traversal, temporary buffers allocated for left-hand sub-expressions are recycled and reused for subsequent right-hand sub-expressions, bounding total memory consumption to the tree depth rather than the number of operators.
-4. **Type-Specialized Kernels**: Execution dispatches to specialized evaluators ([`FloatEval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/FloatEval.java), [`DoubleEval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/DoubleEval.java), or [`IntEval`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/internal/eval/IntEval.java)) to eliminate primitive boxing.
+4. **Type-Specialized Kernels**: Execution dispatches to specialized evaluators ([`FloatEval`](../../core/src/main/java/jnum/internal/eval/FloatEval.java), [`DoubleEval`](../../core/src/main/java/jnum/internal/eval/DoubleEval.java), or [`IntEval`](../../core/src/main/java/jnum/internal/eval/IntEval.java)) to eliminate primitive boxing.
 
 ---
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2026 Abhinav Chinnala (chinnala.abhinav5@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package jnum.benchmark;
 
 import java.util.Map;
@@ -23,6 +38,7 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class Arith1DState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_1K, b_1K, res_1K;
         public NDArray a_10K, b_10K, res_10K;
         public NDArray a_100K, b_100K, res_100K;
@@ -32,29 +48,35 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 1000L);
-            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 1000L);
-            res_1K = JNum.zeros(DType.f32, 1000L);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000L);
+            b_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000L);
+            res_1K = JNum.zeros(arena, DType.f32, 1000L);
 
-            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
-            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
-            res_10K = JNum.zeros(DType.f32, 10000L);
+            a_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000L);
+            res_10K = JNum.zeros(arena, DType.f32, 10000L);
 
-            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 100000L);
-            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 100000L);
-            res_100K = JNum.zeros(DType.f32, 100000L);
+            a_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100000L);
+            b_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100000L);
+            res_100K = JNum.zeros(arena, DType.f32, 100000L);
 
-            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            res_1M = JNum.zeros(DType.f32, 1_000_000L);
+            a_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1_000_000L);
+            res_1M = JNum.zeros(arena, DType.f32, 1_000_000L);
 
-            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
-            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
-            res_10M = JNum.zeros(DType.f32, 10_000_000L);
+            a_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10_000_000L);
+            res_10M = JNum.zeros(arena, DType.f32, 10_000_000L);
 
-            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
-            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 100_000_000L);
-            res_100M = JNum.zeros(DType.f32, 100_000_000L);
+            a_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100_000_000L);
+            b_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100_000_000L);
+            res_100M = JNum.zeros(arena, DType.f32, 100_000_000L);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -93,6 +115,7 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class Arith2DState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_1K, b_1K, res_1K;
         public NDArray a_10K, b_10K, res_10K;
         public NDArray a_100K, b_100K, res_100K;
@@ -102,29 +125,35 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 100);
-            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 100);
-            res_1K = JNum.zeros(DType.f32, 10, 100);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 100);
+            b_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 100);
+            res_1K = JNum.zeros(arena, DType.f32, 10, 100);
 
-            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100);
-            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100);
-            res_10K = JNum.zeros(DType.f32, 100, 100);
+            a_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 100);
+            b_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 100);
+            res_10K = JNum.zeros(arena, DType.f32, 100, 100);
 
-            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 100);
-            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 100);
-            res_100K = JNum.zeros(DType.f32, 1000, 100);
+            a_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000, 100);
+            b_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000, 100);
+            res_100K = JNum.zeros(arena, DType.f32, 1000, 100);
 
-            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
-            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1000, 1000);
-            res_1M = JNum.zeros(DType.f32, 1000, 1000);
+            a_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000, 1000);
+            b_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1000, 1000);
+            res_1M = JNum.zeros(arena, DType.f32, 1000, 1000);
 
-            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
-            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 1000);
-            res_10M = JNum.zeros(DType.f32, 10000, 1000);
+            a_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000, 1000);
+            b_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000, 1000);
+            res_10M = JNum.zeros(arena, DType.f32, 10000, 1000);
 
-            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
-            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 10000, 10000);
-            res_100M = JNum.zeros(DType.f32, 10000, 10000);
+            a_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000, 10000);
+            b_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000, 10000);
+            res_100M = JNum.zeros(arena, DType.f32, 10000, 10000);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -146,6 +175,7 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class Arith3DState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_1K, b_1K, res_1K;
         public NDArray a_10K, b_10K, res_10K;
         public NDArray a_100K, b_100K, res_100K;
@@ -155,29 +185,35 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
-            b_1K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 10, 10);
-            res_1K = JNum.zeros(DType.f32, 10, 10, 10);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 10, 10);
+            b_1K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 10, 10);
+            res_1K = JNum.zeros(arena, DType.f32, 10, 10, 10);
 
-            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
-            b_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10, 20, 50);
-            res_10K = JNum.zeros(DType.f32, 10, 20, 50);
+            a_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 20, 50);
+            b_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10, 20, 50);
+            res_10K = JNum.zeros(arena, DType.f32, 10, 20, 50);
 
-            a_100K = JNum.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
-            b_100K = JNum.rand(1.0f, 10.0f, DType.f32, 20, 50, 100);
-            res_100K = JNum.zeros(DType.f32, 20, 50, 100);
+            a_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 20, 50, 100);
+            b_100K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 20, 50, 100);
+            res_100K = JNum.zeros(arena, DType.f32, 20, 50, 100);
 
-            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
-            b_1M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 100, 100);
-            res_1M = JNum.zeros(DType.f32, 100, 100, 100);
+            a_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 100, 100);
+            b_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 100, 100);
+            res_1M = JNum.zeros(arena, DType.f32, 100, 100, 100);
 
-            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
-            b_10M = JNum.rand(1.0f, 10.0f, DType.f32, 100, 200, 500);
-            res_10M = JNum.zeros(DType.f32, 100, 200, 500);
+            a_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 200, 500);
+            b_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 100, 200, 500);
+            res_10M = JNum.zeros(arena, DType.f32, 100, 200, 500);
 
-            a_100M = JNum.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
-            b_100M = JNum.rand(1.0f, 10.0f, DType.f32, 200, 500, 1000);
-            res_100M = JNum.zeros(DType.f32, 200, 500, 1000);
+            a_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 200, 500, 1000);
+            b_100M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 200, 500, 1000);
+            res_100M = JNum.zeros(arena, DType.f32, 200, 500, 1000);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -199,6 +235,7 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class MatmulState {
+        private java.lang.foreign.Arena arena;
         public NDArray a128, b128, res128;
         public NDArray a512, b512, res512;
         public NDArray a1024, b1024, res1024;
@@ -219,65 +256,71 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a128 = JNum.rand(1.0f, 5.0f, DType.f32, 128, 128);
-            b128 = JNum.rand(1.0f, 5.0f, DType.f32, 128, 128);
-            res128 = JNum.zeros(DType.f32, 128, 128);
+            arena = java.lang.foreign.Arena.ofShared();
+            a128 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 128, 128);
+            b128 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 128, 128);
+            res128 = JNum.zeros(arena, DType.f32, 128, 128);
 
-            a512 = JNum.rand(1.0f, 5.0f, DType.f32, 512, 512);
-            b512 = JNum.rand(1.0f, 5.0f, DType.f32, 512, 512);
-            res512 = JNum.zeros(DType.f32, 512, 512);
+            a512 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 512, 512);
+            b512 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 512, 512);
+            res512 = JNum.zeros(arena, DType.f32, 512, 512);
 
-            a1024 = JNum.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
-            b1024 = JNum.rand(1.0f, 5.0f, DType.f32, 1024, 1024);
-            res1024 = JNum.zeros(DType.f32, 1024, 1024);
+            a1024 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1024, 1024);
+            b1024 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1024, 1024);
+            res1024 = JNum.zeros(arena, DType.f32, 1024, 1024);
 
-            a2048 = JNum.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
-            b2048 = JNum.rand(1.0f, 5.0f, DType.f32, 2048, 2048);
-            res2048 = JNum.zeros(DType.f32, 2048, 2048);
+            a2048 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2048, 2048);
+            b2048 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2048, 2048);
+            res2048 = JNum.zeros(arena, DType.f32, 2048, 2048);
 
-            a4096 = JNum.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
-            b4096 = JNum.rand(1.0f, 5.0f, DType.f32, 4096, 4096);
-            res4096 = JNum.zeros(DType.f32, 4096, 4096);
+            a4096 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 4096, 4096);
+            b4096 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 4096, 4096);
+            res4096 = JNum.zeros(arena, DType.f32, 4096, 4096);
 
-            a8192 = JNum.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
-            b8192 = JNum.rand(1.0f, 5.0f, DType.f32, 8192, 8192);
-            res8192 = JNum.zeros(DType.f32, 8192, 8192);
+            a8192 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 8192, 8192);
+            b8192 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 8192, 8192);
+            res8192 = JNum.zeros(arena, DType.f32, 8192, 8192);
 
-            a10k = JNum.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
-            b10k = JNum.rand(1.0f, 5.0f, DType.f32, 10000, 10000);
-            res10k = JNum.zeros(DType.f32, 10000, 10000);
+            a10k = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000, 10000);
+            b10k = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000, 10000);
+            res10k = JNum.zeros(arena, DType.f32, 10000, 10000);
 
-            aOdd1 = JNum.rand(1.0f, 5.0f, DType.f32, 127, 255);
-            bOdd1 = JNum.rand(1.0f, 5.0f, DType.f32, 255, 511);
-            resOdd1 = JNum.zeros(DType.f32, 127, 511);
+            aOdd1 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 127, 255);
+            bOdd1 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 255, 511);
+            resOdd1 = JNum.zeros(arena, DType.f32, 127, 511);
 
-            aOdd2 = JNum.rand(1.0f, 5.0f, DType.f32, 513, 1023);
-            bOdd2 = JNum.rand(1.0f, 5.0f, DType.f32, 1023, 383);
-            resOdd2 = JNum.zeros(DType.f32, 513, 383);
+            aOdd2 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 513, 1023);
+            bOdd2 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1023, 383);
+            resOdd2 = JNum.zeros(arena, DType.f32, 513, 383);
 
-            aOdd3 = JNum.rand(1.0f, 5.0f, DType.f32, 769, 383);
-            bOdd3 = JNum.rand(1.0f, 5.0f, DType.f32, 383, 513);
-            resOdd3 = JNum.zeros(DType.f32, 769, 513);
+            aOdd3 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 769, 383);
+            bOdd3 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 383, 513);
+            resOdd3 = JNum.zeros(arena, DType.f32, 769, 513);
 
-            a3D_8_128 = JNum.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
-            b3D_8_128 = JNum.rand(1.0f, 5.0f, DType.f32, 8, 128, 128);
-            res3D_8_128 = JNum.zeros(DType.f32, 8, 128, 128);
+            a3D_8_128 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 8, 128, 128);
+            b3D_8_128 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 8, 128, 128);
+            res3D_8_128 = JNum.zeros(arena, DType.f32, 8, 128, 128);
 
-            a3D_4_512 = JNum.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
-            b3D_4_512 = JNum.rand(1.0f, 5.0f, DType.f32, 4, 512, 512);
-            res3D_4_512 = JNum.zeros(DType.f32, 4, 512, 512);
+            a3D_4_512 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 4, 512, 512);
+            b3D_4_512 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 4, 512, 512);
+            res3D_4_512 = JNum.zeros(arena, DType.f32, 4, 512, 512);
 
-            a3D_2_1024 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
-            b3D_2_1024 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 1024, 1024);
-            res3D_2_1024 = JNum.zeros(DType.f32, 2, 1024, 1024);
+            a3D_2_1024 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2, 1024, 1024);
+            b3D_2_1024 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2, 1024, 1024);
+            res3D_2_1024 = JNum.zeros(arena, DType.f32, 2, 1024, 1024);
 
-            a3D_2_4096 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 4096, 4096);
-            b3D_2_4096 = JNum.rand(1.0f, 5.0f, DType.f32, 2, 4096, 4096);
-            res3D_2_4096 = JNum.zeros(DType.f32, 2, 4096, 4096);
+            a3D_2_4096 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2, 4096, 4096);
+            b3D_2_4096 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 2, 4096, 4096);
+            res3D_2_4096 = JNum.zeros(arena, DType.f32, 2, 4096, 4096);
 
-            a3D_1_8192 = JNum.rand(1.0f, 5.0f, DType.f32, 1, 8192, 8192);
-            b3D_1_8192 = JNum.rand(1.0f, 5.0f, DType.f32, 1, 8192, 8192);
-            res3D_1_8192 = JNum.zeros(DType.f32, 1, 8192, 8192);
+            a3D_1_8192 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1, 8192, 8192);
+            b3D_1_8192 = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1, 8192, 8192);
+            res3D_1_8192 = JNum.zeros(arena, DType.f32, 1, 8192, 8192);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -304,6 +347,7 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class DotState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_1K, b_1K;
         public NDArray a_10K, b_10K;
         public NDArray a_100K, b_100K;
@@ -313,23 +357,29 @@ public class JNumJMHSuite {
 
         @Setup(Level.Trial)
         public void setup() {
-            a_1K = JNum.rand(1.0f, 5.0f, DType.f32, 1000L);
-            b_1K = JNum.rand(1.0f, 5.0f, DType.f32, 1000L);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
+            b_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
 
-            a_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
-            b_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
+            a_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
 
-            a_100K = JNum.rand(1.0f, 5.0f, DType.f32, 100000L);
-            b_100K = JNum.rand(1.0f, 5.0f, DType.f32, 100000L);
+            a_100K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 100000L);
+            b_100K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 100000L);
 
-            a_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            b_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
+            a_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
 
-            a_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            b_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
+            a_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
 
-            a_100M = JNum.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
-            b_100M = JNum.rand(1.0f, 5.0f, DType.f32, 100_000_000L);
+            a_100M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 100_000_000L);
+            b_100M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 100_000_000L);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -345,55 +395,74 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class TrigState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_10K, a_1M, a_10M;
+        public NDArray res_10K, res_1M, res_10M;
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = JNum.rand(0.1f, 2.0f, DType.f32, 10000L);
-            a_1M = JNum.rand(0.1f, 2.0f, DType.f32, 1_000_000L);
-            a_10M = JNum.rand(0.1f, 2.0f, DType.f32, 10_000_000L);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_10K = JNum.rand(arena, 0.1f, 2.0f, DType.f32, 10000L);
+            a_1M = JNum.rand(arena, 0.1f, 2.0f, DType.f32, 1_000_000L);
+            a_10M = JNum.rand(arena, 0.1f, 2.0f, DType.f32, 10_000_000L);
+
+            res_10K = JNum.zeros(arena, DType.f32, 10000L);
+            res_1M = JNum.zeros(arena, DType.f32, 1_000_000L);
+            res_10M = JNum.zeros(arena, DType.f32, 10_000_000L);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
-    @Benchmark public void sin_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.sin()); }
-    @Benchmark public void cos_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.cos()); }
-    @Benchmark public void tan_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.tan()); }
-    @Benchmark public void exp_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.exp()); }
-    @Benchmark public void log_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.log()); }
-    @Benchmark public void sqrt_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.sqrt()); }
-    @Benchmark public void tanh_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.tanh()); }
-    @Benchmark public void sigmoid_10K(TrigState s, Blackhole bh) { bh.consume(s.a_10K.sigmoid()); }
+    @Benchmark public void sin_10K(TrigState s, Blackhole bh) { s.a_10K.sin(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void cos_10K(TrigState s, Blackhole bh) { s.a_10K.cos(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void tan_10K(TrigState s, Blackhole bh) { s.a_10K.tan(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void exp_10K(TrigState s, Blackhole bh) { s.a_10K.exp(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void log_10K(TrigState s, Blackhole bh) { s.a_10K.log(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void sqrt_10K(TrigState s, Blackhole bh) { s.a_10K.sqrt(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void tanh_10K(TrigState s, Blackhole bh) { s.a_10K.tanh(s.res_10K); bh.consume(s.res_10K); }
+    @Benchmark public void sigmoid_10K(TrigState s, Blackhole bh) { s.a_10K.sigmoid(s.res_10K); bh.consume(s.res_10K); }
 
-    @Benchmark public void sin_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.sin()); }
-    @Benchmark public void cos_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.cos()); }
-    @Benchmark public void tan_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.tan()); }
-    @Benchmark public void exp_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.exp()); }
-    @Benchmark public void log_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.log()); }
-    @Benchmark public void sqrt_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.sqrt()); }
-    @Benchmark public void tanh_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.tanh()); }
-    @Benchmark public void sigmoid_1M(TrigState s, Blackhole bh) { bh.consume(s.a_1M.sigmoid()); }
+    @Benchmark public void sin_1M(TrigState s, Blackhole bh) { s.a_1M.sin(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void cos_1M(TrigState s, Blackhole bh) { s.a_1M.cos(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void tan_1M(TrigState s, Blackhole bh) { s.a_1M.tan(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void exp_1M(TrigState s, Blackhole bh) { s.a_1M.exp(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void log_1M(TrigState s, Blackhole bh) { s.a_1M.log(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void sqrt_1M(TrigState s, Blackhole bh) { s.a_1M.sqrt(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void tanh_1M(TrigState s, Blackhole bh) { s.a_1M.tanh(s.res_1M); bh.consume(s.res_1M); }
+    @Benchmark public void sigmoid_1M(TrigState s, Blackhole bh) { s.a_1M.sigmoid(s.res_1M); bh.consume(s.res_1M); }
 
-    @Benchmark public void sin_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.sin()); }
-    @Benchmark public void cos_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.cos()); }
-    @Benchmark public void tan_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.tan()); }
-    @Benchmark public void exp_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.exp()); }
-    @Benchmark public void log_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.log()); }
-    @Benchmark public void sqrt_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.sqrt()); }
-    @Benchmark public void tanh_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.tanh()); }
-    @Benchmark public void sigmoid_10M(TrigState s, Blackhole bh) { bh.consume(s.a_10M.sigmoid()); }
+    @Benchmark public void sin_10M(TrigState s, Blackhole bh) { s.a_10M.sin(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void cos_10M(TrigState s, Blackhole bh) { s.a_10M.cos(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void tan_10M(TrigState s, Blackhole bh) { s.a_10M.tan(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void exp_10M(TrigState s, Blackhole bh) { s.a_10M.exp(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void log_10M(TrigState s, Blackhole bh) { s.a_10M.log(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void sqrt_10M(TrigState s, Blackhole bh) { s.a_10M.sqrt(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void tanh_10M(TrigState s, Blackhole bh) { s.a_10M.tanh(s.res_10M); bh.consume(s.res_10M); }
+    @Benchmark public void sigmoid_10M(TrigState s, Blackhole bh) { s.a_10M.sigmoid(s.res_10M); bh.consume(s.res_10M); }
 
     // =========================================================================
     // 7. REDUCTIONS STATE & BENCHMARKS
     // =========================================================================
     @State(Scope.Benchmark)
     public static class RedState {
+        private java.lang.foreign.Arena arena;
         public NDArray a_10K, a_1M, a_10M;
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = JNum.rand(1.0f, 10.0f, DType.f32, 10000L);
-            a_1M = JNum.rand(1.0f, 10.0f, DType.f32, 1_000_000L);
-            a_10M = JNum.rand(1.0f, 10.0f, DType.f32, 10_000_000L);
+            arena = java.lang.foreign.Arena.ofShared();
+            a_10K = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10000L);
+            a_1M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 1_000_000L);
+            a_10M = JNum.rand(arena, 1.0f, 10.0f, DType.f32, 10_000_000L);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
@@ -417,86 +486,163 @@ public class JNumJMHSuite {
     // =========================================================================
     @State(Scope.Benchmark)
     public static class LinalgState {
+        private java.lang.foreign.Arena arena;
         public NDArray mat32, vec32, spd32;
         public NDArray mat128, vec128, spd128;
         public NDArray mat256, vec256, spd256;
 
         @Setup(Level.Trial)
         public void setup() {
-            mat32 = JNum.rand(1.0, 5.0, DType.f64, 32, 32).add(JNum.identity(32, DType.f64).mul(10.0));
-            vec32 = JNum.rand(1.0, 5.0, DType.f64, 32, 1);
-            spd32 = mat32.matmul(mat32.transpose()).add(JNum.identity(32, DType.f64).mul(5.0));
+            arena = java.lang.foreign.Arena.ofShared();
+            mat32 = JNum.rand(arena, 1.0, 5.0, DType.f64, 32, 32).add(JNum.identity(32, DType.f64).mul(10.0), arena);
+            vec32 = JNum.rand(arena, 1.0, 5.0, DType.f64, 32, 1);
+            spd32 = mat32.matmul(mat32.transpose()).add(JNum.identity(32, DType.f64).mul(5.0), arena);
 
-            mat128 = JNum.rand(1.0, 5.0, DType.f64, 128, 128).add(JNum.identity(128, DType.f64).mul(20.0));
-            vec128 = JNum.rand(1.0, 5.0, DType.f64, 128, 1);
-            spd128 = mat128.matmul(mat128.transpose()).add(JNum.identity(128, DType.f64).mul(10.0));
+            mat128 = JNum.rand(arena, 1.0, 5.0, DType.f64, 128, 128).add(JNum.identity(128, DType.f64).mul(20.0), arena);
+            vec128 = JNum.rand(arena, 1.0, 5.0, DType.f64, 128, 1);
+            spd128 = mat128.matmul(mat128.transpose()).add(JNum.identity(128, DType.f64).mul(10.0), arena);
 
-            mat256 = JNum.rand(1.0, 5.0, DType.f64, 256, 256).add(JNum.identity(256, DType.f64).mul(30.0));
-            vec256 = JNum.rand(1.0, 5.0, DType.f64, 256, 1);
-            spd256 = mat256.matmul(mat256.transpose()).add(JNum.identity(256, DType.f64).mul(15.0));
+            mat256 = JNum.rand(arena, 1.0, 5.0, DType.f64, 256, 256).add(JNum.identity(256, DType.f64).mul(30.0), arena);
+            vec256 = JNum.rand(arena, 1.0, 5.0, DType.f64, 256, 1);
+            spd256 = mat256.matmul(mat256.transpose()).add(JNum.identity(256, DType.f64).mul(15.0), arena);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
-    @Benchmark public void inv_32(LinalgState s, Blackhole bh) { bh.consume(s.mat32.inv()); }
+    @Benchmark public void inv_32(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat32.inv(a));
+        }
+    }
     @Benchmark public void det_32(LinalgState s, Blackhole bh) { bh.consume(s.mat32.det()); }
     @Benchmark public void trace_32(LinalgState s, Blackhole bh) { bh.consume(s.mat32.trace()); }
-    @Benchmark public void cholesky_32(LinalgState s, Blackhole bh) { bh.consume(s.spd32.cholesky()); }
-    @Benchmark public void solve_32(LinalgState s, Blackhole bh) { bh.consume(s.mat32.solve(s.vec32)); }
-    @Benchmark public void qr_32(LinalgState s, Blackhole bh) { bh.consume(s.mat32.qr()); }
+    @Benchmark public void cholesky_32(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.spd32.cholesky(a));
+        }
+    }
+    @Benchmark public void solve_32(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat32.solve(s.vec32, a));
+        }
+    }
+    @Benchmark public void qr_32(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat32.qr(a));
+        }
+    }
 
-    @Benchmark public void inv_128(LinalgState s, Blackhole bh) { bh.consume(s.mat128.inv()); }
+    @Benchmark public void inv_128(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat128.inv(a));
+        }
+    }
     @Benchmark public void det_128(LinalgState s, Blackhole bh) { bh.consume(s.mat128.det()); }
     @Benchmark public void trace_128(LinalgState s, Blackhole bh) { bh.consume(s.mat128.trace()); }
-    @Benchmark public void cholesky_128(LinalgState s, Blackhole bh) { bh.consume(s.spd128.cholesky()); }
-    @Benchmark public void solve_128(LinalgState s, Blackhole bh) { bh.consume(s.mat128.solve(s.vec128)); }
-    @Benchmark public void qr_128(LinalgState s, Blackhole bh) { bh.consume(s.mat128.qr()); }
+    @Benchmark public void cholesky_128(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.spd128.cholesky(a));
+        }
+    }
+    @Benchmark public void solve_128(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat128.solve(s.vec128, a));
+        }
+    }
+    @Benchmark public void qr_128(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat128.qr(a));
+        }
+    }
 
-    @Benchmark public void inv_256(LinalgState s, Blackhole bh) { bh.consume(s.mat256.inv()); }
+    @Benchmark public void inv_256(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat256.inv(a));
+        }
+    }
     @Benchmark public void det_256(LinalgState s, Blackhole bh) { bh.consume(s.mat256.det()); }
     @Benchmark public void trace_256(LinalgState s, Blackhole bh) { bh.consume(s.mat256.trace()); }
-    @Benchmark public void cholesky_256(LinalgState s, Blackhole bh) { bh.consume(s.spd256.cholesky()); }
-    @Benchmark public void solve_256(LinalgState s, Blackhole bh) { bh.consume(s.mat256.solve(s.vec256)); }
-    @Benchmark public void qr_256(LinalgState s, Blackhole bh) { bh.consume(s.mat256.qr()); }
+    @Benchmark public void cholesky_256(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.spd256.cholesky(a));
+        }
+    }
+    @Benchmark public void solve_256(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat256.solve(s.vec256, a));
+        }
+    }
+    @Benchmark public void qr_256(LinalgState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.mat256.qr(a));
+        }
+    }
 
     // =========================================================================
     // 9. EXPRESSION STATE & BENCHMARKS (In-place buffer reuse vs chaining vs eval)
     // =========================================================================
     @State(Scope.Benchmark)
     public static class ExprState {
+        private java.lang.foreign.Arena arena;
+        public NDArray a_1K, b_1K, c_1K, d_1K, res_1K;
         public NDArray a_10K, b_10K, c_10K, d_10K, res_10K;
         public NDArray a_1M, b_1M, c_1M, d_1M, res_1M;
         public NDArray a_10M, b_10M, c_10M, d_10M, res_10M;
 
+        public Map<String, NDArray> vars_1K;
         public Map<String, NDArray> vars_10K;
         public Map<String, NDArray> vars_1M;
         public Map<String, NDArray> vars_10M;
 
         @Setup(Level.Trial)
         public void setup() {
-            a_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
-            b_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
-            c_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
-            d_10K = JNum.rand(1.0f, 5.0f, DType.f32, 10000L);
-            res_10K = JNum.zeros(DType.f32, 10000L);
+            arena = java.lang.foreign.Arena.ofConfined();
+            a_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
+            b_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
+            c_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
+            d_1K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1000L);
+            res_1K = JNum.zeros(arena, DType.f32, 1000L);
+            vars_1K = Map.of("a", a_1K, "b", b_1K, "c", c_1K, "d", d_1K);
+
+            a_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
+            b_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
+            c_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
+            d_10K = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10000L);
+            res_10K = JNum.zeros(arena, DType.f32, 10000L);
             vars_10K = Map.of("a", a_10K, "b", b_10K, "c", c_10K, "d", d_10K);
 
-            a_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            b_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            c_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            d_1M = JNum.rand(1.0f, 5.0f, DType.f32, 1_000_000L);
-            res_1M = JNum.zeros(DType.f32, 1_000_000L);
+            a_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
+            b_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
+            c_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
+            d_1M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 1_000_000L);
+            res_1M = JNum.zeros(arena, DType.f32, 1_000_000L);
             vars_1M = Map.of("a", a_1M, "b", b_1M, "c", c_1M, "d", d_1M);
 
-            a_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            b_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            c_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            d_10M = JNum.rand(1.0f, 5.0f, DType.f32, 10_000_000L);
-            res_10M = JNum.zeros(DType.f32, 10_000_000L);
+            a_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
+            b_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
+            c_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
+            d_10M = JNum.rand(arena, 1.0f, 5.0f, DType.f32, 10_000_000L);
+            res_10M = JNum.zeros(arena, DType.f32, 10_000_000L);
             vars_10M = Map.of("a", a_10M, "b", b_10M, "c", c_10M, "d", d_10M);
+        }
+
+        @TearDown(Level.Trial)
+        public void tearDown() {
+            if (arena != null) arena.close();
         }
     }
 
     // In-place buffer reuse: a.add(b, res); res.muli(c); res.subi(d); -> ZERO heap allocation!
+    @Benchmark public void expr_inplace_1K(ExprState s, Blackhole bh) {
+        s.a_1K.add(s.b_1K, s.res_1K);
+        s.res_1K.muli(s.c_1K);
+        s.res_1K.subi(s.d_1K);
+        bh.consume(s.res_1K);
+    }
     @Benchmark public void expr_inplace_10K(ExprState s, Blackhole bh) {
         s.a_10K.add(s.b_10K, s.res_10K);
         s.res_10K.muli(s.c_10K);
@@ -517,24 +663,46 @@ public class JNumJMHSuite {
     }
 
     // Standard Chained: (a + b) * c - d
+    @Benchmark public void expr_chained_1K(ExprState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.a_1K.add(s.b_1K, a).mul(s.c_1K, a).sub(s.d_1K, a));
+        }
+    }
     @Benchmark public void expr_chained_10K(ExprState s, Blackhole bh) {
-        bh.consume(s.a_10K.add(s.b_10K).mul(s.c_10K).sub(s.d_10K));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.a_10K.add(s.b_10K, a).mul(s.c_10K, a).sub(s.d_10K, a));
+        }
     }
     @Benchmark public void expr_chained_1M(ExprState s, Blackhole bh) {
-        bh.consume(s.a_1M.add(s.b_1M).mul(s.c_1M).sub(s.d_1M));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.a_1M.add(s.b_1M, a).mul(s.c_1M, a).sub(s.d_1M, a));
+        }
     }
     @Benchmark public void expr_chained_10M(ExprState s, Blackhole bh) {
-        bh.consume(s.a_10M.add(s.b_10M).mul(s.c_10M).sub(s.d_10M));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(s.a_10M.add(s.b_10M, a).mul(s.c_10M, a).sub(s.d_10M, a));
+        }
     }
 
     // Postfix Expression Engine: JNum.eval("(a + b) * c - d", vars)
+    @Benchmark public void expr_engine_1K(ExprState s, Blackhole bh) {
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(JNum.eval(a, "(a + b) * c - d", s.vars_1K));
+        }
+    }
     @Benchmark public void expr_engine_10K(ExprState s, Blackhole bh) {
-        bh.consume(JNum.eval("(a + b) * c - d", s.vars_10K));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(JNum.eval(a, "(a + b) * c - d", s.vars_10K));
+        }
     }
     @Benchmark public void expr_engine_1M(ExprState s, Blackhole bh) {
-        bh.consume(JNum.eval("(a + b) * c - d", s.vars_1M));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(JNum.eval(a, "(a + b) * c - d", s.vars_1M));
+        }
     }
     @Benchmark public void expr_engine_10M(ExprState s, Blackhole bh) {
-        bh.consume(JNum.eval("(a + b) * c - d", s.vars_10M));
+        try (java.lang.foreign.Arena a = java.lang.foreign.Arena.ofConfined()) {
+            bh.consume(JNum.eval(a, "(a + b) * c - d", s.vars_10M));
+        }
     }
 }

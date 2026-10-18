@@ -2,7 +2,7 @@
 
 Extracting statistical insights from raw numerical data requires fast, accurate aggregations. From simple summary metrics like mean and variance to non-trivial order statistics like quantiles and mode, statistical calculations must be numerically stable and free of intermediate memory allocations.
 
-JNum houses all statistical algorithms in the dedicated [`jnum.stat.Stats`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/stat/Stats.java) facade.
+JNum houses all statistical algorithms in the dedicated [`jnum.stat.Stats`](../../core/src/main/java/jnum/stat/Stats.java) facade.
 
 ---
 
@@ -109,7 +109,7 @@ double iqr = Stats.iqr(data);
 
 ## 4. Quantiles & Percentiles
 
-JNum implements quantile calculations matching NumPy's 5 interpolation methods defined in [`QuantileMethod`](file:///c:/Users/DELL/Desktop/JNum/core/src/main/java/jnum/stat/QuantileMethod.java):
+JNum implements quantile calculations matching NumPy's 5 interpolation methods defined in [`QuantileMethod`](../../core/src/main/java/jnum/stat/QuantileMethod.java):
 
 | `QuantileMethod` | Interpolation Strategy |
 | :--- | :--- |
