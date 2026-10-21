@@ -28,6 +28,7 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 import jnum.testutil.TestArrayFactory;
+import jnum.linalg.SlogdetResult;
 
 public class DetTest {
 
@@ -63,7 +64,7 @@ public class DetTest {
             NDArray empty = JNum.zeros(arena, DType.f32, 0, 0);
             assertEquals(1.0f, Det.detFloat(empty));
             assertEquals(1.0, Det.detDouble(empty));
-            Det.SlogdetResult sEmpty = Det.slogdet(empty);
+            SlogdetResult sEmpty = Det.slogdet(empty);
             assertEquals(1.0, sEmpty.sign());
             assertEquals(0.0, sEmpty.logAbsDet());
 
@@ -72,7 +73,7 @@ public class DetTest {
 
             NDArray singleD = TestArrayFactory.matrix(new double[][]{{-4.2}});
             assertEquals(-4.2, Det.detDouble(singleD), 1e-12);
-            Det.SlogdetResult sSingle = Det.slogdet(singleD);
+            SlogdetResult sSingle = Det.slogdet(singleD);
             assertEquals(-1.0, sSingle.sign());
             assertEquals(Math.log(4.2), sSingle.logAbsDet(), 1e-12);
         }
@@ -104,7 +105,7 @@ public class DetTest {
             });
             assertEquals(-306.0, Det.detDouble(m3D), 1e-9);
 
-            Det.SlogdetResult slog = Det.slogdet(m3D);
+            SlogdetResult slog = Det.slogdet(m3D);
             assertEquals(-1.0, slog.sign());
             assertEquals(Math.log(306.0), slog.logAbsDet(), 1e-9);
         }
@@ -128,7 +129,7 @@ public class DetTest {
                 {7.0, 8.0, 9.0}
             });
             assertEquals(0.0, Det.detDouble(singularD), 1e-12);
-            Det.SlogdetResult res = Det.slogdet(singularD);
+            SlogdetResult res = Det.slogdet(singularD);
             assertEquals(0.0, res.sign());
             assertEquals(Double.NEGATIVE_INFINITY, res.logAbsDet());
         }

@@ -29,6 +29,7 @@ import jnum.JNum;
 import jnum.NDArray;
 import jnum.testutil.TestArrayFactory;
 import jnum.testutil.TestAssertions;
+import jnum.linalg.EighResult;
 
 public class EighTest {
 
@@ -58,12 +59,12 @@ public class EighTest {
     void test1x1Matrix() {
         try (Arena arena = Arena.ofConfined()) {
             NDArray mF = TestArrayFactory.matrix(new float[][]{{4.5f}});
-            Eigh.EighResult resF = Eigh.eigh(mF, arena);
+            EighResult resF = Eigh.eigh(mF, arena);
             assertEquals(4.5f, resF.eigenvalues().getFloat(0), 1e-6f);
             assertEquals(1.0f, resF.eigenvectors().getFloat(0, 0), 1e-6f);
 
             NDArray mD = TestArrayFactory.matrix(new double[][]{{-2.5}});
-            Eigh.EighResult resD = Eigh.eigh(mD, arena);
+            EighResult resD = Eigh.eigh(mD, arena);
             assertEquals(-2.5, resD.eigenvalues().getDouble(0), 1e-12);
             assertEquals(1.0, resD.eigenvectors().getDouble(0, 0), 1e-12);
         }
@@ -78,7 +79,7 @@ public class EighTest {
                 {2.0f, 1.0f},
                 {1.0f, 2.0f}
             });
-            Eigh.EighResult resF = Eigh.eigh(aF, arena);
+            EighResult resF = Eigh.eigh(aF, arena);
             NDArray wF = resF.eigenvalues();
             NDArray vF = resF.eigenvectors();
 
@@ -101,7 +102,7 @@ public class EighTest {
         try (Arena arena = Arena.ofConfined()) {
             int n = 4;
             NDArray aD = TestArrayFactory.spd(n);
-            Eigh.EighResult res = Eigh.eigh(aD, arena);
+            EighResult res = Eigh.eigh(aD, arena);
             NDArray w = res.eigenvalues();
             NDArray v = res.eigenvectors();
 

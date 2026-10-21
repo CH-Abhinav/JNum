@@ -18,6 +18,8 @@ package jnum;
 import jnum.internal.eval.EvalEngine;
 import jnum.internal.memory.Allocator;
 import jnum.internal.layout.ShapeUtil;
+import jnum.internal.ops.TrigOps;
+import jnum.internal.ops.UnaryOps;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -31,7 +33,9 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p>Provides factory methods to create, initialize, and allocate multidimensional
  * {@link NDArray} tensors (e.g., {@code zeros}, {@code ones}, {@code rand}, {@code arange},
- * {@code eye}), bridge native Java primitive arrays into tensors, and evaluate symbolic expressions.</p>
+ * {@code eye}), bridge native Java primitive arrays into tensors, evaluate symbolic expressions,
+ * and perform vectorized element-wise mathematical operations (e.g., trigonometric, exponential,
+ * and logarithmic functions).</p>
  *
  * <p>Tensors created without an explicit {@link Arena} use {@link Arena#ofAuto()}, whose
  * memory is reclaimed automatically by the garbage collector.</p>
@@ -535,5 +539,433 @@ public class JNum {
 
     public static NDArray identity(Arena arena, int n, DType dtype) {
         return eye(arena, n, dtype);
+    }
+
+    // =========================================================================
+    // UNARY AND TRANSCENDENTAL MATHEMATICAL OPERATIONS
+    // =========================================================================
+
+    /**
+     * Computes the element-wise square root of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing the square root of each element
+     */
+    public static NDArray sqrt(NDArray a) {
+        return UnaryOps.sqrt(a);
+    }
+
+    /**
+     * Computes the element-wise square root of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing the square roots
+     */
+    public static NDArray sqrt(NDArray a, NDArray res) {
+        return UnaryOps.sqrt(a, res);
+    }
+
+    /**
+     * Computes the element-wise square root of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing the square roots
+     */
+    public static NDArray sqrt(NDArray a, Arena arena) {
+        return UnaryOps.sqrt(a, arena);
+    }
+
+    /**
+     * Computes the element-wise absolute value of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing absolute values
+     */
+    public static NDArray abs(NDArray a) {
+        return UnaryOps.abs(a);
+    }
+
+    /**
+     * Computes the element-wise absolute value of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing absolute values
+     */
+    public static NDArray abs(NDArray a, NDArray res) {
+        return UnaryOps.abs(a, res);
+    }
+
+    /**
+     * Computes the element-wise absolute value of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing absolute values
+     */
+    public static NDArray abs(NDArray a, Arena arena) {
+        return UnaryOps.abs(a, arena);
+    }
+
+    /**
+     * Computes the element-wise natural exponential ({@code e^x}) of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing the exponential values
+     */
+    public static NDArray exp(NDArray a) {
+        return UnaryOps.exp(a);
+    }
+
+    /**
+     * Computes the element-wise natural exponential ({@code e^x}) of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing the exponential values
+     */
+    public static NDArray exp(NDArray a, NDArray res) {
+        return UnaryOps.exp(a, res);
+    }
+
+    /**
+     * Computes the element-wise natural exponential ({@code e^x}) of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing the exponential values
+     */
+    public static NDArray exp(NDArray a, Arena arena) {
+        return UnaryOps.exp(a, arena);
+    }
+
+    /**
+     * Computes the element-wise natural logarithm ({@code ln(x)}) of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing the natural logarithms
+     */
+    public static NDArray log(NDArray a) {
+        return UnaryOps.log(a);
+    }
+
+    /**
+     * Computes the element-wise natural logarithm ({@code ln(x)}) of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing the natural logarithms
+     */
+    public static NDArray log(NDArray a, NDArray res) {
+        return UnaryOps.log(a, res);
+    }
+
+    /**
+     * Computes the element-wise natural logarithm ({@code ln(x)}) of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing the natural logarithms
+     */
+    public static NDArray log(NDArray a, Arena arena) {
+        return UnaryOps.log(a, arena);
+    }
+
+    /**
+     * Computes the element-wise base-10 logarithm ({@code log10(x)}) of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing the base-10 logarithms
+     */
+    public static NDArray log10(NDArray a) {
+        return UnaryOps.log10(a);
+    }
+
+    /**
+     * Computes the element-wise base-10 logarithm ({@code log10(x)}) of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing the base-10 logarithms
+     */
+    public static NDArray log10(NDArray a, NDArray res) {
+        return UnaryOps.log10(a, res);
+    }
+
+    /**
+     * Computes the element-wise base-10 logarithm ({@code log10(x)}) of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing the base-10 logarithms
+     */
+    public static NDArray log10(NDArray a, Arena arena) {
+        return UnaryOps.log10(a, arena);
+    }
+
+    /**
+     * Applies the logistic sigmoid activation function {@code 1 / (1 + e^-x)} element-wise to the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing the sigmoid activations
+     */
+    public static NDArray sigmoid(NDArray a) {
+        return UnaryOps.sigmoid(a);
+    }
+
+    /**
+     * Applies the logistic sigmoid activation function {@code 1 / (1 + e^-x)} element-wise to the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing the sigmoid activations
+     */
+    public static NDArray sigmoid(NDArray a, NDArray res) {
+        return UnaryOps.sigmoid(a, res);
+    }
+
+    /**
+     * Applies the logistic sigmoid activation function {@code 1 / (1 + e^-x)} element-wise to the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing the sigmoid activations
+     */
+    public static NDArray sigmoid(NDArray a, Arena arena) {
+        return UnaryOps.sigmoid(a, arena);
+    }
+
+    // =========================================================================
+    // TRIGONOMETRIC AND HYPERBOLIC OPERATIONS
+    // =========================================================================
+
+    /**
+     * Computes the element-wise trigonometric sine of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing sine values
+     */
+    public static NDArray sin(NDArray a) {
+        return TrigOps.sin(a);
+    }
+
+    /**
+     * Computes the element-wise trigonometric sine of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing sine values
+     */
+    public static NDArray sin(NDArray a, NDArray res) {
+        return TrigOps.sin(a, res);
+    }
+
+    /**
+     * Computes the element-wise trigonometric sine of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing sine values
+     */
+    public static NDArray sin(NDArray a, Arena arena) {
+        return TrigOps.sin(a, arena);
+    }
+
+    /**
+     * Computes the element-wise trigonometric cosine of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing cosine values
+     */
+    public static NDArray cos(NDArray a) {
+        return TrigOps.cos(a);
+    }
+
+    /**
+     * Computes the element-wise trigonometric cosine of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing cosine values
+     */
+    public static NDArray cos(NDArray a, NDArray res) {
+        return TrigOps.cos(a, res);
+    }
+
+    /**
+     * Computes the element-wise trigonometric cosine of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing cosine values
+     */
+    public static NDArray cos(NDArray a, Arena arena) {
+        return TrigOps.cos(a, arena);
+    }
+
+    /**
+     * Computes the element-wise trigonometric tangent of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing tangent values
+     */
+    public static NDArray tan(NDArray a) {
+        return TrigOps.tan(a);
+    }
+
+    /**
+     * Computes the element-wise trigonometric tangent of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing tangent values
+     */
+    public static NDArray tan(NDArray a, NDArray res) {
+        return TrigOps.tan(a, res);
+    }
+
+    /**
+     * Computes the element-wise trigonometric tangent of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing tangent values
+     */
+    public static NDArray tan(NDArray a, Arena arena) {
+        return TrigOps.tan(a, arena);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic sine of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing hyperbolic sine values
+     */
+    public static NDArray sinh(NDArray a) {
+        return TrigOps.sinh(a);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic sine of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing hyperbolic sine values
+     */
+    public static NDArray sinh(NDArray a, NDArray res) {
+        return TrigOps.sinh(a, res);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic sine of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing hyperbolic sine values
+     */
+    public static NDArray sinh(NDArray a, Arena arena) {
+        return TrigOps.sinh(a, arena);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic cosine of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing hyperbolic cosine values
+     */
+    public static NDArray cosh(NDArray a) {
+        return TrigOps.cosh(a);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic cosine of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing hyperbolic cosine values
+     */
+    public static NDArray cosh(NDArray a, NDArray res) {
+        return TrigOps.cosh(a, res);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic cosine of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing hyperbolic cosine values
+     */
+    public static NDArray cosh(NDArray a, Arena arena) {
+        return TrigOps.cosh(a, arena);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic tangent of the given tensor,
+     * allocating the result using automatic memory management ({@link Arena#ofAuto()}).
+     *
+     * @param a the input tensor
+     * @return a newly allocated {@link NDArray} containing hyperbolic tangent values
+     */
+    public static NDArray tanh(NDArray a) {
+        return TrigOps.tanh(a);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic tangent of the given tensor,
+     * writing the results into the pre-allocated destination tensor {@code res}.
+     *
+     * @param a the input tensor
+     * @param res destination tensor where results are written
+     * @return the destination {@code res} tensor containing hyperbolic tangent values
+     */
+    public static NDArray tanh(NDArray a, NDArray res) {
+        return TrigOps.tanh(a, res);
+    }
+
+    /**
+     * Computes the element-wise hyperbolic tangent of the given tensor,
+     * allocating the result in the specified {@link Arena}.
+     *
+     * @param a the input tensor
+     * @param arena memory arena governing the lifecycle of the result
+     * @return a newly allocated {@link NDArray} in the specified arena containing hyperbolic tangent values
+     */
+    public static NDArray tanh(NDArray a, Arena arena) {
+        return TrigOps.tanh(a, arena);
     }
 }

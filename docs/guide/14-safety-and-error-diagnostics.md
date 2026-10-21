@@ -41,7 +41,7 @@ Exception in thread "main" java.lang.IllegalStateException: Already closed
 
 ### The Fix
 
-Never allow scoped tensors to escape the `try-with-resources` block that created them. If a computed result must outlive the scope, copy it into an auto-managed arena (`Arena.ofAuto()`) using [`a.contiguous(Arena.ofAuto())`](../../core/src/main/java/jnum/NDArray.java#L733):
+Never allow scoped tensors to escape the `try-with-resources` block that created them. If a computed result must outlive the scope, copy it into an auto-managed arena (`Arena.ofAuto()`) using [`a.contiguous(Arena.ofAuto())`](../../core/src/main/java/jnum/NDArray.java#L753):
 
 ```java
 NDArray persistentResult;

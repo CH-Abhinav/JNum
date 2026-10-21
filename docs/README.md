@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/logo.png" alt="JNum Logo" width="160">
+</p>
+
 # JNum Documentation
 
 Welcome to the official documentation for **JNum**, a high-performance numerical computing library for modern Java (JDK 25+) and Kotlin, powered by **Project Panama** (Foreign Function & Memory API and the Vector API).

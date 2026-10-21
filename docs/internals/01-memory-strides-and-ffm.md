@@ -105,7 +105,7 @@ If $\text{step}_k$ is negative, $s'_k$ becomes negative, and reading sequentiall
 
 ## 4. 64-Byte Hardware Cache-Line Alignment
 
-In [`Allocator.java`](../../core/src/main/java/jnum/internal/memory/Allocator.java), every tensor memory segment is allocated with a strict 64-byte alignment requirement:
+In [`Allocator.java`](../../core/src/main/java/jnum/internal/memory/Allocator.java#L45), every tensor memory segment is allocated with a strict 64-byte alignment requirement:
 
 ```java
 // Allocates native memory aligned to 64 bytes

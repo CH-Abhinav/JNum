@@ -28,6 +28,7 @@ import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
 import jnum.testutil.TestArrayFactory;
+import jnum.linalg.EigResult;
 
 public class EigTest {
 
@@ -57,17 +58,17 @@ public class EigTest {
     void testBoundaryDimensions() {
         try (Arena arena = Arena.ofConfined()) {
             NDArray empty = JNum.zeros(arena, DType.f32, 0, 0);
-            Eig.EigResult resEmpty = Eig.eig(empty, arena);
+            EigResult resEmpty = Eig.eig(empty, arena);
             assertEquals(0, resEmpty.realEigenvalues().getSize());
             assertEquals(0, resEmpty.imagEigenvalues().getSize());
 
             NDArray singleF = TestArrayFactory.matrix(new float[][]{{7.5f}});
-            Eig.EigResult resSingleF = Eig.eig(singleF, arena);
+            EigResult resSingleF = Eig.eig(singleF, arena);
             assertEquals(7.5f, resSingleF.realEigenvalues().getFloat(0), 1e-6f);
             assertEquals(0.0f, resSingleF.imagEigenvalues().getFloat(0), 1e-6f);
 
             NDArray singleD = TestArrayFactory.matrix(new double[][]{{-3.2}});
-            Eig.EigResult resSingleD = Eig.eig(singleD, arena);
+            EigResult resSingleD = Eig.eig(singleD, arena);
             assertEquals(-3.2, resSingleD.realEigenvalues().getDouble(0), 1e-12);
             assertEquals(0.0, resSingleD.imagEigenvalues().getDouble(0), 1e-12);
         }
@@ -81,7 +82,7 @@ public class EigTest {
                 {2.0f, 0.0f},
                 {0.0f, 5.0f}
             });
-            Eig.EigResult resF = Eig.eig(diagF, arena);
+            EigResult resF = Eig.eig(diagF, arena);
             float r0 = resF.realEigenvalues().getFloat(0);
             float r1 = resF.realEigenvalues().getFloat(1);
             // Eigenvalues could be [2, 5] or [5, 2]
@@ -101,7 +102,7 @@ public class EigTest {
                 {0.0, -1.0},
                 {1.0, 0.0}
             });
-            Eig.EigResult res = Eig.eig(rot, arena);
+            EigResult res = Eig.eig(rot, arena);
             assertEquals(0.0, res.realEigenvalues().getDouble(0), 1e-6);
             assertEquals(0.0, res.realEigenvalues().getDouble(1), 1e-6);
 

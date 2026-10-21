@@ -24,6 +24,7 @@ import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jnum.DType;
 import jnum.NDArray;
+import jnum.linalg.SlogdetResult;
 
 /**
  * Determinant and log-determinant kernels via LU decomposition with row partial pivoting.
@@ -39,7 +40,7 @@ public final class Det {
     }
 
     /** Container record holding the sign (-1, 0, +1) and log-absolute determinant ln|det(A)|. */
-    public record SlogdetResult(double sign, double logAbsDet) {}
+
 
     /** Computes determinant in single-precision float. */
     public static float detFloat(NDArray a) {

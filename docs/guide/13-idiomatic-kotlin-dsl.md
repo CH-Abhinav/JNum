@@ -6,13 +6,24 @@ While JNum is written for modern Java 25, it ships with a first-class companion 
 
 ## 1. Adding the Kotlin Dependency
 
-In your `build.gradle.kts`:
+Because **`jnum-kotlin`** bundles the entire JNum core runtime alongside Kotlin extensions, Kotlin developers only need to declare `jnum-kotlin`:
+
+### Gradle (`build.gradle.kts`)
 
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum:0.2.0")
     implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
 }
+```
+
+### Maven (`pom.xml`)
+
+```xml
+<dependency>
+    <groupId>io.github.ch-abhinav</groupId>
+    <artifactId>jnum-kotlin</artifactId>
+    <version>0.2.0</version>
+</dependency>
 ```
 
 Import the extensions:

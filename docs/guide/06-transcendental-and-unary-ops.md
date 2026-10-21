@@ -8,7 +8,14 @@ Executing `Math.sin(x)` or `Math.exp(x)` inside a standard Java loop suffers fro
 
 ## 1. Unary Mathematical Functions
 
-All unary functions operate element-wise and return a newly allocated tensor of the same shape and type.
+JNum provides two complementary ways to call unary operations:
+1. **NumPy-Style Static Functions via [`JNum`](../../core/src/main/java/jnum/JNum.java#L545)** (e.g. `JNum.sqrt(x)`, `JNum.sin(x)`)
+2. **Fluent Instance Methods on [`NDArray`](../../core/src/main/java/jnum/NDArray.java#L1515)** (e.g. `x.sqrt()`, `x.sin()`)
+
+Both styles execute identical SIMD vector kernels. Furthermore, every operation supports three execution variants:
+* `JNum.sin(a)` / `a.sin()` — Allocates a new tensor with automatic GC lifecycle (`Arena.ofAuto()`).
+* `JNum.sin(a, res)` / `a.sin(res)` — Writes directly into a pre-allocated destination buffer `res` (zero memory allocations).
+* `JNum.sin(a, arena)` / `a.sin(arena)` — Allocates the result in an explicit scoped `Arena`.
 
 ```java
 import jnum.JNum;
@@ -17,12 +24,13 @@ import jnum.NDArray;
 void main() {
     NDArray x = JNum.from(new float[]{1.0f, 4.0f, 9.0f, 16.0f}, 4);
 
-    // Square root
-    NDArray root = x.sqrt(); // [1.0, 2.0, 3.0, 4.0]
+    // Fluent method chaining or static JNum call:
+    NDArray root1 = x.sqrt();           // [1.0, 2.0, 3.0, 4.0]
+    NDArray root2 = JNum.sqrt(x);       // Identical result
 
     // Absolute value
     NDArray neg = JNum.from(new float[]{-3.5f, 2.0f, -0.1f}, 3);
-    NDArray absVal = neg.abs(); // [3.5, 2.0, 0.1]
+    NDArray absVal = JNum.abs(neg);     // [3.5, 2.0, 0.1]
 }
 ```
 
@@ -62,18 +70,19 @@ NDArray probabilities = logits.sigmoid();
 
 JNum provides element-wise circular trigonometric functions accepting angles in radians:
 
-| Function | Method | Formula |
-| :--- | :--- | :--- |
-| **Sine** | [`a.sin()`](../../core/src/main/java/jnum/NDArray.java) | $\sin(x)$ |
-| **Cosine** | [`a.cos()`](../../core/src/main/java/jnum/NDArray.java) | $\cos(x)$ |
-| **Tangent** | [`a.tan()`](../../core/src/main/java/jnum/NDArray.java) | $\tan(x)$ |
+| Function | Instance Method | Static Function | Formula |
+| :--- | :--- | :--- | :--- |
+| **Sine** | [`a.sin()`](../../core/src/main/java/jnum/NDArray.java#L1573) | [`JNum.sin(a)`](../../core/src/main/java/jnum/JNum.java#L769) | $\sin(x)$ |
+| **Cosine** | [`a.cos()`](../../core/src/main/java/jnum/NDArray.java#L1582) | [`JNum.cos(a)`](../../core/src/main/java/jnum/JNum.java#L804) | $\cos(x)$ |
+| **Tangent** | [`a.tan()`](../../core/src/main/java/jnum/NDArray.java#L1591) | [`JNum.tan(a)`](../../core/src/main/java/jnum/JNum.java#L839) | $\tan(x)$ |
 
 ```java
 // Sequence of angles from 0 to 2*PI with step 0.1
 double pi = Math.PI;
 NDArray theta = JNum.arange(0.0, 2.0 * pi, 0.1);
 
-NDArray sinWave = theta.sin();
+// Static or instance style:
+NDArray sinWave = JNum.sin(theta);
 NDArray cosWave = theta.cos();
 NDArray tanWave = theta.tan();
 ```
@@ -84,16 +93,18 @@ NDArray tanWave = theta.tan();
 
 Hyperbolic functions are widely used in physics simulations, relativistic mechanics, and neural network recurrent cells:
 
-| Function | Method | Formula |
-| :--- | :--- | :--- |
-| **Hyperbolic Sine** | [`a.sinh()`](../../core/src/main/java/jnum/NDArray.java) | $\sinh(x) = \frac{e^x - e^{-x}}{2}$ |
-| **Hyperbolic Cosine** | [`a.cosh()`](../../core/src/main/java/jnum/NDArray.java) | $\cosh(x) = \frac{e^x + e^{-x}}{2}$ |
-| **Hyperbolic Tangent**| [`a.tanh()`](../../core/src/main/java/jnum/NDArray.java) | $\tanh(x) = \frac{\sinh(x)}{\cosh(x)}$ |
+| Function | Instance Method | Static Function | Formula |
+| :--- | :--- | :--- | :--- |
+| **Hyperbolic Sine** | [`a.sinh()`](../../core/src/main/java/jnum/NDArray.java#L1600) | [`JNum.sinh(a)`](../../core/src/main/java/jnum/JNum.java#L874) | $\sinh(x) = \frac{e^x - e^{-x}}{2}$ |
+| **Hyperbolic Cosine** | [`a.cosh()`](../../core/src/main/java/jnum/NDArray.java#L1609) | [`JNum.cosh(a)`](../../core/src/main/java/jnum/JNum.java#L909) | $\cosh(x) = \frac{e^x + e^{-x}}{2}$ |
+| **Hyperbolic Tangent**| [`a.tanh()`](../../core/src/main/java/jnum/NDArray.java#L1618) | [`JNum.tanh(a)`](../../core/src/main/java/jnum/JNum.java#L944) | $\tanh(x) = \frac{\sinh(x)}{\cosh(x)}$ |
 
 ```java
 NDArray x = JNum.from(new float[]{-2.0f, -1.0f, 0.0f, 1.0f, 2.0f}, 5);
 
-NDArray tanh = x.tanh();
+// Both styles supported:
+NDArray tanh1 = x.tanh();
+NDArray tanh2 = JNum.tanh(x);
 // Output: [-0.9640, -0.7615, 0.0, 0.7615, 0.9640]
 ```
 

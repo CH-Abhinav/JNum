@@ -20,11 +20,11 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 
-import jnum.internal.kernel.linalg.Det.SlogdetResult;
-import jnum.internal.kernel.linalg.QR.QRResult;
-import jnum.internal.kernel.linalg.Eigh.EighResult;
-import jnum.internal.kernel.linalg.SVD.SVDResult;
-import jnum.internal.kernel.linalg.Eig.EigResult;
+import jnum.linalg.SlogdetResult;
+import jnum.linalg.QRResult;
+import jnum.linalg.EighResult;
+import jnum.linalg.SVDResult;
+import jnum.linalg.EigResult;
 import jnum.internal.layout.LayoutOps;
 import jnum.internal.layout.NDIter;
 import jnum.internal.layout.ShapeUtil;
@@ -50,6 +50,11 @@ import jnum.internal.ops.UnaryOps;
  * may be mutated via in-place operations (e.g. {@code addi}) or setter methods.</p>
  */
 public class NDArray {
+
+    static {
+        // Eagerly trigger hardware cache detection and thread pool initialization at classload
+        int _ = jnum.internal.Constants.AVAILABLE_CORES;
+    }
 
     // =========================================================================
     // Parameters & Construction

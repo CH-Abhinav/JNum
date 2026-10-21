@@ -1,10 +1,16 @@
-# JNum
+<p align="center">
+  <img src="assets/logo.png" alt="JNum Logo" width="180">
+</p>
 
-[![Java 25](https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/25/)
-[![Project Panama](https://img.shields.io/badge/Project-Panama-007396?logo=openjdk&logoColor=white)](https://openjdk.org/projects/panama/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Jar Size](https://img.shields.io/badge/Jar%20Size-%3C%20150%20KB-success)](#the-pure-java-advantage)
-[![Documentation](https://img.shields.io/badge/Docs-User%20Guide-blueviolet)](docs/)
+<h1 align="center">JNum</h1>
+
+<p align="center">
+  <a href="https://openjdk.org/projects/jdk/25/"><img src="https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white" alt="Java 25"></a>
+  <a href="https://openjdk.org/projects/panama/"><img src="https://img.shields.io/badge/Project-Panama-007396?logo=openjdk&logoColor=white" alt="Project Panama"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
+  <a href="#why-jnum-the-pure-java-advantage"><img src="https://img.shields.io/badge/Jar%20Size-%3C%20500%20KB-success" alt="Jar Size"></a>
+  <a href="docs/"><img src="https://img.shields.io/badge/Docs-User%20Guide-blueviolet" alt="Documentation"></a>
+</p>
 
 A high-performance, hardware-accelerated numerical computing library for modern Java (JDK 25+) and Kotlin, powered by **Project Panama** (Foreign Function & Memory API and the Vector API).
 
@@ -19,7 +25,7 @@ Traditional JVM numerical and tensor libraries (such as ND4J or Deeplearning4j) 
 | Metric | Legacy Java Tensor Libraries | **JNum** |
 | :--- | :--- | :--- |
 | **Backend Implementation** | C++ (OpenBLAS, OneDNN, LibTorch) bridged via JNI | **100% Pure Java 25 & Kotlin** |
-| **Native Library Bloat** | 100+ MB (Bundles `.dll`, `.so`, `.dylib` binaries) | **< 150 KB total JAR footprint** |
+| **Native Library Bloat** | 100+ MB (Bundles `.dll`, `.so`, `.dylib` binaries) | **< 500 KB total JAR footprint (~470 KB)** |
 | **Memory Architecture** | Deprecated `sun.misc.Unsafe` (Memory corruption risk) | **Foreign Function & Memory (JEP 454)** |
 | **SIMD Acceleration** | Opaque native compiler intrinsics | **JVM Vector API (`jdk.incubator.vector`)** |
 | **Memory Safety** | Out-of-bounds causes native process crash (`SIGSEGV`) | **100% JVM Memory Safe (Catchable Exceptions)** |
@@ -71,7 +77,7 @@ fun main() {
     // Python-style multidimensional range slicing
     val topScores = logits[0 until 5, all]
 
-    println("Computed logits shape: ${logits.shapeString()}")
+    println("Top scores:\n$topScores")
 }
 ```
 
@@ -88,20 +94,74 @@ fun main() {
 
 ---
 
+## Empirical Benchmarks & Performance
+
+All benchmarks were measured via OpenJDK **JMH 1.37** on **Java 25 LTS** (`-Xms8g -Xmx8g -XX:+AlwaysPreTouch -XX:+UseParallelGC --add-modules jdk.incubator.vector`), comparing JNum against **NumPy 2.4** (OpenBLAS/C backend) and standard JVM numerical engines (**EJML 0.44**, **ojAlgo 55.0**, and **ND4J 1.0.0-M2.1** with native OpenBLAS backend).
+
+### 1. Matrix Multiplication (GEMM) Scaling
+
+| Matrix Dimensions | JNum (Pure Java 25) | NumPy (C / OpenBLAS) | ND4J (OpenBLAS C++) | EJML (Pure Java) | Performance Highlights |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **$4 \times 4$** | **0.0002 ms** | 0.0023 ms | 0.020 ms | ≈ 0.0001 ms | **11× faster** than NumPy, **100× faster** than ND4J |
+| **$16 \times 16$** | **0.0004 ms** | 0.0028 ms | 0.019 ms | 0.003 ms | **7× faster** than NumPy, **47× faster** than ND4J |
+| **$64 \times 64$** | **0.015 ms** | 0.013 ms | 0.190 ms | 0.140 ms | On-par with NumPy, **9.3× faster** than EJML |
+| **$128 \times 128$** | **0.138 ms** | 0.254 ms | 0.499 ms | 1.028 ms | **1.8× faster** than NumPy, **7.4× faster** than EJML |
+| **$512 \times 512$** | **2.50 ms** | 1.86 ms | 2.67 ms | 27.16 ms | Matches C++ BLAS, **10.8× faster** than EJML |
+| **$1024 \times 1024$** | **13.85 ms** | 8.98 ms | 12.18 ms | 216.56 ms | Near-native speed, **15.6× faster** than EJML |
+| **$2048 \times 2048$** | **94.62 ms** | 62.99 ms | 85.29 ms | 2,049.86 ms | Pure Java competitive with C BLAS, **21.6× faster** than EJML |
+| **$4096 \times 4096$** | **942.38 ms** | 487.92 ms | 857.41 ms | 17,419.52 ms | Matches ND4J C++, **18.4× faster** than EJML |
+| **$8192 \times 8192$** | **6,784.15 ms** | 5,967.30 ms | 6,317.97 ms | 141,500.0 ms | **~88% of NumPy C BLAS**, **20.8× faster** than EJML |
+
+> [!NOTE]
+> **Why JNum wins on small-to-medium matrices:** Legacy C++ wrappers (ND4J) and Python C-API bindings (NumPy) incur dispatch and JNI call boundary overheads. JNum's **Tier 0 nano-scalar** and **Tier 1 direct SIMD** kernels execute inside CPU vector registers without crossing native boundaries or scheduling thread pools.
+
+---
+
+### 2. Transcendental & Activation Functions (100M Elements)
+
+| Vector Math Op | JNum (Pure Java 25) | NumPy | EJML | ojAlgo | ND4J (Native C++) | JNum Advantage |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`sin(x)`** | **151.59 ms** | 154.87 ms | 1,334.80 ms | 1,338.30 ms | 1,693.35 ms | **On-par with NumPy**, **8.8× – 11.2× faster** than JVM peers |
+| **`cos(x)`** | **170.91 ms** | 151.35 ms | 1,077.31 ms | 1,542.43 ms | 1,979.36 ms | **6.3× – 11.6× faster** than JVM peers |
+| **`exp(x)`** | **111.49 ms** | 122.10 ms | 804.97 ms | 913.84 ms | 1,988.33 ms | **1.1× faster than NumPy**, **7.2× – 17.8× faster** than JVM peers |
+| **`log(x)`** | **121.47 ms** | 164.22 ms | 844.08 ms | 1,062.01 ms | 1,243.39 ms | **1.35× faster than NumPy**, **6.9× – 10.2× faster** than JVM peers |
+| **`sigmoid(x)`** | **115.01 ms** | 440.49 ms | 973.74 ms | 1,033.69 ms | 1,843.23 ms | **3.8× faster than NumPy**, **8.5× – 16.0× faster** than JVM peers |
+| **`tanh(x)`** | **301.43 ms** | 197.38 ms | 1,493.26 ms | 1,602.51 ms | 3,130.68 ms | **5.0× – 10.4× faster** than JVM peers |
+
+> [!TIP]
+> **Why JNum wins on transcendental ops:** EJML and ojAlgo process elements through scalar `Math.*` calls in a single-threaded loop. JNum utilizes **vectorized minimax Chebyshev polynomials** scheduled across AVX2/AVX-512 lanes, computing 8 or 16 transcendental operations per CPU clock cycle.
+
+---
+
+### 3. Linear Algebra Solvers & Decompositions ($256 \times 256$)
+
+| Operation | JNum (Pure Java 25) | NumPy | EJML | ND4J | JNum Advantage |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Matrix Inverse** | **7.271 ms** | 10.680 ms | 18.122 ms | 1,224.654 ms | **1.47× faster** than NumPy, **2.5× faster** than EJML, **168× faster** than ND4J |
+| **Linear Solve ($Ax=b$)** | **1.976 ms** | 1.003 ms | 5.331 ms | 37.278 ms | Near-native speed, **2.7× faster** than EJML, **18.8× faster** than ND4J |
+| **Determinant** | **1.839 ms** | 5.735 ms | 5.380 ms | 399.752 ms | **3.1× faster** than NumPy, **2.9× faster** than EJML |
+| **Cholesky** | **1.261 ms** | 2.328 ms | 3.545 ms | — | **1.8× faster** than NumPy, **2.8× faster** than EJML |
+| **QR Factorization** | **46.170 ms** | 12.622 ms | 7.447 ms | 586.330 ms | **12.7× faster** than ND4J |
+
+---
+
 ## Quick Installation
 
-Add the JNum core dependency to your project:
+Add JNum to your project (choose Java or Kotlin):
 
 ### Maven (`pom.xml`)
 
+**For Java:**
 ```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum</artifactId>
     <version>0.2.0</version>
 </dependency>
+```
 
-<!-- Optional Kotlin extensions: -->
+**For Kotlin** *(bundles core + Kotlin extensions)*:
+```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum-kotlin</artifactId>
@@ -111,15 +171,22 @@ Add the JNum core dependency to your project:
 
 ### Gradle (`build.gradle.kts`)
 
+**For Java:**
 ```kotlin
 dependencies {
     implementation("io.github.ch-abhinav:jnum:0.2.0")
-    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0") // Optional
+}
+```
+
+**For Kotlin** *(bundles core + Kotlin extensions)*:
+```kotlin
+dependencies {
+    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
 }
 ```
 
 > [!IMPORTANT]
-> Because JNum leverages Project Panama, builds and runtime invocations require `--add-modules jdk.incubator.vector` and `--enable-native-access=ALL-UNNAMED`.
+> Because JNum leverages Project Panama, compilation requires `--add-modules jdk.incubator.vector`, and runtime execution requires `--add-modules jdk.incubator.vector --enable-native-access=ALL-UNNAMED`.
 > 
 > 👉 **[Read the Full Installation & Setup Guide](docs/guide/01-getting-started.md)** for copy-paste Maven/Gradle compiler plugins and single-file runner configurations.
 

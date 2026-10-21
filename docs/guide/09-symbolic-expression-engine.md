@@ -11,7 +11,7 @@ NDArray step3 = step2.sub(d); // Final Result (Temp 1 & 2 are discarded)
 
 In long-running or high-throughput systems, discarding millions of temporary arrays causes memory fragmentation and severe garbage collection pressure.
 
-JNum solves this through its **Symbolic Evaluation Engine** ([`JNum.eval`](../../core/src/main/java/jnum/JNum.java#L433)). It compiles mathematical expression strings into an Abstract Syntax Tree (AST), optimizes execution order, and recycles intermediate memory buffers with zero temporary allocations.
+JNum solves this through its **Symbolic Evaluation Engine** ([`JNum.eval`](../../core/src/main/java/jnum/JNum.java#L480)). It compiles mathematical expression strings into an Abstract Syntax Tree (AST), optimizes execution order, and recycles intermediate memory buffers with zero temporary allocations.
 
 ---
 
@@ -66,6 +66,10 @@ void main() {
     IO.println("Output shape: " + output.shapeString());
 }
 ```
+
+> [!TIP]
+> To bound native memory deterministically, pass an explicit `Arena`:
+> `JNum.eval(arena, "$0 * $1 + $2", a, b, c)` or `JNum.eval(arena, "x + y", map)`.
 
 ---
 

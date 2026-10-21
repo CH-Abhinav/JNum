@@ -25,7 +25,7 @@ Because the JSON header specifies the exact byte start and end offset of every t
 
 ## 2. Inspecting Checkpoints Without Loading Data
 
-Before allocating memory, you can inspect the metadata, tensor names, shapes, and data types of a checkpoint using [`JNumIO.inspectSafetensors()`](../../core/src/main/java/jnum/io/JNumIO.java#L224):
+Before allocating memory, you can inspect the metadata, tensor names, shapes, and data types of a checkpoint using [`JNumIO.inspectSafetensors()`](../../core/src/main/java/jnum/io/JNumIO.java#L239):
 
 ```java
 import java.nio.file.Path;
@@ -90,7 +90,7 @@ IO.println("Loaded gate projection: " + gateProj.shapeString());
 
 ## 4. Zero-Copy Deterministic Memory Mapping (`MmapTensors`)
 
-For multi-gigabyte models, copying weights from disk to RAM is inefficient. JNum allows memory-mapping an entire `.safetensors` archive using [`readSafetensorsMmapScoped`](../../core/src/main/java/jnum/io/JNumIO.java#L278). 
+For multi-gigabyte models, copying weights from disk to RAM is inefficient. JNum allows memory-mapping an entire `.safetensors` archive using [`readSafetensorsMmapScoped`](../../core/src/main/java/jnum/io/JNumIO.java#L293). 
 
 Tensors are returned inside an `AutoCloseable` container ([`MmapTensors`](../../core/src/main/java/jnum/io/MmapTensors.java)), guaranteeing safe and deterministic unmapping when execution completes:
 

@@ -23,6 +23,7 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.linalg.EigResult;
 
 /**
  * Eigenvalue decomposition kernel for general (non-symmetric) square real matrices.
@@ -38,7 +39,7 @@ public final class Eig {
     }
 
     /** Container record holding real and imaginary eigenvalue vectors. */
-    public record EigResult(NDArray realEigenvalues, NDArray imagEigenvalues) {}
+
 
     /**
      * Top-level dispatcher: computes eigenvalues of general square matrix A.

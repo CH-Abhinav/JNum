@@ -52,7 +52,7 @@ public final class Pinv {
         NDArray res = JNum.zeros(arena, dtype == DType.f32 ? DType.f32 : DType.f64, n, m);
         MemorySegment resSeg = res.getData();
 
-        SVD.SVDResult svd = SVD.svd(a, arena);
+        var svd = SVD.svd(a, arena);
         NDArray uContig = svd.u().isContiguous() ? svd.u() : svd.u().contiguous();
         NDArray vtContig = svd.vt().isContiguous() ? svd.vt() : svd.vt().contiguous();
         MemorySegment uSeg = uContig.getData();

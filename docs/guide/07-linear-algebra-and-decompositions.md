@@ -4,6 +4,10 @@ Linear algebra is the foundation of machine learning, computer vision, robotics,
 
 JNum includes a **pure Java BLAS and LAPACK engine** written without JNI dependencies, delivering near-C/Fortran performance through high-level Panama Vector SIMD kernels, cache-blocked matrix packing, and matrix decomposition algorithms.
 
+All linear algebra operations are accessible through two equivalent APIs:
+1. **NumPy-Style Static Facade**: [`jnum.linalg.Linalg`](../../core/src/main/java/jnum/linalg/Linalg.java) (e.g., `Linalg.matmul(a, b)`, `Linalg.solve(A, b)`, `Linalg.svd(A)`)
+2. **Fluent Instance Methods**: [`NDArray`](../../core/src/main/java/jnum/NDArray.java) (e.g., `a.matmul(b)`, `A.solve(b)`, `A.svd()`)
+
 ---
 
 ## 1. Matrix Multiplication (GEMM)
@@ -12,11 +16,12 @@ To compute the matrix product of two 2D matrices $A \in \mathbb{R}^{N \times M}$
 
 $$C = A \cdot B, \quad C_{i, j} = \sum_{k=0}^{M-1} A_{i, k} B_{k, j}$$
 
-Call [`a.matmul(b)`](../../core/src/main/java/jnum/NDArray.java#L1582):
+Call [`a.matmul(b)`](../../core/src/main/java/jnum/NDArray.java#L1634) or [`Linalg.matmul(a, b)`](../../core/src/main/java/jnum/linalg/Linalg.java#L51):
 
 ```java
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.linalg.Linalg;
 
 void main() {
     // Matrix A: 2 rows, 3 columns
@@ -32,9 +37,12 @@ void main() {
         11, 12
     }, 3, 2);
 
-    NDArray c = a.matmul(b);
-    IO.println("Result (Shape: " + c.shapeString() + "):");
-    IO.println(c);
+    // Fluent method chaining or static Linalg call:
+    NDArray c1 = a.matmul(b);
+    NDArray c2 = Linalg.matmul(a, b); // Identical result
+
+    IO.println("Result (Shape: " + c1.shapeString() + "):");
+    IO.println(c1);
 }
 ```
 
@@ -52,8 +60,10 @@ For high-frequency inference loops, avoid allocating a new matrix on every call 
 ```java
 NDArray out = JNum.zeros(2, 2);
 
-// Writes directly into 'out' with zero memory allocation
+// Writes directly into 'out' with zero memory allocation:
 a.matmul(b, out);
+// Or via static facade:
+Linalg.matmul(a, b, out);
 ```
 
 ### The 4-Tier GEMM Dispatch Architecture
@@ -73,29 +83,33 @@ JNum inspects the matrix dimensions and total arithmetic work volume ($\mathcal{
 
 ### Dot Product (Inner Product)
 
-For 1D vectors, compute the scalar inner product with [`a.dot(b)`](../../core/src/main/java/jnum/NDArray.java#L1399):
+For 1D vectors, compute the scalar inner product with [`a.dot(b)`](../../core/src/main/java/jnum/NDArray.java#L1427) or [`Linalg.dot(a, b)`](../../core/src/main/java/jnum/linalg/Linalg.java#L78):
 
 ```java
 NDArray u = JNum.from(new float[]{1.0f, 3.0f, -5.0f}, 3);
 NDArray v = JNum.from(new float[]{4.0f, -2.0f, -1.0f}, 3);
 
-double dotProduct = u.dot(v); // 1*4 + 3*(-2) + (-5)*(-1) = 3.0
+// Fluent instance method or static Linalg call:
+double dotProduct1 = u.dot(v);
+double dotProduct2 = Linalg.dot(u, v); // 1*4 + 3*(-2) + (-5)*(-1) = 3.0
 ```
 
 ### Vector Norms (Euclidean / Frobenius L2)
 
-Compute the Euclidean L2 length of a vector or Frobenius norm of a matrix:
+Compute the Euclidean L2 length of a vector or Frobenius norm of a matrix via [`a.norm()`](../../core/src/main/java/jnum/NDArray.java#L1670) or [`Linalg.norm(a)`](../../core/src/main/java/jnum/linalg/Linalg.java#L128):
 
 $$\|A\|_F = \sqrt{\sum_{i} \sum_{j} A_{i, j}^2}$$
 
 ```java
 NDArray vec = JNum.from(new float[]{3.0f, 4.0f}, 2);
-double length = vec.norm(); // 5.0
+
+double length1 = vec.norm();       // 5.0
+double length2 = Linalg.norm(vec); // 5.0
 ```
 
 ### Cosine Similarity
 
-Measure the angular similarity between two normalized directional vectors:
+Measure the angular similarity between two normalized directional vectors via [`a.cosineSimilarity(b)`](../../core/src/main/java/jnum/NDArray.java#L1903) or [`Linalg.cosineSimilarity(a, b)`](../../core/src/main/java/jnum/linalg/Linalg.java#L91):
 
 $$\text{CosineSimilarity}(u, v) = \frac{u \cdot v}{\|u\|_2 \|v\|_2}$$
 
@@ -103,7 +117,8 @@ $$\text{CosineSimilarity}(u, v) = \frac{u \cdot v}{\|u\|_2 \|v\|_2}$$
 NDArray docA = JNum.from(new float[]{1.0f, 2.0f, 0.0f}, 3);
 NDArray docB = JNum.from(new float[]{2.0f, 4.0f, 0.0f}, 3);
 
-double similarity = docA.cosineSimilarity(docB); // 1.0 (collinear)
+double similarity1 = docA.cosineSimilarity(docB); // 1.0 (collinear)
+double similarity2 = Linalg.cosineSimilarity(docA, docB);
 ```
 
 ---
@@ -118,10 +133,12 @@ NDArray m = JNum.from(new double[]{
     2, 6
 }, 2, 2);
 
-double trace = m.trace(); // 4 + 6 = 10.0
-double det   = m.det();   // (4*6) - (7*2) = 10.0
-int rank     = m.matrixRank(); // 2
-double cond  = m.cond();       // 2-norm condition number
+// Fluent on NDArray or static on Linalg:
+double trace = Linalg.trace(m);       // or m.trace() -> 4 + 6 = 10.0
+double det   = Linalg.det(m);         // or m.det() -> (4*6) - (7*2) = 10.0
+int rank     = Linalg.matrixRank(m);   // or m.matrixRank() -> 2
+double cond  = Linalg.cond(m);         // or m.cond() -> 2-norm condition number
+var slogdet  = Linalg.slogdet(m);      // sign and log-abs-determinant
 ```
 
 ### Matrix Inversion (`inv`) and Pseudoinverse (`pinv`)
@@ -130,11 +147,13 @@ Compute exact inverses or Moore-Penrose pseudoinverses:
 
 ```java
 // Exact inverse for non-singular square matrices: A * A^-1 = I
-NDArray mInv = m.inv();
+NDArray mInv1 = m.inv();
+NDArray mInv2 = Linalg.inv(m);
 
 // Moore-Penrose pseudoinverse via SVD (for rectangular or ill-conditioned matrices)
 NDArray rect = JNum.rand(jnum.DType.f64, 5, 3);
-NDArray rectPinv = rect.pinv(); // Shape [3, 5]
+NDArray rectPinv1 = rect.pinv();         // Shape [3, 5]
+NDArray rectPinv2 = Linalg.pinv(rect);   // Identical result
 ```
 
 ### Solving Linear Systems ($Ax = b$)
@@ -152,17 +171,19 @@ NDArray A = JNum.from(new double[]{
 
 NDArray b = JNum.from(new double[]{9, 8}, 2, 1);
 
-NDArray x = A.solve(b);
+// Fluent or static:
+NDArray x1 = A.solve(b);
+NDArray x2 = Linalg.solve(A, b);
 // Output: x = [2.0, 3.0]
 IO.println("Solution x:");
-IO.println(x);
+IO.println(x1);
 ```
 
 ---
 
 ## 4. Canonical Matrix Decompositions
 
-JNum provides four fundamental factorizations:
+JNum provides four fundamental factorizations, supported both via instance methods and static `Linalg` calls:
 
 ### A. Cholesky Decomposition
 
@@ -176,9 +197,11 @@ NDArray symm = JNum.from(new double[]{
     -16, -43, 98
 }, 3, 3);
 
-NDArray L = symm.cholesky();
+// Fluent or static:
+NDArray L1 = symm.cholesky();
+NDArray L2 = Linalg.cholesky(symm);
 IO.println("Lower triangular factor L:");
-IO.println(L);
+IO.println(L1);
 ```
 
 ### B. QR Factorization
@@ -189,10 +212,13 @@ $$A = Q \cdot R$$
 
 ```java
 NDArray matrix = JNum.rand(jnum.DType.f64, 5, 3);
-var qr = matrix.qr();
 
-NDArray Q = qr.q(); // Shape [5, 5] orthogonal
-NDArray R = qr.r(); // Shape [5, 3] upper triangular
+// Fluent or static:
+var qr1 = matrix.qr();
+var qr2 = Linalg.qr(matrix);
+
+NDArray Q = qr1.q(); // Shape [5, 5] orthogonal
+NDArray R = qr1.r(); // Shape [5, 3] upper triangular
 ```
 
 ### C. Singular Value Decomposition (SVD)
@@ -203,11 +229,14 @@ $$A = U \cdot \Sigma \cdot V^T$$
 
 ```java
 NDArray data = JNum.rand(jnum.DType.f64, 4, 3);
-var svd = data.svd();
 
-NDArray U  = svd.u();  // [4, 4]
-NDArray S  = svd.s();  // [3] singular values in descending order
-NDArray Vt = svd.vt(); // [3, 3]
+// Fluent or static:
+var svd1 = data.svd();
+var svd2 = Linalg.svd(data);
+
+NDArray U  = svd1.u();  // [4, 4]
+NDArray S  = svd1.s();  // [3] singular values in descending order
+NDArray Vt = svd1.vt(); // [3, 3]
 ```
 
 ### D. Eigensystems (`eig` and `eigh`)
@@ -221,9 +250,12 @@ NDArray cov = JNum.from(new double[]{
     1, 2
 }, 2, 2);
 
-var res = cov.eigh();
-NDArray eigenvalues  = res.eigenvalues();  // [1.0, 3.0]
-NDArray eigenvectors = res.eigenvectors(); // Orthogonal columns
+// Fluent or static:
+var res1 = cov.eigh();
+var res2 = Linalg.eigh(cov);
+
+NDArray eigenvalues  = res1.eigenvalues();  // [1.0, 3.0]
+NDArray eigenvectors = res1.eigenvectors(); // Orthogonal columns
 ```
 
 ---

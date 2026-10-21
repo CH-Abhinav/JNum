@@ -44,7 +44,7 @@ public final class Cond {
         int k = Math.min(m, n);
         if (k == 0) return 0.0;
 
-        SVD.SVDResult svd = SVD.svd(a, arena);
+        var svd = SVD.svd(a, arena);
         MemorySegment sSeg = svd.s().getData();
 
         if (a.getDType() == DType.f32) {

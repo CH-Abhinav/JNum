@@ -24,6 +24,7 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.linalg.QRResult;
 
 /**
  * QR decomposition kernel (A = Q * R) via Householder reflections.
@@ -38,7 +39,7 @@ public final class QR {
     }
 
     /** Container record holding the orthogonal matrix Q and upper-triangular matrix R. */
-    public record QRResult(NDArray q, NDArray r) {}
+
 
     /**
      * Top-level dispatcher: decomposes matrix A into orthogonal Q and upper-triangular R.

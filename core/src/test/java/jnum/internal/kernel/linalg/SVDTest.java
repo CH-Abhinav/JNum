@@ -29,6 +29,7 @@ import jnum.JNum;
 import jnum.NDArray;
 import jnum.testutil.TestArrayFactory;
 import jnum.testutil.TestAssertions;
+import jnum.linalg.SVDResult;
 
 public class SVDTest {
 
@@ -59,7 +60,7 @@ public class SVDTest {
         try (Arena arena = Arena.ofConfined()) {
             int n = 4;
             NDArray aF = TestArrayFactory.random(801L, DType.f32, n, n);
-            SVD.SVDResult svdF = SVD.svd(aF, arena);
+            SVDResult svdF = SVD.svd(aF, arena);
             NDArray uF = svdF.u();
             NDArray sF = svdF.s();
             NDArray vtF = svdF.vt();
@@ -89,7 +90,7 @@ public class SVDTest {
 
             // Double
             NDArray aD = TestArrayFactory.random(802L, DType.f64, n, n);
-            SVD.SVDResult svdD = SVD.svd(aD, arena);
+            SVDResult svdD = SVD.svd(aD, arena);
             NDArray uD = svdD.u();
             NDArray sD = svdD.s();
             NDArray vtD = svdD.vt();
@@ -111,7 +112,7 @@ public class SVDTest {
             // Tall: 5x3
             int m = 5, n = 3;
             NDArray aTall = TestArrayFactory.random(803L, DType.f64, m, n);
-            SVD.SVDResult svdTall = SVD.svd(aTall, arena);
+            SVDResult svdTall = SVD.svd(aTall, arena);
             assertEquals(m, svdTall.u().internalShapeUnsafe()[0]);
             assertEquals(m, svdTall.u().internalShapeUnsafe()[1]);
             assertEquals(n, svdTall.s().internalShapeUnsafe()[0]);
@@ -120,7 +121,7 @@ public class SVDTest {
 
             // Wide: 3x5
             NDArray aWide = TestArrayFactory.random(804L, DType.f64, 3, 5);
-            SVD.SVDResult svdWide = SVD.svd(aWide, arena);
+            SVDResult svdWide = SVD.svd(aWide, arena);
             assertEquals(3, svdWide.u().internalShapeUnsafe()[0]);
             assertEquals(3, svdWide.u().internalShapeUnsafe()[1]);
             assertEquals(3, svdWide.s().internalShapeUnsafe()[0]);

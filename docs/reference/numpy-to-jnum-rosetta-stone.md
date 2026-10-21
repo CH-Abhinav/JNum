@@ -62,12 +62,32 @@ This reference provides a side-by-side comparison of common numerical operations
 
 ---
 
-## 5. Comparisons, Clamping & Boolean Logic
+## 5. Mathematical & Transcendental Functions
+
+| Operation | NumPy (Python) | JNum (Java 25) | JNum (Kotlin) |
+| :--- | :--- | :--- | :--- |
+| **Square Root** | `np.sqrt(a)` | `a.sqrt()` or `JNum.sqrt(a)` | `a.sqrt()` or `JNum.sqrt(a)` |
+| **Absolute Value** | `np.abs(a)` | `a.abs()` or `JNum.abs(a)` | `a.abs()` or `JNum.abs(a)` |
+| **Exponential** | `np.exp(a)` | `a.exp()` or `JNum.exp(a)` | `a.exp()` or `JNum.exp(a)` |
+| **Natural Log** | `np.log(a)` | `a.log()` or `JNum.log(a)` | `a.log()` or `JNum.log(a)` |
+| **Base-10 Log** | `np.log10(a)` | `a.log10()` or `JNum.log10(a)` | `a.log10()` or `JNum.log10(a)` |
+| **Sine** | `np.sin(a)` | `a.sin()` or `JNum.sin(a)` | `a.sin()` or `JNum.sin(a)` |
+| **Cosine** | `np.cos(a)` | `a.cos()` or `JNum.cos(a)` | `a.cos()` or `JNum.cos(a)` |
+| **Tangent** | `np.tan(a)` | `a.tan()` or `JNum.tan(a)` | `a.tan()` or `JNum.tan(a)` |
+| **Hyperbolic Sine** | `np.sinh(a)` | `a.sinh()` or `JNum.sinh(a)` | `a.sinh()` or `JNum.sinh(a)` |
+| **Hyperbolic Cosine** | `np.cosh(a)` | `a.cosh()` or `JNum.cosh(a)` | `a.cosh()` or `JNum.cosh(a)` |
+| **Hyperbolic Tanh** | `np.tanh(a)` | `a.tanh()` or `JNum.tanh(a)` | `a.tanh()` or `JNum.tanh(a)` |
+| **Sigmoid Activation**| `1 / (1 + np.exp(-a))` | `a.sigmoid()` or `JNum.sigmoid(a)` | `a.sigmoid()` or `JNum.sigmoid(a)` |
+
+---
+
+## 6. Comparisons, Clamping & Boolean Logic
 
 | Operation | NumPy (Python) | JNum (Java 25) | JNum (Kotlin) |
 | :--- | :--- | :--- | :--- |
 | **Element Maximum** | `np.maximum(a, b)` | `a.maximum(b)` | `a.maximum(b)` |
 | **Element Minimum** | `np.minimum(a, b)` | `a.minimum(b)` | `a.minimum(b)` |
+| **Range Clamping** | `np.clip(a, -1.0, 1.0)` | `a.clamp(-1.0f, 1.0f)` | `a.clamp(-1.0f, 1.0f)` |
 | **Scalar Clip / ReLU**| `np.maximum(a, 0)` | `a.maximum(0.0f)` | `a.maximum(0.0f)` |
 | **Logical AND** | `a & b` | `a.and(b)` | `a and b` |
 | **Logical OR** | `a \| b` | `a.or(b)` | `a or b` |
@@ -78,28 +98,28 @@ This reference provides a side-by-side comparison of common numerical operations
 
 ---
 
-## 6. Linear Algebra & Decompositions
+## 7. Linear Algebra & Decompositions
 
 | Operation | NumPy (Python) | JNum (Java 25) | JNum (Kotlin) |
 | :--- | :--- | :--- | :--- |
-| **Matrix Multiply** | `a @ b` or `np.matmul(a, b)` | `a.matmul(b)` | `a matmul b` |
-| **1D Dot Product** | `np.dot(u, v)` | `u.dot(v)` | `u dot v` |
-| **Euclidean Norm** | `np.linalg.norm(a)` | `a.norm()` | `a.norm()` |
-| **Matrix Trace** | `np.trace(a)` | `a.trace()` | `a.trace()` |
-| **Determinant** | `np.linalg.det(a)` | `a.det()` | `a.det()` |
-| **Matrix Rank** | `np.linalg.matrix_rank(a)`| `a.matrixRank()` | `a.matrixRank()` |
-| **Condition Number** | `np.linalg.cond(a)` | `a.cond()` | `a.cond()` |
-| **Matrix Inverse** | `np.linalg.inv(a)` | `a.inv()` | `a.inv()` |
-| **Solve ($Ax=b$)** | `np.linalg.solve(A, b)` | `A.solve(b)` | `A.solve(b)` |
-| **Pseudoinverse** | `np.linalg.pinv(a)` | `a.pinv()` | `a.pinv()` |
-| **Cholesky** | `np.linalg.cholesky(a)` | `a.cholesky()` | `a.cholesky()` |
-| **QR Factorization** | `q, r = np.linalg.qr(a)` | `QRResult qr = a.qr();` | `val (q, r) = a.qr()` |
-| **SVD** | `u, s, vt = np.linalg.svd(a)` | `SVDResult svd = a.svd();` | `val (u, s, vt) = a.svd()` |
-| **Eigenvalues** | `w, v = np.linalg.eig(a)` | `EigResult res = a.eig();` | `val (w, v) = a.eig()` |
+| **Matrix Multiply** | `a @ b` or `np.matmul(a, b)` | `a.matmul(b)` or `Linalg.matmul(a, b)` | `a matmul b` or `Linalg.matmul(a, b)` |
+| **1D Dot Product** | `np.dot(u, v)` | `u.dot(v)` or `Linalg.dot(u, v)` | `u dot v` or `Linalg.dot(u, v)` |
+| **Euclidean Norm** | `np.linalg.norm(a)` | `a.norm()` or `Linalg.norm(a)` | `a.norm()` or `Linalg.norm(a)` |
+| **Matrix Trace** | `np.trace(a)` | `a.trace()` or `Linalg.trace(a)` | `a.trace()` or `Linalg.trace(a)` |
+| **Determinant** | `np.linalg.det(a)` | `a.det()` or `Linalg.det(a)` | `a.det()` or `Linalg.det(a)` |
+| **Matrix Rank** | `np.linalg.matrix_rank(a)`| `a.matrixRank()` or `Linalg.matrixRank(a)` | `a.matrixRank()` or `Linalg.matrixRank(a)` |
+| **Condition Number** | `np.linalg.cond(a)` | `a.cond()` or `Linalg.cond(a)` | `a.cond()` or `Linalg.cond(a)` |
+| **Matrix Inverse** | `np.linalg.inv(a)` | `a.inv()` or `Linalg.inv(a)` | `a.inv()` or `Linalg.inv(a)` |
+| **Solve ($Ax=b$)** | `np.linalg.solve(A, b)` | `A.solve(b)` or `Linalg.solve(A, b)` | `A.solve(b)` or `Linalg.solve(A, b)` |
+| **Pseudoinverse** | `np.linalg.pinv(a)` | `a.pinv()` or `Linalg.pinv(a)` | `a.pinv()` or `Linalg.pinv(a)` |
+| **Cholesky** | `np.linalg.cholesky(a)` | `a.cholesky()` or `Linalg.cholesky(a)` | `a.cholesky()` or `Linalg.cholesky(a)` |
+| **QR Factorization** | `q, r = np.linalg.qr(a)` | `a.qr()` or `Linalg.qr(a)` | `val (q, r) = a.qr()` |
+| **SVD** | `u, s, vt = np.linalg.svd(a)` | `a.svd()` or `Linalg.svd(a)` | `val (u, s, vt) = a.svd()` |
+| **Eigenvalues** | `w, v = np.linalg.eig(a)` | `a.eig()` or `Linalg.eig(a)` | `val (w, v) = a.eig()` |
 
 ---
 
-## 7. Descriptive & Inferential Statistics
+## 8. Descriptive & Inferential Statistics
 
 | Operation | NumPy (Python) | JNum (Java 25) | JNum (Kotlin) |
 | :--- | :--- | :--- | :--- |
@@ -117,9 +137,18 @@ This reference provides a side-by-side comparison of common numerical operations
 
 ---
 
-## 8. File I/O & Model Checkpoints
+## 9. Symbolic Expression Evaluation
 
-| Operation | NumPy / Hugging Face (Python) | JNum (Java 25) |
+| Operation | Python / NumExpr | JNum (Java 25) | JNum (Kotlin) |
+| :--- | :--- | :--- | :--- |
+| **Positional Expr** | `ne.evaluate("a * b + c")` | `JNum.eval("$0 * $1 + $2", a, b, c)` | `JNum.eval("$0 * $1 + $2", a, b, c)` |
+| **Named Variable Expr** | `ne.evaluate("x * w + b")` | `JNum.eval("x * w + b", Map.of("x", x, "w", w, "b", b))` | `JNum.eval("x * w + b", mapOf("x" to x, "w" to w, "b" to b))` |
+
+---
+
+## 10. File I/O & Model Checkpoints
+
+| Operation | NumPy / Hugging Face (Python) | JNum (Java 25 & Kotlin) |
 | :--- | :--- | :--- |
 | **Save `.npy`** | `np.save("file.npy", arr)` | `JNumIO.writeNpy(arr, Path.of("file.npy"))` |
 | **Load `.npy`** | `arr = np.load("file.npy")` | `NDArray arr = JNumIO.readNpy(Path.of("file.npy"))` |

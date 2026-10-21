@@ -6,7 +6,21 @@ Because JNum executes high-throughput SIMD operations and manages off-heap memor
 
 ## 1. Mandatory Runtime & Compiler Flags
 
-These two flags must be passed whenever compiling or executing applications using JNum:
+These flags are required when compiling or executing applications using JNum:
+
+### Compilation (`javac` / Build Tools)
+
+To enable the incubator SIMD vector module during compilation:
+
+```bash
+javac --add-modules jdk.incubator.vector YourApp.java
+```
+
+*(In Maven, this is configured in `maven-compiler-plugin` via `<compilerArgs><arg>--add-modules</arg><arg>jdk.incubator.vector</arg></compilerArgs>`.)*
+
+### Runtime (`java`)
+
+To execute the application with SIMD and off-heap FFM native memory access:
 
 ```bash
 java --add-modules jdk.incubator.vector \
@@ -14,10 +28,10 @@ java --add-modules jdk.incubator.vector \
      -jar your-application.jar
 ```
 
-| Flag | Category | Purpose |
-| :--- | :--- | :--- |
-| `--add-modules jdk.incubator.vector` | Module Resolution | Loads the incubator SIMD vector module into the JVM runtime image. |
-| `--enable-native-access=ALL-UNNAMED` | FFM Permissions | Authorizes the default classloader to allocate and bind off-heap `MemorySegment` buffers without terminal security warnings. |
+| Flag | Category | Scope | Purpose |
+| :--- | :--- | :--- | :--- |
+| `--add-modules jdk.incubator.vector` | Module Resolution | Compile & Runtime | Loads the incubator SIMD vector module into the JVM image. |
+| `--enable-native-access=ALL-UNNAMED` | FFM Permissions | Runtime only | Authorizes the default classloader to allocate and bind off-heap `MemorySegment` buffers without terminal security warnings. |
 
 ---
 

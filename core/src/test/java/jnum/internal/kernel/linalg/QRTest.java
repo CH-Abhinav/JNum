@@ -29,6 +29,7 @@ import jnum.JNum;
 import jnum.NDArray;
 import jnum.testutil.TestArrayFactory;
 import jnum.testutil.TestAssertions;
+import jnum.linalg.QRResult;
 
 public class QRTest {
 
@@ -59,7 +60,7 @@ public class QRTest {
         try (Arena arena = Arena.ofConfined()) {
             int n = 4;
             NDArray aF = TestArrayFactory.random(701L, DType.f32, n, n);
-            QR.QRResult qrF = QR.qr(aF, arena);
+            QRResult qrF = QR.qr(aF, arena);
             NDArray qF = qrF.q();
             NDArray rF = qrF.r();
 
@@ -88,7 +89,7 @@ public class QRTest {
 
             // Double
             NDArray aD = TestArrayFactory.random(702L, DType.f64, n, n);
-            QR.QRResult qrD = QR.qr(aD, arena);
+            QRResult qrD = QR.qr(aD, arena);
             NDArray qD = qrD.q();
             NDArray rD = qrD.r();
 
@@ -109,7 +110,7 @@ public class QRTest {
         try (Arena arena = Arena.ofConfined()) {
             int m = 6, n = 3;
             NDArray a = TestArrayFactory.random(703L, DType.f64, m, n);
-            QR.QRResult res = QR.qr(a, arena);
+            QRResult res = QR.qr(a, arena);
             NDArray q = res.q();
             NDArray r = res.r();
 
@@ -137,7 +138,7 @@ public class QRTest {
         try (Arena arena = Arena.ofConfined()) {
             NDArray base = TestArrayFactory.random(704L, DType.f32, 5, 5);
             NDArray aT = base.transpose();
-            QR.QRResult res = QR.qr(aT, arena);
+            QRResult res = QR.qr(aT, arena);
 
             NDArray recon = JNum.zeros(arena, DType.f32, 5, 5);
             MatMul.matmulFloat(res.q(), res.r(), recon);

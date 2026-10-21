@@ -23,6 +23,7 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.linalg.EighResult;
 
 /**
  * Eigenvalue decomposition kernel for symmetric / Hermitian real matrices.
@@ -38,7 +39,7 @@ public final class Eigh {
     }
 
     /** Container record holding real eigenvalues and orthogonal eigenvector columns. */
-    public record EighResult(NDArray eigenvalues, NDArray eigenvectors) {}
+
 
     /**
      * Top-level dispatcher: computes eigenvalues and eigenvectors of symmetric matrix A.

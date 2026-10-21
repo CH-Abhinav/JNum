@@ -26,22 +26,27 @@ import jnum.internal.kernel.linalg.Cholesky;
 import jnum.internal.kernel.linalg.Cond;
 import jnum.internal.kernel.linalg.CosineSimilarity;
 import jnum.internal.kernel.linalg.Det;
-import jnum.internal.kernel.linalg.Det.SlogdetResult;
+
 import jnum.internal.kernel.linalg.Eig;
-import jnum.internal.kernel.linalg.Eig.EigResult;
+
 import jnum.internal.kernel.linalg.Eigh;
-import jnum.internal.kernel.linalg.Eigh.EighResult;
+
 import jnum.internal.kernel.linalg.Inv;
 import jnum.internal.kernel.linalg.MatMul;
 import jnum.internal.kernel.linalg.MatrixRank;
 import jnum.internal.kernel.linalg.Norm;
 import jnum.internal.kernel.linalg.Pinv;
 import jnum.internal.kernel.linalg.QR;
-import jnum.internal.kernel.linalg.QR.QRResult;
+
 import jnum.internal.kernel.linalg.Solve;
 import jnum.internal.kernel.linalg.SVD;
-import jnum.internal.kernel.linalg.SVD.SVDResult;
+
 import jnum.internal.kernel.linalg.Trace;
+import jnum.linalg.EigResult;
+import jnum.linalg.EighResult;
+import jnum.linalg.QRResult;
+import jnum.linalg.SVDResult;
+import jnum.linalg.SlogdetResult;
 
 /**
  * High-level orchestration facade for linear algebra routines, GEMM, and matrix decompositions.

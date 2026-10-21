@@ -24,34 +24,40 @@ java -version
 
 ## 2. Dependency Coordinates
 
-Add the JNum core artifact (and optional Kotlin extension module) to your build configuration.
+Add JNum to your build configuration. For Kotlin projects, `jnum-kotlin` bundles the core JNum runtime along with Kotlin operator overloads and DSL extensions.
 
 ### Maven (`pom.xml`)
 
+**For Java:**
 ```xml
-<dependencies>
-    <!-- Core JNum Java Library -->
-    <dependency>
-        <groupId>io.github.ch-abhinav</groupId>
-        <artifactId>jnum</artifactId>
-        <version>0.2.0</version>
-    </dependency>
+<dependency>
+    <groupId>io.github.ch-abhinav</groupId>
+    <artifactId>jnum</artifactId>
+    <version>0.2.0</version>
+</dependency>
+```
 
-    <!-- Optional: JNum Kotlin Extensions -->
-    <dependency>
-        <groupId>io.github.ch-abhinav</groupId>
-        <artifactId>jnum-kotlin</artifactId>
-        <version>0.2.0</version>
-    </dependency>
-</dependencies>
+**For Kotlin** *(bundles core + Kotlin extensions)*:
+```xml
+<dependency>
+    <groupId>io.github.ch-abhinav</groupId>
+    <artifactId>jnum-kotlin</artifactId>
+    <version>0.2.0</version>
+</dependency>
 ```
 
 ### Gradle (`build.gradle.kts`)
 
+**For Java:**
 ```kotlin
 dependencies {
     implementation("io.github.ch-abhinav:jnum:0.2.0")
-    // Optional Kotlin operator overloads and DSL:
+}
+```
+
+**For Kotlin** *(bundles core + Kotlin extensions)*:
+```kotlin
+dependencies {
     implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
 }
 ```
@@ -91,7 +97,6 @@ Add compiler and surefire arguments to your `pom.xml` so that builds and unit te
                 <compilerArgs>
                     <arg>--add-modules</arg>
                     <arg>jdk.incubator.vector</arg>
-                    <arg>--enable-native-access=ALL-UNNAMED</arg>
                 </compilerArgs>
             </configuration>
         </plugin>
@@ -130,8 +135,7 @@ java {
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf(
-        "--add-modules", "jdk.incubator.vector",
-        "--enable-native-access=ALL-UNNAMED"
+        "--add-modules", "jdk.incubator.vector"
     ))
 }
 
@@ -177,8 +181,7 @@ void main() {
 Execute it directly from your terminal:
 
 ```bash
-java --enable-preview \
-     --add-modules jdk.incubator.vector \
+java --add-modules jdk.incubator.vector \
      --enable-native-access=ALL-UNNAMED \
      VerifyJNum.java
 ```

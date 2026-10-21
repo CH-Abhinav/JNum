@@ -131,37 +131,9 @@ public final class MatMulMicroKernels {
      */
     public static void microKernel6x16_Float(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
                                              MemorySegment C, int ci, int cj, int kc, int N, boolean isFirstKBlock) {
-        final long cStride = (long) N * 4L;
-        final long row0 = ((long) ci * N + cj) * 4L;
-        final long row1 = row0 + cStride;
-        final long row2 = row1 + cStride;
-        final long row3 = row2 + cStride;
-        final long row4 = row3 + cStride;
-        final long row5 = row4 + cStride;
-
-        FloatVector c00, c01, c10, c11, c20, c21, c30, c31, c40, c41, c50, c51;
-        if (isFirstKBlock) {
-            var z = FloatVector.zero(SPECIES);
-            c00 = z; c01 = z;
-            c10 = z; c11 = z;
-            c20 = z; c21 = z;
-            c30 = z; c31 = z;
-            c40 = z; c41 = z;
-            c50 = z; c51 = z;
-        } else {
-            c00 = FloatVector.fromMemorySegment(SPECIES, C, row0, NATIVE);
-            c01 = FloatVector.fromMemorySegment(SPECIES, C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c10 = FloatVector.fromMemorySegment(SPECIES, C, row1, NATIVE);
-            c11 = FloatVector.fromMemorySegment(SPECIES, C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c20 = FloatVector.fromMemorySegment(SPECIES, C, row2, NATIVE);
-            c21 = FloatVector.fromMemorySegment(SPECIES, C, row2 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c30 = FloatVector.fromMemorySegment(SPECIES, C, row3, NATIVE);
-            c31 = FloatVector.fromMemorySegment(SPECIES, C, row3 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c40 = FloatVector.fromMemorySegment(SPECIES, C, row4, NATIVE);
-            c41 = FloatVector.fromMemorySegment(SPECIES, C, row4 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c50 = FloatVector.fromMemorySegment(SPECIES, C, row5, NATIVE);
-            c51 = FloatVector.fromMemorySegment(SPECIES, C, row5 + STRIDE_VEC_BYTES_F32, NATIVE);
-        }
+        var z = FloatVector.zero(SPECIES);
+        FloatVector c00 = z, c01 = z, c10 = z, c11 = z, c20 = z, c21 = z;
+        FloatVector c30 = z, c31 = z, c40 = z, c41 = z, c50 = z, c51 = z;
 
         long aOff = aBase;
         long bOff = bBase;
@@ -189,28 +161,26 @@ public final class MatMulMicroKernels {
             c50 = a1.fma(b0, c50); c51 = a1.fma(b1, c51);
 
             // Iteration 1
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F32;
-            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1, NATIVE);
-            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1 + STRIDE_VEC_BYTES_F32, NATIVE);
+            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32, NATIVE);
+            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32 + STRIDE_VEC_BYTES_F32, NATIVE);
 
-            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1));
-            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 4L));
+            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32));
+            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 4L));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 8L));
-            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 12L));
+            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 8L));
+            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 12L));
             c20 = a0.fma(b0, c20); c21 = a0.fma(b1, c21);
             c30 = a1.fma(b0, c30); c31 = a1.fma(b1, c31);
 
-            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 16L));
-            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 20L));
+            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 16L));
+            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 20L));
             c40 = a0.fma(b0, c40); c41 = a0.fma(b1, c41);
             c50 = a1.fma(b0, c50); c51 = a1.fma(b1, c51);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F32;
+            aOff += 2L * STEP_A_ROW_BYTES_F32;
+            bOff += 2L * STEP_B_ROW_BYTES_F32;
         }
 
         for (; k < kc; k++) {
@@ -236,12 +206,35 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F32;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F32, NATIVE);
+        final long cStride = (long) N * 4L;
+        final long row0 = ((long) ci * N + cj) * 4L;
+        final long row1 = row0 + cStride;
+        final long row2 = row1 + cStride;
+        final long row3 = row2 + cStride;
+        final long row4 = row3 + cStride;
+        final long row5 = row4 + cStride;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F32, NATIVE);
+        } else {
+            FloatVector.fromMemorySegment(SPECIES, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row0 + STRIDE_VEC_BYTES_F32, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row1 + STRIDE_VEC_BYTES_F32, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row2, NATIVE).add(c20).intoMemorySegment(C, row2, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row2 + STRIDE_VEC_BYTES_F32, NATIVE).add(c21).intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row3, NATIVE).add(c30).intoMemorySegment(C, row3, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row3 + STRIDE_VEC_BYTES_F32, NATIVE).add(c31).intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row4, NATIVE).add(c40).intoMemorySegment(C, row4, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row4 + STRIDE_VEC_BYTES_F32, NATIVE).add(c41).intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row5, NATIVE).add(c50).intoMemorySegment(C, row5, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row5 + STRIDE_VEC_BYTES_F32, NATIVE).add(c51).intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F32, NATIVE);
+        }
     }
 
     private static void microKernel6x16Masked_Float(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
@@ -320,19 +313,8 @@ public final class MatMulMicroKernels {
                                              MemorySegment pB, long bBase,
                                              MemorySegment C, int ci, int cj,
                                              int kc, int N, boolean isFirstKBlock) {
-        final long row0 = ((long) ci * N + cj) * 4L;
-        final long row1 = row0 + (long) N * 4L;
-
-        FloatVector c00, c01, c10, c11;
-        if (isFirstKBlock) {
-            var z = FloatVector.zero(SPECIES);
-            c00 = z; c01 = z; c10 = z; c11 = z;
-        } else {
-            c00 = FloatVector.fromMemorySegment(SPECIES, C, row0, NATIVE);
-            c01 = FloatVector.fromMemorySegment(SPECIES, C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
-            c10 = FloatVector.fromMemorySegment(SPECIES, C, row1, NATIVE);
-            c11 = FloatVector.fromMemorySegment(SPECIES, C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
-        }
+        var z = FloatVector.zero(SPECIES);
+        FloatVector c00 = z, c01 = z, c10 = z, c11 = z;
 
         long aOff = aBase + (long) rOff * 4L;
         long bOff = bBase;
@@ -347,17 +329,15 @@ public final class MatMulMicroKernels {
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F32;
-            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1, NATIVE);
-            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1 + STRIDE_VEC_BYTES_F32, NATIVE);
-            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1));
-            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1 + 4L));
+            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32, NATIVE);
+            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32 + STRIDE_VEC_BYTES_F32, NATIVE);
+            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32));
+            a1 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32 + 4L));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F32;
+            aOff += 2L * STEP_A_ROW_BYTES_F32;
+            bOff += 2L * STEP_B_ROW_BYTES_F32;
         }
 
         for (; k < kc; k++) {
@@ -372,8 +352,18 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F32;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
+        final long row0 = ((long) ci * N + cj) * 4L;
+        final long row1 = row0 + (long) N * 4L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
+        } else {
+            FloatVector.fromMemorySegment(SPECIES, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row0 + STRIDE_VEC_BYTES_F32, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F32, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row1 + STRIDE_VEC_BYTES_F32, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F32, NATIVE);
+        }
     }
 
     private static void microKernel2x16Masked_Float(MemorySegment pA, long aBase, int rOff,
@@ -415,16 +405,8 @@ public final class MatMulMicroKernels {
                                              MemorySegment pB, long bBase,
                                              MemorySegment C, int ci, int cj,
                                              int kc, int N, boolean isFirstKBlock) {
-        final long row = ((long) ci * N + cj) * 4L;
-
-        FloatVector c00, c01;
-        if (isFirstKBlock) {
-            var z = FloatVector.zero(SPECIES);
-            c00 = z; c01 = z;
-        } else {
-            c00 = FloatVector.fromMemorySegment(SPECIES, C, row, NATIVE);
-            c01 = FloatVector.fromMemorySegment(SPECIES, C, row + STRIDE_VEC_BYTES_F32, NATIVE);
-        }
+        var z = FloatVector.zero(SPECIES);
+        FloatVector c00 = z, c01 = z;
 
         long aOff = aBase + (long) rOff * 4L;
         long bOff = bBase;
@@ -437,15 +419,13 @@ public final class MatMulMicroKernels {
             var a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F32;
-            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1, NATIVE);
-            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff1 + STRIDE_VEC_BYTES_F32, NATIVE);
-            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff1));
+            b0 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32, NATIVE);
+            b1 = FloatVector.fromMemorySegment(SPECIES, pB, bOff + STEP_B_ROW_BYTES_F32 + STRIDE_VEC_BYTES_F32, NATIVE);
+            a0 = FloatVector.broadcast(SPECIES, pA.get(VF, aOff + STEP_A_ROW_BYTES_F32));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F32;
+            aOff += 2L * STEP_A_ROW_BYTES_F32;
+            bOff += 2L * STEP_B_ROW_BYTES_F32;
         }
 
         for (; k < kc; k++) {
@@ -458,8 +438,15 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F32;
         }
 
-        c00.intoMemorySegment(C, row, NATIVE);
-        c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_F32, NATIVE);
+        final long row = ((long) ci * N + cj) * 4L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row, NATIVE);
+            c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_F32, NATIVE);
+        } else {
+            FloatVector.fromMemorySegment(SPECIES, C, row, NATIVE).add(c00).intoMemorySegment(C, row, NATIVE);
+            FloatVector.fromMemorySegment(SPECIES, C, row + STRIDE_VEC_BYTES_F32, NATIVE).add(c01).intoMemorySegment(C, row + STRIDE_VEC_BYTES_F32, NATIVE);
+        }
     }
 
     private static void microKernel1x16Masked_Float(MemorySegment pA, long aBase, int rOff,
@@ -718,37 +705,9 @@ public final class MatMulMicroKernels {
      */
     public static void microKernel6x16_Double(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
                                               MemorySegment C, int ci, int cj, int kc, int N, boolean isFirstKBlock) {
-        final long cStride = (long) N * 8L;
-        final long row0 = ((long) ci * N + cj) * 8L;
-        final long row1 = row0 + cStride;
-        final long row2 = row1 + cStride;
-        final long row3 = row2 + cStride;
-        final long row4 = row3 + cStride;
-        final long row5 = row4 + cStride;
-
-        DoubleVector c00, c01, c10, c11, c20, c21, c30, c31, c40, c41, c50, c51;
-        if (isFirstKBlock) {
-            var z = DoubleVector.zero(SPECIESDB);
-            c00 = z; c01 = z;
-            c10 = z; c11 = z;
-            c20 = z; c21 = z;
-            c30 = z; c31 = z;
-            c40 = z; c41 = z;
-            c50 = z; c51 = z;
-        } else {
-            c00 = DoubleVector.fromMemorySegment(SPECIESDB, C, row0, NATIVE);
-            c01 = DoubleVector.fromMemorySegment(SPECIESDB, C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c10 = DoubleVector.fromMemorySegment(SPECIESDB, C, row1, NATIVE);
-            c11 = DoubleVector.fromMemorySegment(SPECIESDB, C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c20 = DoubleVector.fromMemorySegment(SPECIESDB, C, row2, NATIVE);
-            c21 = DoubleVector.fromMemorySegment(SPECIESDB, C, row2 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c30 = DoubleVector.fromMemorySegment(SPECIESDB, C, row3, NATIVE);
-            c31 = DoubleVector.fromMemorySegment(SPECIESDB, C, row3 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c40 = DoubleVector.fromMemorySegment(SPECIESDB, C, row4, NATIVE);
-            c41 = DoubleVector.fromMemorySegment(SPECIESDB, C, row4 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c50 = DoubleVector.fromMemorySegment(SPECIESDB, C, row5, NATIVE);
-            c51 = DoubleVector.fromMemorySegment(SPECIESDB, C, row5 + STRIDE_VEC_BYTES_F64, NATIVE);
-        }
+        var z = DoubleVector.zero(SPECIESDB);
+        DoubleVector c00 = z, c01 = z, c10 = z, c11 = z, c20 = z, c21 = z;
+        DoubleVector c30 = z, c31 = z, c40 = z, c41 = z, c50 = z, c51 = z;
 
         long aOff = aBase;
         long bOff = bBase;
@@ -776,28 +735,26 @@ public final class MatMulMicroKernels {
             c50 = a1.fma(b0, c50); c51 = a1.fma(b1, c51);
 
             // Iteration 1
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F64;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F64;
-            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1, NATIVE);
-            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1 + STRIDE_VEC_BYTES_F64, NATIVE);
+            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64, NATIVE);
+            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64 + STRIDE_VEC_BYTES_F64, NATIVE);
 
-            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1));
-            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 8L));
+            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64));
+            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 8L));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 16L));
-            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 24L));
+            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 16L));
+            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 24L));
             c20 = a0.fma(b0, c20); c21 = a0.fma(b1, c21);
             c30 = a1.fma(b0, c30); c31 = a1.fma(b1, c31);
 
-            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 32L));
-            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 40L));
+            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 32L));
+            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 40L));
             c40 = a0.fma(b0, c40); c41 = a0.fma(b1, c41);
             c50 = a1.fma(b0, c50); c51 = a1.fma(b1, c51);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F64;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F64;
+            aOff += 2L * STEP_A_ROW_BYTES_F64;
+            bOff += 2L * STEP_B_ROW_BYTES_F64;
         }
 
         for (; k < kc; k++) {
@@ -823,12 +780,35 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F64;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F64, NATIVE);
+        final long cStride = (long) N * 8L;
+        final long row0 = ((long) ci * N + cj) * 8L;
+        final long row1 = row0 + cStride;
+        final long row2 = row1 + cStride;
+        final long row3 = row2 + cStride;
+        final long row4 = row3 + cStride;
+        final long row5 = row4 + cStride;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F64, NATIVE);
+        } else {
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row0 + STRIDE_VEC_BYTES_F64, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row1 + STRIDE_VEC_BYTES_F64, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row2, NATIVE).add(c20).intoMemorySegment(C, row2, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row2 + STRIDE_VEC_BYTES_F64, NATIVE).add(c21).intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row3, NATIVE).add(c30).intoMemorySegment(C, row3, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row3 + STRIDE_VEC_BYTES_F64, NATIVE).add(c31).intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row4, NATIVE).add(c40).intoMemorySegment(C, row4, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row4 + STRIDE_VEC_BYTES_F64, NATIVE).add(c41).intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row5, NATIVE).add(c50).intoMemorySegment(C, row5, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row5 + STRIDE_VEC_BYTES_F64, NATIVE).add(c51).intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_F64, NATIVE);
+        }
     }
 
     private static void microKernel6x16Masked_Double(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
@@ -907,19 +887,8 @@ public final class MatMulMicroKernels {
                                               MemorySegment pB, long bBase,
                                               MemorySegment C, int ci, int cj,
                                               int kc, int N, boolean isFirstKBlock) {
-        final long row0 = ((long) ci * N + cj) * 8L;
-        final long row1 = row0 + (long) N * 8L;
-
-        DoubleVector c00, c01, c10, c11;
-        if (isFirstKBlock) {
-            var z = DoubleVector.zero(SPECIESDB);
-            c00 = z; c01 = z; c10 = z; c11 = z;
-        } else {
-            c00 = DoubleVector.fromMemorySegment(SPECIESDB, C, row0, NATIVE);
-            c01 = DoubleVector.fromMemorySegment(SPECIESDB, C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
-            c10 = DoubleVector.fromMemorySegment(SPECIESDB, C, row1, NATIVE);
-            c11 = DoubleVector.fromMemorySegment(SPECIESDB, C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
-        }
+        var z = DoubleVector.zero(SPECIESDB);
+        DoubleVector c00 = z, c01 = z, c10 = z, c11 = z;
 
         long aOff = aBase + (long) rOff * 8L;
         long bOff = bBase;
@@ -934,17 +903,15 @@ public final class MatMulMicroKernels {
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F64;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F64;
-            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1, NATIVE);
-            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1 + STRIDE_VEC_BYTES_F64, NATIVE);
-            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1));
-            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1 + 8L));
+            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64, NATIVE);
+            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64 + STRIDE_VEC_BYTES_F64, NATIVE);
+            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64));
+            a1 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64 + 8L));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
             c10 = a1.fma(b0, c10); c11 = a1.fma(b1, c11);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F64;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F64;
+            aOff += 2L * STEP_A_ROW_BYTES_F64;
+            bOff += 2L * STEP_B_ROW_BYTES_F64;
         }
 
         for (; k < kc; k++) {
@@ -959,8 +926,18 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F64;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
+        final long row0 = ((long) ci * N + cj) * 8L;
+        final long row1 = row0 + (long) N * 8L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
+        } else {
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row0 + STRIDE_VEC_BYTES_F64, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_F64, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row1 + STRIDE_VEC_BYTES_F64, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_F64, NATIVE);
+        }
     }
 
     private static void microKernel2x16Masked_Double(MemorySegment pA, long aBase, int rOff,
@@ -1002,16 +979,8 @@ public final class MatMulMicroKernels {
                                               MemorySegment pB, long bBase,
                                               MemorySegment C, int ci, int cj,
                                               int kc, int N, boolean isFirstKBlock) {
-        final long row = ((long) ci * N + cj) * 8L;
-
-        DoubleVector c00, c01;
-        if (isFirstKBlock) {
-            var z = DoubleVector.zero(SPECIESDB);
-            c00 = z; c01 = z;
-        } else {
-            c00 = DoubleVector.fromMemorySegment(SPECIESDB, C, row, NATIVE);
-            c01 = DoubleVector.fromMemorySegment(SPECIESDB, C, row + STRIDE_VEC_BYTES_F64, NATIVE);
-        }
+        var z = DoubleVector.zero(SPECIESDB);
+        DoubleVector c00 = z, c01 = z;
 
         long aOff = aBase + (long) rOff * 8L;
         long bOff = bBase;
@@ -1024,15 +993,13 @@ public final class MatMulMicroKernels {
             var a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_F64;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_F64;
-            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1, NATIVE);
-            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff1 + STRIDE_VEC_BYTES_F64, NATIVE);
-            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff1));
+            b0 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64, NATIVE);
+            b1 = DoubleVector.fromMemorySegment(SPECIESDB, pB, bOff + STEP_B_ROW_BYTES_F64 + STRIDE_VEC_BYTES_F64, NATIVE);
+            a0 = DoubleVector.broadcast(SPECIESDB, pA.get(VD, aOff + STEP_A_ROW_BYTES_F64));
             c00 = a0.fma(b0, c00); c01 = a0.fma(b1, c01);
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_F64;
-            bOff = bOff1 + STEP_B_ROW_BYTES_F64;
+            aOff += 2L * STEP_A_ROW_BYTES_F64;
+            bOff += 2L * STEP_B_ROW_BYTES_F64;
         }
 
         for (; k < kc; k++) {
@@ -1045,8 +1012,15 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_F64;
         }
 
-        c00.intoMemorySegment(C, row, NATIVE);
-        c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_F64, NATIVE);
+        final long row = ((long) ci * N + cj) * 8L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row, NATIVE);
+            c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_F64, NATIVE);
+        } else {
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row, NATIVE).add(c00).intoMemorySegment(C, row, NATIVE);
+            DoubleVector.fromMemorySegment(SPECIESDB, C, row + STRIDE_VEC_BYTES_F64, NATIVE).add(c01).intoMemorySegment(C, row + STRIDE_VEC_BYTES_F64, NATIVE);
+        }
     }
 
     private static void microKernel1x16Masked_Double(MemorySegment pA, long aBase, int rOff,
@@ -1309,37 +1283,9 @@ public final class MatMulMicroKernels {
      */
     public static void microKernel6x16_Int(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
                                            MemorySegment C, int ci, int cj, int kc, int N, boolean isFirstKBlock) {
-        final long cStride = (long) N * 4L;
-        final long row0 = ((long) ci * N + cj) * 4L;
-        final long row1 = row0 + cStride;
-        final long row2 = row1 + cStride;
-        final long row3 = row2 + cStride;
-        final long row4 = row3 + cStride;
-        final long row5 = row4 + cStride;
-
-        IntVector c00, c01, c10, c11, c20, c21, c30, c31, c40, c41, c50, c51;
-        if (isFirstKBlock) {
-            var z = IntVector.zero(SPECIESINT);
-            c00 = z; c01 = z;
-            c10 = z; c11 = z;
-            c20 = z; c21 = z;
-            c30 = z; c31 = z;
-            c40 = z; c41 = z;
-            c50 = z; c51 = z;
-        } else {
-            c00 = IntVector.fromMemorySegment(SPECIESINT, C, row0, NATIVE);
-            c01 = IntVector.fromMemorySegment(SPECIESINT, C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c10 = IntVector.fromMemorySegment(SPECIESINT, C, row1, NATIVE);
-            c11 = IntVector.fromMemorySegment(SPECIESINT, C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c20 = IntVector.fromMemorySegment(SPECIESINT, C, row2, NATIVE);
-            c21 = IntVector.fromMemorySegment(SPECIESINT, C, row2 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c30 = IntVector.fromMemorySegment(SPECIESINT, C, row3, NATIVE);
-            c31 = IntVector.fromMemorySegment(SPECIESINT, C, row3 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c40 = IntVector.fromMemorySegment(SPECIESINT, C, row4, NATIVE);
-            c41 = IntVector.fromMemorySegment(SPECIESINT, C, row4 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c50 = IntVector.fromMemorySegment(SPECIESINT, C, row5, NATIVE);
-            c51 = IntVector.fromMemorySegment(SPECIESINT, C, row5 + STRIDE_VEC_BYTES_I32, NATIVE);
-        }
+        var z = IntVector.zero(SPECIESINT);
+        IntVector c00 = z, c01 = z, c10 = z, c11 = z, c20 = z, c21 = z;
+        IntVector c30 = z, c31 = z, c40 = z, c41 = z, c50 = z, c51 = z;
 
         long aOff = aBase;
         long bOff = bBase;
@@ -1367,28 +1313,26 @@ public final class MatMulMicroKernels {
             c50 = c50.add(a1.mul(b0)); c51 = c51.add(a1.mul(b1));
 
             // Iteration 1
-            long aOff1 = aOff + STEP_A_ROW_BYTES_I32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_I32;
-            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1, NATIVE);
-            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1 + STRIDE_VEC_BYTES_I32, NATIVE);
+            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32, NATIVE);
+            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32 + STRIDE_VEC_BYTES_I32, NATIVE);
 
-            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1));
-            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 4L));
+            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32));
+            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 4L));
             c00 = c00.add(a0.mul(b0)); c01 = c01.add(a0.mul(b1));
             c10 = c10.add(a1.mul(b0)); c11 = c11.add(a1.mul(b1));
 
-            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 8L));
-            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 12L));
+            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 8L));
+            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 12L));
             c20 = c20.add(a0.mul(b0)); c21 = c21.add(a0.mul(b1));
             c30 = c30.add(a1.mul(b0)); c31 = c31.add(a1.mul(b1));
 
-            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 16L));
-            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 20L));
+            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 16L));
+            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 20L));
             c40 = c40.add(a0.mul(b0)); c41 = c41.add(a0.mul(b1));
             c50 = c50.add(a1.mul(b0)); c51 = c51.add(a1.mul(b1));
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_I32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_I32;
+            aOff += 2L * STEP_A_ROW_BYTES_I32;
+            bOff += 2L * STEP_B_ROW_BYTES_I32;
         }
 
         for (; k < kc; k++) {
@@ -1414,12 +1358,35 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_I32;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_I32, NATIVE);
+        final long cStride = (long) N * 4L;
+        final long row0 = ((long) ci * N + cj) * 4L;
+        final long row1 = row0 + cStride;
+        final long row2 = row1 + cStride;
+        final long row3 = row2 + cStride;
+        final long row4 = row3 + cStride;
+        final long row5 = row4 + cStride;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c20.intoMemorySegment(C, row2, NATIVE); c21.intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c30.intoMemorySegment(C, row3, NATIVE); c31.intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c40.intoMemorySegment(C, row4, NATIVE); c41.intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c50.intoMemorySegment(C, row5, NATIVE); c51.intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_I32, NATIVE);
+        } else {
+            IntVector.fromMemorySegment(SPECIESINT, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row0 + STRIDE_VEC_BYTES_I32, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row1 + STRIDE_VEC_BYTES_I32, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row2, NATIVE).add(c20).intoMemorySegment(C, row2, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row2 + STRIDE_VEC_BYTES_I32, NATIVE).add(c21).intoMemorySegment(C, row2 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row3, NATIVE).add(c30).intoMemorySegment(C, row3, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row3 + STRIDE_VEC_BYTES_I32, NATIVE).add(c31).intoMemorySegment(C, row3 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row4, NATIVE).add(c40).intoMemorySegment(C, row4, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row4 + STRIDE_VEC_BYTES_I32, NATIVE).add(c41).intoMemorySegment(C, row4 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row5, NATIVE).add(c50).intoMemorySegment(C, row5, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row5 + STRIDE_VEC_BYTES_I32, NATIVE).add(c51).intoMemorySegment(C, row5 + STRIDE_VEC_BYTES_I32, NATIVE);
+        }
     }
 
     private static void microKernel6x16Masked_Int(MemorySegment pA, long aBase, MemorySegment pB, long bBase,
@@ -1498,19 +1465,8 @@ public final class MatMulMicroKernels {
                                            MemorySegment pB, long bBase,
                                            MemorySegment C, int ci, int cj,
                                            int kc, int N, boolean isFirstKBlock) {
-        final long row0 = ((long) ci * N + cj) * 4L;
-        final long row1 = row0 + (long) N * 4L;
-
-        IntVector c00, c01, c10, c11;
-        if (isFirstKBlock) {
-            var z = IntVector.zero(SPECIESINT);
-            c00 = z; c01 = z; c10 = z; c11 = z;
-        } else {
-            c00 = IntVector.fromMemorySegment(SPECIESINT, C, row0, NATIVE);
-            c01 = IntVector.fromMemorySegment(SPECIESINT, C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
-            c10 = IntVector.fromMemorySegment(SPECIESINT, C, row1, NATIVE);
-            c11 = IntVector.fromMemorySegment(SPECIESINT, C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
-        }
+        var z = IntVector.zero(SPECIESINT);
+        IntVector c00 = z, c01 = z, c10 = z, c11 = z;
 
         long aOff = aBase + (long) rOff * 4L;
         long bOff = bBase;
@@ -1525,17 +1481,15 @@ public final class MatMulMicroKernels {
             c00 = c00.add(a0.mul(b0)); c01 = c01.add(a0.mul(b1));
             c10 = c10.add(a1.mul(b0)); c11 = c11.add(a1.mul(b1));
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_I32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_I32;
-            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1, NATIVE);
-            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1 + STRIDE_VEC_BYTES_I32, NATIVE);
-            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1));
-            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1 + 4L));
+            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32, NATIVE);
+            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32 + STRIDE_VEC_BYTES_I32, NATIVE);
+            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32));
+            a1 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32 + 4L));
             c00 = c00.add(a0.mul(b0)); c01 = c01.add(a0.mul(b1));
             c10 = c10.add(a1.mul(b0)); c11 = c11.add(a1.mul(b1));
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_I32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_I32;
+            aOff += 2L * STEP_A_ROW_BYTES_I32;
+            bOff += 2L * STEP_B_ROW_BYTES_I32;
         }
 
         for (; k < kc; k++) {
@@ -1550,8 +1504,18 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_I32;
         }
 
-        c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
-        c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
+        final long row0 = ((long) ci * N + cj) * 4L;
+        final long row1 = row0 + (long) N * 4L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row0, NATIVE); c01.intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
+            c10.intoMemorySegment(C, row1, NATIVE); c11.intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
+        } else {
+            IntVector.fromMemorySegment(SPECIESINT, C, row0, NATIVE).add(c00).intoMemorySegment(C, row0, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row0 + STRIDE_VEC_BYTES_I32, NATIVE).add(c01).intoMemorySegment(C, row0 + STRIDE_VEC_BYTES_I32, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row1, NATIVE).add(c10).intoMemorySegment(C, row1, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row1 + STRIDE_VEC_BYTES_I32, NATIVE).add(c11).intoMemorySegment(C, row1 + STRIDE_VEC_BYTES_I32, NATIVE);
+        }
     }
 
     private static void microKernel2x16Masked_Int(MemorySegment pA, long aBase, int rOff,
@@ -1593,16 +1557,8 @@ public final class MatMulMicroKernels {
                                            MemorySegment pB, long bBase,
                                            MemorySegment C, int ci, int cj,
                                            int kc, int N, boolean isFirstKBlock) {
-        final long row = ((long) ci * N + cj) * 4L;
-
-        IntVector c00, c01;
-        if (isFirstKBlock) {
-            var z = IntVector.zero(SPECIESINT);
-            c00 = z; c01 = z;
-        } else {
-            c00 = IntVector.fromMemorySegment(SPECIESINT, C, row, NATIVE);
-            c01 = IntVector.fromMemorySegment(SPECIESINT, C, row + STRIDE_VEC_BYTES_I32, NATIVE);
-        }
+        var z = IntVector.zero(SPECIESINT);
+        IntVector c00 = z, c01 = z;
 
         long aOff = aBase + (long) rOff * 4L;
         long bOff = bBase;
@@ -1615,15 +1571,13 @@ public final class MatMulMicroKernels {
             var a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff));
             c00 = c00.add(a0.mul(b0)); c01 = c01.add(a0.mul(b1));
 
-            long aOff1 = aOff + STEP_A_ROW_BYTES_I32;
-            long bOff1 = bOff + STEP_B_ROW_BYTES_I32;
-            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1, NATIVE);
-            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff1 + STRIDE_VEC_BYTES_I32, NATIVE);
-            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff1));
+            b0 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32, NATIVE);
+            b1 = IntVector.fromMemorySegment(SPECIESINT, pB, bOff + STEP_B_ROW_BYTES_I32 + STRIDE_VEC_BYTES_I32, NATIVE);
+            a0 = IntVector.broadcast(SPECIESINT, pA.get(VI, aOff + STEP_A_ROW_BYTES_I32));
             c00 = c00.add(a0.mul(b0)); c01 = c01.add(a0.mul(b1));
 
-            aOff = aOff1 + STEP_A_ROW_BYTES_I32;
-            bOff = bOff1 + STEP_B_ROW_BYTES_I32;
+            aOff += 2L * STEP_A_ROW_BYTES_I32;
+            bOff += 2L * STEP_B_ROW_BYTES_I32;
         }
 
         for (; k < kc; k++) {
@@ -1636,8 +1590,15 @@ public final class MatMulMicroKernels {
             bOff += STEP_B_ROW_BYTES_I32;
         }
 
-        c00.intoMemorySegment(C, row, NATIVE);
-        c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_I32, NATIVE);
+        final long row = ((long) ci * N + cj) * 4L;
+
+        if (isFirstKBlock) {
+            c00.intoMemorySegment(C, row, NATIVE);
+            c01.intoMemorySegment(C, row + STRIDE_VEC_BYTES_I32, NATIVE);
+        } else {
+            IntVector.fromMemorySegment(SPECIESINT, C, row, NATIVE).add(c00).intoMemorySegment(C, row, NATIVE);
+            IntVector.fromMemorySegment(SPECIESINT, C, row + STRIDE_VEC_BYTES_I32, NATIVE).add(c01).intoMemorySegment(C, row + STRIDE_VEC_BYTES_I32, NATIVE);
+        }
     }
 
     private static void microKernel1x16Masked_Int(MemorySegment pA, long aBase, int rOff,

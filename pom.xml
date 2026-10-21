@@ -170,7 +170,6 @@
                         <additionalOptions>
                             <additionalOption>--add-modules</additionalOption>
                             <additionalOption>jdk.incubator.vector</additionalOption>
-                            <additionalOption>--enable-native-access=ALL-UNNAMED</additionalOption>
                         </additionalOptions>
                         <doclint>none</doclint>
                     </configuration>
@@ -243,7 +242,6 @@
                             <additionalOptions>
                                 <additionalOption>--add-modules</additionalOption>
                                 <additionalOption>jdk.incubator.vector</additionalOption>
-                                <additionalOption>--enable-native-access=ALL-UNNAMED</additionalOption>
                             </additionalOptions>
                             <doclint>none</doclint>
                         </configuration>

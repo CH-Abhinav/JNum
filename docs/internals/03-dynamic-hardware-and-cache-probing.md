@@ -127,7 +127,7 @@ Thread 2: [ 240 rows ] (Heavy load)
 Thread 3: [  30 rows ] (Finishes early; sits idle waiting at barrier)
 ```
 
-JNum's parallel GEBP engine implements dynamic task sizing ([`computeDynamicLeafMc`](../../core/src/main/java/jnum/internal/Constants.java#L217)):
+JNum's parallel GEBP engine implements dynamic task sizing ([`computeDynamicLeafMc`](../../core/src/main/java/jnum/internal/Constants.java#L236)):
 
 ```java
 public static int computeDynamicLeafMc(int totalRows, int mrStep, int maxMc) {

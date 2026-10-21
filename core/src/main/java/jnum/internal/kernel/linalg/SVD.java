@@ -23,6 +23,7 @@ import java.lang.foreign.ValueLayout;
 import jnum.DType;
 import jnum.JNum;
 import jnum.NDArray;
+import jnum.linalg.SVDResult;
 
 /**
  * Singular Value Decomposition kernel (A = U * S * V^T).
@@ -38,7 +39,7 @@ public final class SVD {
     }
 
     /** Container record holding left singular vectors U, singular values S, and right singular vectors V^T. */
-    public record SVDResult(NDArray u, NDArray s, NDArray vt) {}
+
 
     /**
      * Top-level dispatcher: decomposes matrix A into U, S, and V^T. Handles m &lt; n by transposition.

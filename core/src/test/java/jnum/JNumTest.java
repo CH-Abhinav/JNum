@@ -188,4 +188,60 @@ class JNumTest {
         assertThrows(IllegalArgumentException.class, () -> JNum.eval("x + 1"));
         assertThrows(IllegalArgumentException.class, () -> JNum.eval("x + 1", Map.of()));
     }
+
+    // =========================================================================
+    // 07. Functional Mathematical & Trigonometric Operations
+    // =========================================================================
+    @Test
+    @DisplayName("JNum math and trig static methods produce matching results to instance methods")
+    void mathAndTrigStaticMethods() {
+        NDArray x = JNum.from(new float[]{0.0f, (float) (Math.PI / 2), (float) Math.PI}, 3);
+
+        // Sin, Cos, Tan
+        NDArray sinRes = JNum.sin(x);
+        assertEquals(0.0f, sinRes.getFloat(0), 1e-5f);
+        assertEquals(1.0f, sinRes.getFloat(1), 1e-5f);
+        assertEquals(x.sin().getFloat(1), sinRes.getFloat(1), 1e-5f);
+
+        NDArray cosRes = JNum.cos(x);
+        assertEquals(1.0f, cosRes.getFloat(0), 1e-5f);
+        assertEquals(0.0f, cosRes.getFloat(1), 1e-5f);
+
+        NDArray tanRes = JNum.tan(x);
+        assertEquals(0.0f, tanRes.getFloat(0), 1e-5f);
+
+        // Hyperbolic
+        NDArray h = JNum.from(new float[]{0.0f, 1.0f}, 2);
+        assertEquals(0.0f, JNum.sinh(h).getFloat(0), 1e-5f);
+        assertEquals(1.0f, JNum.cosh(h).getFloat(0), 1e-5f);
+        assertEquals(0.0f, JNum.tanh(h).getFloat(0), 1e-5f);
+
+        // Sqrt, Abs, Exp, Log, Log10, Sigmoid
+        NDArray vals = JNum.from(new float[]{4.0f, 9.0f}, 2);
+        assertEquals(2.0f, JNum.sqrt(vals).getFloat(0), 1e-5f);
+        assertEquals(3.0f, JNum.sqrt(vals).getFloat(1), 1e-5f);
+
+        NDArray neg = JNum.from(new float[]{-5.0f, 3.0f}, 2);
+        assertEquals(5.0f, JNum.abs(neg).getFloat(0), 1e-5f);
+
+        NDArray zeros = JNum.zeros(2);
+        assertEquals(1.0f, JNum.exp(zeros).getFloat(0), 1e-5f);
+        assertEquals(0.5f, JNum.sigmoid(zeros).getFloat(0), 1e-5f);
+
+        NDArray e = JNum.from(new float[]{(float) Math.E, 10.0f}, 2);
+        assertEquals(1.0f, JNum.log(e).getFloat(0), 1e-5f);
+        assertEquals(1.0f, JNum.log10(e).getFloat(1), 1e-5f);
+
+        // With destination buffer (res)
+        NDArray out = JNum.zeros(2);
+        NDArray returned = JNum.sqrt(vals, out);
+        assertSame(out, returned);
+        assertEquals(2.0f, out.getFloat(0), 1e-5f);
+
+        // With Arena
+        try (Arena arena = Arena.ofConfined()) {
+            NDArray arenaRes = JNum.sin(x, arena);
+            assertEquals(1.0f, arenaRes.getFloat(1), 1e-5f);
+        }
+    }
 }

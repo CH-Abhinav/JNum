@@ -26,17 +26,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteOrder;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Global hardware, CPU cache hierarchy, Panama Vector, and runtime constants.
- * Dynamically probes L1D/L2/L3 caches, SIMD vector width, and logical core counts
- * across x86_64 (SSE/AVX2/AVX-512), AArch64 (NEON/SVE), and RISC-V to compute
- * platform-adaptive BLIS tiling and parallel partitioning parameters.
+ * Dynamically detects L1/L2/L3 caches to compute optimal BLIS tiling parameters.
  */
 public final class Constants {
 
@@ -59,7 +61,7 @@ public final class Constants {
 
     // =========================================================================
     // VECTOR API (PANAMA) HARDWARE CONSTANTS
-    // ========================================================================
+    // =========================================================================
 
     public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
@@ -153,9 +155,11 @@ public final class Constants {
     public static final int MATMUL_MC;
     public static final int MATMUL_NC;
 
-    public static final int AVAILABLE_CORES = Math.max(1, Runtime.getRuntime().availableProcessors());
+    public static final int LOGICAL_CORES = Math.max(1, Runtime.getRuntime().availableProcessors());
+    public static final int AVAILABLE_CORES = LOGICAL_CORES;
+    public static final int PHYSICAL_CORES;
 
-    // Default to 1 balanced leaf task per logical core so each thread holds a large MC panel
+    // Default to 1 balanced leaf task per physical core so each thread holds a large MC panel
     // (11-22 MR micro-panels), maximizing L1D reuse of packed B and keeping C hot in local L2.
     public static final int MATMUL_TASKS_PER_CORE =
             (int) getLongProp("jnum.matmul.tasksPerCore", 1L);
@@ -164,13 +168,20 @@ public final class Constants {
         long l1d = getLongProp("jnum.cache.l1", -1L);
         long l2  = getLongProp("jnum.cache.l2", -1L);
         long l3  = getLongProp("jnum.cache.l3", -1L);
+        int detectedPhysCores = -1;
 
         if (l1d <= 0 || l2 <= 0 || l3 <= 0) {
-            long[] detected = detectSystemCaches();
+            long[] detected = detectSystemHardware();
             if (l1d <= 0) l1d = detected[0];
             if (l2 <= 0)  l2  = detected[1];
             if (l3 <= 0)  l3  = detected[2];
+            detectedPhysCores = (int) detected[3];
         }
+
+        if (detectedPhysCores <= 0) {
+            detectedPhysCores = AVAILABLE_CORES >= 4 ? Math.max(1, AVAILABLE_CORES / 2) : AVAILABLE_CORES;
+        }
+        PHYSICAL_CORES = detectedPhysCores;
 
         L1D_CACHE_BYTES = l1d;
         L2_CACHE_BYTES = l2;
@@ -179,54 +190,47 @@ public final class Constants {
         int mr = MR;
         int nr = NR_F32;
 
-        // 1. KC: An MR x KC micro-panel of A (6 KB at KC=256) + KC x NR micro-panel of B (16 KB at KC=256)
-        // must fit comfortably inside a 32 KB L1D cache (22 KB total).
-        // Capping KC at 256 prevents L1D overflow when OS cache probes report combined L1i+L1d sizes.
         int kcProp = (int) getLongProp("jnum.cache.kc", -1L);
         if (kcProp > 0) {
             MATMUL_KC = kcProp;
         } else {
             int kcRaw = (int) ((L1D_CACHE_BYTES * 3L / 4L) / (BYTES_F32 * (mr + nr)));
-            MATMUL_KC = Math.max(128, roundDown(Math.min(kcRaw, 256), 64));
+            MATMUL_KC = Math.max(128, roundDown(Math.min(kcRaw, 256), 16));
         }
 
-        // 2. MC: Choose MC so that a thread's packed A panel (MC x KC) fits within ~50%
-        // of per-core L2 cache, aligned to a multiple of 24 (LCM of MR=6 and 8).
         int mcProp = (int) getLongProp("jnum.cache.mc", -1L);
-        int lcmMr = lcm(mr, 8);
         if (mcProp > 0) {
             MATMUL_MC = mcProp;
         } else {
-            int mcRaw = (int) ((L2_CACHE_BYTES / 2L) / (BYTES_F32 * MATMUL_KC));
-            MATMUL_MC = Math.max(lcmMr * 2, roundDown(Math.min(mcRaw, 264), lcmMr));
+            int mcRaw = (int) ((L2_CACHE_BYTES * 6L / 10L) / (BYTES_F32 * MATMUL_KC));
+            MATMUL_MC = Math.max(mr * 2, roundDown(Math.min(mcRaw, 512), mr));
         }
 
-        // 3. NC: Choose NC so that the shared packed B panel (KC x NC) fits within ~50%
-        // of shared L3 cache, aligned to a multiple of LCM(NR_F32, 16).
         int ncProp = (int) getLongProp("jnum.cache.nc", -1L);
-        int lcmNr = lcm(nr, 16);
         if (ncProp > 0) {
             MATMUL_NC = ncProp;
         } else {
             int ncRaw = (int) ((L3_CACHE_BYTES / 2L) / (BYTES_F32 * MATMUL_KC));
-            MATMUL_NC = Math.max(lcmNr * 4, roundDown(Math.min(ncRaw, 4096), lcmNr));
+            MATMUL_NC = Math.max(nr * 2, roundDown(Math.min(ncRaw, 8192), nr));
         }
 
         MC = MATMUL_MC;
         KC = MATMUL_KC;
+        KC_DB = Math.max(64, roundDown(MATMUL_KC / 2, 16));
         NC_ARM = MATMUL_NC;
         NC_AARCH = MATMUL_NC;
     }
 
     public static final int MC;
     public static final int KC;
+    public static final int KC_DB;
     public static final int NC_ARM;
     public static final int NC_AARCH;
 
     /**
      * Dynamically computes the optimal row block size (leaf MC) for parallel GEBP tasks
      * given total rows N, register block height mrStep, max L2 block maxMc, and hardware cores.
-     * Ensures work is divided evenly into (AVAILABLE_CORES * MATMUL_TASKS_PER_CORE) balanced
+     * Ensures work is divided evenly into (PHYSICAL_CORES * MATMUL_TASKS_PER_CORE) balanced
      * multiples of mrStep without straggler tail imbalance.
      */
     public static int computeDynamicLeafMc(int totalRows, int mrStep, int maxMc) {
@@ -254,37 +258,44 @@ public final class Constants {
     public static final ByteOrder NATIVE = NATIVE_ORDER;
 
     // Allocate enough capacity in thread-local buffers for any padded tail panel.
-    private static final long PACK_A_MAX_ROWS = Math.max(MATMUL_MC + 16L, 272L);
-    private static final long PACK_B_MAX_COLS = Math.max(MATMUL_NC + 64L, 4160L);
-    public static final long SHARED_PACKED_B_ELEMENTS =
-            Math.max((long) MATMUL_KC * PACK_B_MAX_COLS, 1024L * 2048L);
+    // MC is bounded by cache size; we allocate an extra 48 rows beyond MC to absorb any padding.
+    private static final int MAX_BUFFER_MC = Math.max(512, MATMUL_MC + 48);
+    private static final int MAX_BUFFER_KC = Math.max(512, MATMUL_KC + 64);
+    private static final int MAX_BUFFER_NC = Math.max(8192, MATMUL_NC + 128);
 
-    private static MemorySegment allocateAlignedFloat(long count) {
-        return Arena.global().allocate(count * BYTES_F32, 64L);
-    }
-    private static MemorySegment allocateAlignedDouble(long count) {
-        return Arena.global().allocate(count * BYTES_F64, 64L);
-    }
-    private static MemorySegment allocateAlignedInt(long count) {
-        return Arena.global().allocate(count * BYTES_I32, 64L);
+    public static final long PACKED_A_ELEMENTS = (long) MAX_BUFFER_MC * MAX_BUFFER_KC;
+    public static final long PACKED_B_ELEMENTS = (long) MAX_BUFFER_KC * MAX_BUFFER_NC;
+    public static final long SHARED_PACKED_B_ELEMENTS = PACKED_B_ELEMENTS;
+
+    private static MemorySegment allocateAlignedFloat(long elements) {
+        return Arena.global().allocate(elements * BYTES_F32, CACHE_LINE_BYTES);
     }
 
+    private static MemorySegment allocateAlignedDouble(long elements) {
+        return Arena.global().allocate(elements * BYTES_F64, CACHE_LINE_BYTES);
+    }
+
+    private static MemorySegment allocateAlignedInt(long elements) {
+        return Arena.global().allocate(elements * BYTES_I32, CACHE_LINE_BYTES);
+    }
+
+    // Per-thread packed A buffers (MC x KC) aligned to cache lines.
     public static final ThreadLocal<MemorySegment> tlPackedA_Float =
-            ThreadLocal.withInitial(() -> allocateAlignedFloat(PACK_A_MAX_ROWS * MATMUL_KC));
-    public static final ThreadLocal<MemorySegment> tlPackedB_Float =
-            ThreadLocal.withInitial(() -> allocateAlignedFloat((long) MATMUL_KC * PACK_B_MAX_COLS));
-
+            ThreadLocal.withInitial(() -> allocateAlignedFloat(PACKED_A_ELEMENTS));
     public static final ThreadLocal<MemorySegment> tlPackedA_Double =
-            ThreadLocal.withInitial(() -> allocateAlignedDouble(PACK_A_MAX_ROWS * MATMUL_KC));
-    public static final ThreadLocal<MemorySegment> tlPackedB_Double =
-            ThreadLocal.withInitial(() -> allocateAlignedDouble((long) MATMUL_KC * PACK_B_MAX_COLS));
-
+            ThreadLocal.withInitial(() -> allocateAlignedDouble(PACKED_A_ELEMENTS));
     public static final ThreadLocal<MemorySegment> tlPackedA_Int =
-            ThreadLocal.withInitial(() -> allocateAlignedInt(PACK_A_MAX_ROWS * MATMUL_KC));
-    public static final ThreadLocal<MemorySegment> tlPackedB_Int =
-            ThreadLocal.withInitial(() -> allocateAlignedInt((long) MATMUL_KC * PACK_B_MAX_COLS));
+            ThreadLocal.withInitial(() -> allocateAlignedInt(PACKED_A_ELEMENTS));
 
-    // Shared global packed-B buffers sized to hold full multi-KC panels (up to 1024x2048),
+    // Per-thread packed B buffers (KC x NC) used for thread-local single-barrier BLIS execution.
+    public static final ThreadLocal<MemorySegment> tlPackedB_Float =
+            ThreadLocal.withInitial(() -> allocateAlignedFloat(PACKED_B_ELEMENTS));
+    public static final ThreadLocal<MemorySegment> tlPackedB_Double =
+            ThreadLocal.withInitial(() -> allocateAlignedDouble(PACKED_B_ELEMENTS));
+    public static final ThreadLocal<MemorySegment> tlPackedB_Int =
+            ThreadLocal.withInitial(() -> allocateAlignedInt(PACKED_B_ELEMENTS));
+
+    // Global shared packed B buffers (KC x NC) shared across all threads in the L3 cache,
     // enabling 2-barrier parallel execution where each core loops over KC locally.
     public static final MemorySegment SHARED_PACKED_B_FLOAT =
             allocateAlignedFloat(SHARED_PACKED_B_ELEMENTS);
@@ -339,13 +350,20 @@ public final class Constants {
     // HARDWARE PROBING UTILITIES
     // =========================================================================
 
-    private static long[] detectSystemCaches() {
+    private static long[] detectSystemHardware() {
         long l1 = 32_768L;
         long l2 = 524_288L;
         long l3 = 8_388_608L;
+        long physCores = -1;
 
         try {
-            if (IS_LINUX) {
+            if (IS_WINDOWS) {
+                long[] winHw = detectWindowsHardwarePanama();
+                if (winHw[0] > 0) l1 = winHw[0];
+                if (winHw[1] > 0) l2 = winHw[1];
+                if (winHw[2] > 0) l3 = winHw[2];
+                if (winHw[3] > 0) physCores = winHw[3];
+            } else if (IS_LINUX) {
                 long[] linuxCaches = detectLinuxCaches();
                 if (linuxCaches[0] > 0) l1 = linuxCaches[0];
                 if (linuxCaches[1] > 0) l2 = linuxCaches[1];
@@ -355,18 +373,13 @@ public final class Constants {
                 if (macCaches[0] > 0) l1 = macCaches[0];
                 if (macCaches[1] > 0) l2 = macCaches[1];
                 if (macCaches[2] > 0) l3 = macCaches[2];
-            } else if (IS_WINDOWS) {
-                long[] winCaches = detectWindowsCaches();
-                if (winCaches[0] > 0) l1 = winCaches[0];
-                if (winCaches[1] > 0) l2 = winCaches[1];
-                if (winCaches[2] > 0) l3 = winCaches[2];
             }
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
 
         l1 = Math.max(32_768L, Math.min(l1, 49_152L));
         l2 = Math.max(262_144L, Math.min(l2, 2_097_152L));
         l3 = Math.max(4_194_304L, l3);
-        return new long[]{l1, l2, l3};
+        return new long[]{l1, l2, l3, physCores};
     }
 
     private static long[] detectLinuxCaches() {
@@ -392,34 +405,71 @@ public final class Constants {
         return new long[]{l1, l2, l3};
     }
 
-    private static long[] detectWindowsCaches() {
-        long l1 = -1, l2 = -1, l3 = -1;
+    private static long[] detectWindowsHardwarePanama() {
+        long l1d = -1, l2 = -1, l3 = -1, physCores = -1;
         try {
-            ProcessBuilder pb = new ProcessBuilder("powershell", "-NoProfile", "-Command",
-                    "Get-CimInstance Win32_CacheMemory | Select-Object -Property Level,MaxCacheSize | ForEach-Object { \"$($_.Level)=$($_.MaxCacheSize)\" }");
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                String line;
-                int physicalCores = Math.max(1, AVAILABLE_CORES / 2);
-                while ((line = br.readLine()) != null) {
-                    if (line.contains("=")) {
-                        String[] parts = line.split("=");
-                        int level = Integer.parseInt(parts[0].trim());
-                        long sizeKb = Long.parseLong(parts[1].trim());
-                        if (level == 3) {
-                            l1 = (sizeKb > 128 ? (sizeKb * 1024L) / physicalCores : sizeKb * 1024L);
-                        } else if (level == 4) {
-                            l2 = (sizeKb > 2048 ? (sizeKb * 1024L) / physicalCores : sizeKb * 1024L);
-                        } else if (level == 5) {
-                            l3 = sizeKb * 1024L;
+            Linker linker = Linker.nativeLinker();
+            SymbolLookup kernel32 = SymbolLookup.libraryLookup("kernel32.dll", Arena.global());
+            var optFunc = kernel32.find("GetLogicalProcessorInformation");
+            if (optFunc.isEmpty()) {
+                return new long[]{-1, -1, -1, -1};
+            }
+            FunctionDescriptor desc = FunctionDescriptor.of(
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.ADDRESS,
+                    ValueLayout.ADDRESS
+            );
+            MethodHandle getInfo = linker.downcallHandle(optFunc.get(), desc);
+
+            try (Arena arena = Arena.ofConfined()) {
+                // Sizing the buffer to 64 KB upfront guarantees GetLogicalProcessorInformation
+                // succeeds on the very first call in < 0.05 ms without needing NULL probe loops.
+                int bufSize = 65536;
+                MemorySegment returnLen = arena.allocate(ValueLayout.JAVA_INT);
+                returnLen.set(ValueLayout.JAVA_INT, 0L, bufSize);
+                MemorySegment buffer = arena.allocate(bufSize, 8);
+
+                int res = (int) getInfo.invokeExact(buffer, returnLen);
+                int len = returnLen.get(ValueLayout.JAVA_INT, 0L);
+
+                if (res == 0 && len > bufSize) {
+                    buffer = arena.allocate(len, 8);
+                    returnLen.set(ValueLayout.JAVA_INT, 0L, len);
+                    res = (int) getInfo.invokeExact(buffer, returnLen);
+                    len = returnLen.get(ValueLayout.JAVA_INT, 0L);
+                }
+
+                if (res != 0 && len > 0) {
+                    int structSize = IS_AMD64 ? 32 : 24;
+                    int count = len / structSize;
+                    int relOffset = IS_AMD64 ? 8 : 4;
+                    int unionOffset = IS_AMD64 ? 16 : 8;
+
+                    int cores = 0;
+                    for (int i = 0; i < count; i++) {
+                        long base = (long) i * structSize;
+                        int relationship = buffer.get(ValueLayout.JAVA_INT, base + (long) relOffset);
+                        if (relationship == 0) { // RelationProcessorCore
+                            cores++;
+                        } else if (relationship == 2) { // RelationCache
+                            int level = buffer.get(ValueLayout.JAVA_BYTE, base + (long) unionOffset) & 0xFF;
+                            int size = buffer.get(ValueLayout.JAVA_INT, base + (long) unionOffset + 4L);
+                            int type = buffer.get(ValueLayout.JAVA_INT, base + (long) unionOffset + 8L);
+                            // PROCESSOR_CACHE_TYPE: 0 = CacheUnified, 1 = CacheInstruction, 2 = CacheData, 3 = CacheTrace
+                            if (level == 1 && (type == 2 || (type == 0 && l1d <= 0))) {
+                                l1d = size;
+                            } else if (level == 2) {
+                                l2 = size;
+                            } else if (level == 3) {
+                                l3 = size;
+                            }
                         }
                     }
+                    if (cores > 0) physCores = cores;
                 }
             }
-            p.waitFor(1500, TimeUnit.MILLISECONDS);
-        } catch (Exception ignored) {}
-        return new long[]{l1, l2, l3};
+        } catch (Throwable ignored) {}
+        return new long[]{l1d, l2, l3, physCores};
     }
 
     private static long[] detectMacCaches() {

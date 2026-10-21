@@ -15,6 +15,7 @@
  */
 module jnum{
     exports jnum;
+    exports jnum.linalg;
     exports jnum.nn;
     exports jnum.io;
     exports jnum.stat;
