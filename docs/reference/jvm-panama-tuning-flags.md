@@ -32,6 +32,7 @@ java --add-modules jdk.incubator.vector \
 | :--- | :--- | :--- | :--- |
 | `--add-modules jdk.incubator.vector` | Module Resolution | Compile & Runtime | Loads the incubator SIMD vector module into the JVM image. |
 | `--enable-native-access=ALL-UNNAMED` | FFM Permissions | Runtime only | Authorizes the default classloader to allocate and bind off-heap `MemorySegment` buffers without terminal security warnings. |
+| `--enable-preview` *(Java 21 only)* | Preview APIs | Compile & Runtime | Required only when using `0.2.1-jdk21` on Java 21 LTS (where FFM is a preview feature). Not needed on JDK 22–27 (`0.2.1`). |
 
 ---
 

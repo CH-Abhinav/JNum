@@ -53,7 +53,8 @@ public class NDArray {
 
     static {
         // Eagerly trigger hardware cache detection and thread pool initialization at classload
-        int _ = jnum.internal.Constants.AVAILABLE_CORES;
+        @SuppressWarnings("unused")
+        int cores = jnum.internal.Constants.AVAILABLE_CORES;
     }
 
     // =========================================================================

@@ -5,14 +5,14 @@
 <h1 align="center">JNum</h1>
 
 <p align="center">
-  <a href="https://openjdk.org/projects/jdk/25/"><img src="https://img.shields.io/badge/Java-25%2B-ED8B00?logo=openjdk&logoColor=white" alt="Java 25"></a>
+  <a href="https://openjdk.org/projects/jdk/22/"><img src="https://img.shields.io/badge/Java-22%2B%20%7C%2021-ED8B00?logo=openjdk&logoColor=white" alt="Java 22+ | 21"></a>
   <a href="https://openjdk.org/projects/panama/"><img src="https://img.shields.io/badge/Project-Panama-007396?logo=openjdk&logoColor=white" alt="Project Panama"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="#why-jnum-the-pure-java-advantage"><img src="https://img.shields.io/badge/Jar%20Size-%3C%20500%20KB-success" alt="Jar Size"></a>
   <a href="docs/"><img src="https://img.shields.io/badge/Docs-User%20Guide-blueviolet" alt="Documentation"></a>
 </p>
 
-A high-performance, hardware-accelerated numerical computing library for modern Java (JDK 25+) and Kotlin, powered by **Project Panama** (Foreign Function & Memory API and the Vector API).
+A high-performance, hardware-accelerated numerical computing library for modern Java (JDK 22–27, plus a dedicated JDK 21 build) and Kotlin, powered by **Project Panama** (Foreign Function & Memory API and the Vector API).
 
 JNum brings the ergonomics of **NumPy** and **PyTorch** to the JVM with native BLAS performance—**without native C++ build toolchains, JNI boundaries, or garbage collection overhead.**
 
@@ -151,42 +151,45 @@ Add JNum to your project (choose Java or Kotlin):
 
 ### Maven (`pom.xml`)
 
-**For Java:**
+**For Java (JDK 22–27):**
 ```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 
-**For Kotlin** *(bundles core + Kotlin extensions)*:
+**For Kotlin** *(bundles core + Kotlin extensions, JDK 22–27)*:
 ```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum-kotlin</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 
 ### Gradle (`build.gradle.kts`)
 
-**For Java:**
+**For Java (JDK 22–27):**
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum:0.2.0")
+    implementation("io.github.ch-abhinav:jnum:0.2.1")
 }
 ```
 
-**For Kotlin** *(bundles core + Kotlin extensions)*:
+**For Kotlin** *(bundles core + Kotlin extensions, JDK 22–27)*:
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
+    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.1")
 }
 ```
+
+> [!NOTE]
+> **Using Java 21 LTS?** Because FFM (`java.lang.foreign`) was a preview feature in Java 21 ([JEP 442](https://openjdk.org/jeps/442)), use version **`0.2.1-jdk21`** (`jnum:0.2.1-jdk21` or `jnum-kotlin:0.2.1-jdk21`) and pass `--enable-preview` in addition to the Panama flags below.
 
 > [!IMPORTANT]
-> Because JNum leverages Project Panama, compilation requires `--add-modules jdk.incubator.vector`, and runtime execution requires `--add-modules jdk.incubator.vector --enable-native-access=ALL-UNNAMED`.
+> Because JNum leverages Project Panama, compilation requires `--add-modules jdk.incubator.vector`, and runtime execution requires `--add-modules jdk.incubator.vector --enable-native-access=ALL-UNNAMED` (plus `--enable-preview` when using `0.2.1-jdk21` on Java 21).
 > 
 > 👉 **[Read the Full Installation & Setup Guide](docs/guide/01-getting-started.md)** for copy-paste Maven/Gradle compiler plugins and single-file runner configurations.
 
@@ -227,7 +230,7 @@ JNum ships with a complete, progressive documentation suite structured like *The
 
 ## Requirements
 
-* **JDK 25 or later** (Temurin, OpenJDK, or Zulu)
+* **JDK 22 or later (JDK 22–27)** for the standard `0.2.1` release, or **JDK 21** with the dedicated `0.2.1-jdk21` release and `--enable-preview` (Temurin, OpenJDK, or Zulu).
 * Architectures supported: **x86_64** (SSE4.2, AVX, AVX2, AVX-512) and **AArch64 / ARM64** (NEON, SVE).
 
 ---

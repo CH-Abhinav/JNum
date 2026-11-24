@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.ch-abhinav</groupId>
         <artifactId>jnum-parent</artifactId>
-        <version>0.2.0</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>jnum-kotlin</artifactId>
@@ -174,4 +174,28 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>jdk21</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>test-kapt</id>
+                                <configuration>
+                                    <javacOptions>
+                                        <javacOption>--enable-preview</javacOption>
+                                    </javacOptions>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

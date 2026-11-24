@@ -1,6 +1,10 @@
 # Maven
 target/
 dependency-reduced-pom.xml
+.flattened-pom.xml
+
+# Benchmarks
+core/benchmarks/jnum_results.json
 
 # IntelliJ IDEA
 .idea/

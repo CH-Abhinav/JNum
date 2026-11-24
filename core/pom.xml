@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.ch-abhinav</groupId>
         <artifactId>jnum-parent</artifactId>
-        <version>0.2.0</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>jnum</artifactId>
@@ -52,10 +52,6 @@
                             <version>${jmh.version}</version>
                         </path>
                     </annotationProcessorPaths>
-                    <compilerArgs>
-                        <arg>--add-modules</arg>
-                        <arg>jdk.incubator.vector</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

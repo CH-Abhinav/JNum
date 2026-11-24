@@ -12,7 +12,7 @@ Because **`jnum-kotlin`** bundles the entire JNum core runtime alongside Kotlin 
 
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
+    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.1")
 }
 ```
 
@@ -22,9 +22,12 @@ dependencies {
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum-kotlin</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
+
+> [!NOTE]
+> On **Java 21 LTS**, use `0.2.1-jdk21` and pass `--enable-preview` alongside `--add-modules jdk.incubator.vector --enable-native-access=ALL-UNNAMED`.
 
 Import the extensions:
 

@@ -8,25 +8,31 @@ on:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
+    name: Test JDK ${{ matrix.java }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        java: ['21', '25']
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 25
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
+          java-version: ${{ matrix.java }}
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build and Test with Maven
+      - name: Build and Test with Maven (JDK 21)
+        if: matrix.java == '21'
+        run: mvn -B clean verify -Pjdk21
+
+      - name: Build and Test with Maven (JDK 22+)
+        if: matrix.java != '21'
         run: mvn -B clean verify
 
       - name: Upload Test Results on Failure

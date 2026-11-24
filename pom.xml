@@ -6,7 +6,7 @@
 
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum-parent</artifactId>
-    <version>0.2.0</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>JNum Parent</name>
@@ -42,8 +42,13 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <revision>0.2.1</revision>
+        <java.version>22</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <enforced.java.version>[22,)</enforced.java.version>
+        <enforced.java.message>Mainline JNum (${revision}) requires JDK 22 or newer (Java 22-27). For Java 21, build with -Pjdk21.</enforced.java.message>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>2.1.10</kotlin.version>
         <jmh.version>1.37</jmh.version>
@@ -110,7 +115,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                     <configuration>
-                        <release>25</release>
+                        <release>${maven.compiler.release}</release>
                         <compilerArgs>
                             <arg>--add-modules</arg>
                             <arg>jdk.incubator.vector</arg>
@@ -153,6 +158,11 @@
                     </dependencies>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.4.2</version>
+                </plugin>
+                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>3.6.4</version>
@@ -166,7 +176,7 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.11.2</version>
                     <configuration>
-                        <release>25</release>
+                        <release>${maven.compiler.release}</release>
                         <additionalOptions>
                             <additionalOption>--add-modules</additionalOption>
                             <additionalOption>jdk.incubator.vector</additionalOption>
@@ -177,6 +187,53 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>${enforced.java.version}</version>
+                                    <message>${enforced.java.message}</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.7.3</version>
+                <configuration>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <updatePomFile>true</updatePomFile>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
@@ -218,6 +275,64 @@
 
     <profiles>
         <profile>
+            <id>jdk21</id>
+            <properties>
+                <revision>0.2.1-jdk21</revision>
+                <java.version>21</java.version>
+                <maven.compiler.source>21</maven.compiler.source>
+                <maven.compiler.target>21</maven.compiler.target>
+                <maven.compiler.release>21</maven.compiler.release>
+                <enforced.java.version>[21, 22)</enforced.java.version>
+                <enforced.java.message>Building with the -Pjdk21 profile requires JDK 21 specifically due to FFM preview constraints.</enforced.java.message>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-compiler-plugin</artifactId>
+                            <configuration>
+                                <release>21</release>
+                                <compilerArgs>
+                                    <arg>--add-modules</arg>
+                                    <arg>jdk.incubator.vector</arg>
+                                    <arg>--enable-preview</arg>
+                                </compilerArgs>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.jetbrains.kotlin</groupId>
+                            <artifactId>kotlin-maven-plugin</artifactId>
+                            <configuration>
+                                <javacOptions>
+                                    <javacOption>--enable-preview</javacOption>
+                                </javacOptions>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <argLine>--add-modules jdk.incubator.vector --enable-preview --enable-native-access=ALL-UNNAMED</argLine>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <configuration>
+                                <release>21</release>
+                                <additionalOptions>
+                                    <additionalOption>--add-modules</additionalOption>
+                                    <additionalOption>jdk.incubator.vector</additionalOption>
+                                    <additionalOption>--enable-preview</additionalOption>
+                                </additionalOptions>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
@@ -238,13 +353,6 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.11.2</version>
-                        <configuration>
-                            <additionalOptions>
-                                <additionalOption>--add-modules</additionalOption>
-                                <additionalOption>jdk.incubator.vector</additionalOption>
-                            </additionalOptions>
-                            <doclint>none</doclint>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -277,7 +385,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.7.0</version>
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>

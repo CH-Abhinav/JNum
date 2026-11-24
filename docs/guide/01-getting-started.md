@@ -9,7 +9,7 @@ Numerical computing on the JVM has traditionally forced developers to make a pai
 ## 1. Prerequisites
 
 To build and run applications with JNum, you need:
-* **Java Development Kit (JDK) 25 or later** (such as Eclipse Temurin, Oracle OpenJDK, or Azul Zulu).
+* **Java Development Kit (JDK) 22 or later (JDK 22–27)** for the standard `0.2.1` release, or **JDK 21** using the dedicated `0.2.1-jdk21` release with `--enable-preview` (Eclipse Temurin, Oracle OpenJDK, or Azul Zulu).
 * An architecture supporting hardware SIMD vector extensions:
   * **x86_64 / AMD64**: SSE4.2, AVX, AVX2, or AVX-512.
   * **AArch64 / ARM64**: ARM NEON or SVE (e.g., Apple Silicon M-series, AWS Graviton).
@@ -28,39 +28,42 @@ Add JNum to your build configuration. For Kotlin projects, `jnum-kotlin` bundles
 
 ### Maven (`pom.xml`)
 
-**For Java:**
+**For Java (JDK 22–27):**
 ```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 
-**For Kotlin** *(bundles core + Kotlin extensions)*:
+**For Kotlin** *(bundles core + Kotlin extensions, JDK 22–27)*:
 ```xml
 <dependency>
     <groupId>io.github.ch-abhinav</groupId>
     <artifactId>jnum-kotlin</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 
 ### Gradle (`build.gradle.kts`)
 
-**For Java:**
+**For Java (JDK 22–27):**
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum:0.2.0")
+    implementation("io.github.ch-abhinav:jnum:0.2.1")
 }
 ```
 
-**For Kotlin** *(bundles core + Kotlin extensions)*:
+**For Kotlin** *(bundles core + Kotlin extensions, JDK 22–27)*:
 ```kotlin
 dependencies {
-    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.0")
+    implementation("io.github.ch-abhinav:jnum-kotlin:0.2.1")
 }
 ```
+
+> [!NOTE]
+> **Using Java 21 LTS?** Because FFM was a preview feature in Java 21 ([JEP 442](https://openjdk.org/jeps/442)), use version **`0.2.1-jdk21`** (`io.github.ch-abhinav:jnum:0.2.1-jdk21` or `io.github.ch-abhinav:jnum-kotlin:0.2.1-jdk21`) and add `--enable-preview` to both your compiler and JVM runtime arguments.
 
 ---
 
@@ -93,7 +96,7 @@ Add compiler and surefire arguments to your `pom.xml` so that builds and unit te
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.13.0</version>
             <configuration>
-                <release>25</release>
+                <release>22</release>
                 <compilerArgs>
                     <arg>--add-modules</arg>
                     <arg>jdk.incubator.vector</arg>
@@ -129,7 +132,7 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(22))
     }
 }
 

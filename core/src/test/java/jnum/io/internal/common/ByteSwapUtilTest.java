@@ -38,8 +38,8 @@ class ByteSwapUtilTest {
     @Test
     void testSwapInPlaceInt32() {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = arena.allocate(ValueLayout.JAVA_INT, 4);
             int[] vals = new int[]{0x12345678, 0, -1, 0x01020304};
+            MemorySegment seg = arena.allocate((long) vals.length * Integer.BYTES);
             for (int i = 0; i < vals.length; i++) {
                 seg.setAtIndex(ValueLayout.JAVA_INT, i, vals[i]);
             }
@@ -61,8 +61,8 @@ class ByteSwapUtilTest {
     @Test
     void testSwapInPlaceFloat32() {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = arena.allocate(ValueLayout.JAVA_FLOAT, 5);
             float[] vals = new float[]{1.0f, -2.5f, 0.0f, Float.NaN, Float.POSITIVE_INFINITY};
+            MemorySegment seg = arena.allocate((long) vals.length * Float.BYTES);
             for (int i = 0; i < vals.length; i++) {
                 seg.setAtIndex(ValueLayout.JAVA_FLOAT, i, vals[i]);
             }
@@ -85,8 +85,8 @@ class ByteSwapUtilTest {
     @Test
     void testSwapInPlaceFloat64() {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = arena.allocate(ValueLayout.JAVA_DOUBLE, 4);
             double[] vals = new double[]{1.23456789, -987.654, Double.NaN, Double.NEGATIVE_INFINITY};
+            MemorySegment seg = arena.allocate((long) vals.length * Double.BYTES);
             for (int i = 0; i < vals.length; i++) {
                 seg.setAtIndex(ValueLayout.JAVA_DOUBLE, i, vals[i]);
             }
@@ -107,7 +107,7 @@ class ByteSwapUtilTest {
     @Test
     void testSwapInPlaceBoolIsNoOp() {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment seg = arena.allocate(ValueLayout.JAVA_BYTE, 3);
+            MemorySegment seg = arena.allocate(3);
             seg.setAtIndex(ValueLayout.JAVA_BYTE, 0, (byte) 1);
             seg.setAtIndex(ValueLayout.JAVA_BYTE, 1, (byte) 0);
             seg.setAtIndex(ValueLayout.JAVA_BYTE, 2, (byte) 1);
